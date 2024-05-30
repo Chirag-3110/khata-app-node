@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
-// Use environment variables for sensitive information
-const mongoUri = "mongodb+srv://chirag:3Ghomu9MZiMLYCkF@cluster0.rpaoiv2.mongodb.net/TodoDataBase?retryWrites=true&w=majority";
+const mongoUri = "mongodb+srv://takchirag828:ln8nkqC42O3DEZEb@khatabook.qfoibva.mongodb.net/?retryWrites=true&w=majority&appName=khatabook";
 
 interface Config {
   useNewUrlParser: boolean;
