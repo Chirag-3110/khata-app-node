@@ -14,7 +14,10 @@ app.use(express.urlencoded({
 
 server.listen(3000, () => {
     console.log('Server started at port 3000');
-    mongoConnect();
+    // mongoConnect();
 });
 
+app.use("/",(req:any,res:any)=>{
+    res.send("Hello World")
+})
 app.use(userRoute);
