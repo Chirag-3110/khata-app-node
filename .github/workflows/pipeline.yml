@@ -55,6 +55,12 @@ jobs:
           mkdir -p extracted-image
           tar -xzf ~/testing.tar.gz -C extracted-image
 
+      - name: Check contents of extracted-image
+        run: ls -l extracted-image/
+
+      - name: Set permissions for extracted-image
+        run: chmod -R 755 extracted-image/
+        
       - name: Copy Docker image to EC2
         uses: appleboy/scp-action@v0.1.5
         with:
