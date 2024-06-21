@@ -62,7 +62,7 @@ jobs:
         run: chmod -R 755 extracted-image/
         
       - name: Copy Docker image to EC2
-        uses: appleboy/scp-action@v0.1.5
+        uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
