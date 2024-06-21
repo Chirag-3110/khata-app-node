@@ -25,7 +25,7 @@ jobs:
         run: npm install
 
       - name: Build Docker image
-        run: docker build -t chirag869/testing .
+        run: docker build -t testing .
         
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
