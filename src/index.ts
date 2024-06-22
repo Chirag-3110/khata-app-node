@@ -17,11 +17,11 @@ server.listen(3000, () => {
     // mongoConnect();
 });
 
-app.use("/",(req:any,res:any)=>{
+app.get("/",(req:any,res:any)=>{
     res.send("Hello New World runner")
 });
 
-app.use("/user",(req:any,res:any)=>{
+app.get("/user",(req:any,res:any)=>{
     res.send("New User");
 })
 
