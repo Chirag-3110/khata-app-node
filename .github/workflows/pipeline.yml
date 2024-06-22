@@ -52,14 +52,14 @@ jobs:
 
       - name: Extract Docker image file
         run: |
-          mkdir -p ~/extracted-image
-          tar -xzf ~/testing.tar.gz -C ~/extracted-image
+          mkdir -p extracted-image
+          tar -xzf ~/testing.tar.gz -C extracted-image
 
       - name: Check contents of extracted-image
-        run: ls -l ~/extracted-image/
+        run: ls -l extracted-image/
 
       - name: Set permissions for extracted-image
-        run: chmod -R 755 ~/extracted-image/
+        run: chmod -R 755 extracted-image/
         
       - name: Copy Docker image to EC2
         uses: appleboy/scp-action@v0.1.5
@@ -67,8 +67,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "~/extracted-image/testing.tar"
-          target: "~/testing.tar"
+          source: "extracted-image/"
+          target: "~/docker-image"
 
       - name: SSH to EC2 and load Docker image
         uses: appleboy/ssh-action@v0.1.5
