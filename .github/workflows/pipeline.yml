@@ -48,7 +48,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: docker-image
-          path: ~/testing.tar.gz
+          path: ~/
 
       - name: Extract Docker image file
         run: |
