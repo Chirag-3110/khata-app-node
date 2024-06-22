@@ -52,7 +52,7 @@ jobs:
 
       - name: Extract Docker image file
         run: |
-          mkdir -p extracted-image
+          mkdir -p ~/extracted-image
           tar -xzf ~/testing.tar.gz -C ~/extracted-image
 
       - name: Check contents of extracted-image
