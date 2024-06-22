@@ -80,7 +80,7 @@ jobs:
           script_stop: true
           script: |
             cd ~/docker-image/extracted-image
-            docker load -i ~/testing.tar
+            docker load -i testing.tar
             docker stop testing || true
             docker rm testing || true
             docker run -d --name testing -p 3000:3000 testing
