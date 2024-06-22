@@ -19,5 +19,10 @@ server.listen(3000, () => {
 
 app.use("/",(req:any,res:any)=>{
     res.send("Hello New World runner")
+});
+
+app.use("/user",(req:any,res:any)=>{
+    res.send("New User");
 })
+
 app.use(userRoute);
