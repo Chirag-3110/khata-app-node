@@ -79,7 +79,7 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            cd ~/docker-image
+            cd ~/docker-image/extracted-image
             docker load -i ~/testing.tar
             docker stop testing || true
             docker rm testing || true
