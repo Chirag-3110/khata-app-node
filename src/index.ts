@@ -22,7 +22,7 @@ app.get("/",(req:any,res:any)=>{
 });
 
 app.get("/user",(req:any,res:any)=>{
-    res.send("New User");
+    res.send("New Done user");
 })
 
 app.use(userRoute);
