@@ -18,11 +18,7 @@ server.listen(3000, () => {
 });
 
 app.get("/",(req:any,res:any)=>{
-    res.send("Hello New World runner")
+    res.send("Server is UP!")
 });
-
-app.get("/user",(req:any,res:any)=>{
-    res.send("New Done user");
-})
 
 app.use(userRoute);
