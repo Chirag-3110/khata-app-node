@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const mongoUri = "mongodb+srv://takchirag828:ln8nkqC42O3DEZEb@khatabook.qfoibva.mongodb.net/?retryWrites=true&w=majority&appName=khatabook";
+const mongoUri = "mongodb+srv://takchirag828:ln8nkqC42O3DEZEb@khatabook.qfoibva.mongodb.net/khata-book?retryWrites=true&w=majority&appName=khatabook";
 
 interface Config {
   useNewUrlParser: boolean;
