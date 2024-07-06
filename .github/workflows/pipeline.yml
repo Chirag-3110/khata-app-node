@@ -15,6 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check disk usage after build
+        run: df -h
+
+      - name: Clean up Docker resources
+        run: docker system prune -af
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -31,12 +37,6 @@ jobs:
 
       - name: Verify Docker image
         run: docker images
-
-      - name: Check disk usage after build
-        run: df -h
-
-      - name: Clean up Docker resources
-        run: docker system prune -af
 
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
