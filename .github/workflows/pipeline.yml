@@ -16,12 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check disk usage after build
-        run: df -h
-
-      - name: Clean up Docker resources
-        run: docker system prune -af
-
+      
       - name: setup node
         uses: actions/setup-node@v4
         with:
