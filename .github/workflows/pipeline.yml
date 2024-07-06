@@ -29,6 +29,9 @@ jobs:
       - name: Build Docker image
         run: docker build -t testing .
 
+      - name: Verify Docker image
+        run: docker images
+
       - name: Check disk usage after build
         run: df -h
 
