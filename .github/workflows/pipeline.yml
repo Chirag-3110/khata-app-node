@@ -1,3 +1,4 @@
+
 name: Testing CICD
 
 on:
@@ -21,7 +22,7 @@ jobs:
       - name: Clean up Docker resources
         run: docker system prune -af
 
-      - name: Setup Node
+      - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: '18'
@@ -29,15 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Check disk usage before build
-        run: df -h
-
       - name: Build Docker image
         run: docker build -t testing .
-
-      - name: Verify Docker image
-        run: docker images
-
+        
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
 
@@ -55,9 +50,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Check disk usage before download
-        run: df -h
-
       - name: Download Docker image file
         uses: actions/download-artifact@v2
         with:
@@ -74,7 +66,7 @@ jobs:
 
       - name: Set permissions for extracted-image
         run: chmod -R 755 extracted-image/
-
+        
       - name: Copy Docker image to EC2
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -98,6 +90,3 @@ jobs:
             docker stop testing || true
             docker rm testing || true
             docker run -d --name testing -p 3000:3000 testing
-
-      - name: Check disk usage after deployment
-        run: df -h
