@@ -28,6 +28,7 @@ const userSchema = new Schema<User>({
     email: {
         type: String,
         unique: true,
+        required:true
     },
     status: {
         type: Boolean,
@@ -51,6 +52,7 @@ const userSchema = new Schema<User>({
     },
     documentId: {
         type: String,
+        required:true
     },
     deviceToken: [{
         type: String,
@@ -64,6 +66,7 @@ const userSchema = new Schema<User>({
     },
     isEmailVerified: {
         type: Boolean,
+        default:false
     },
     address: {
         type: String,
