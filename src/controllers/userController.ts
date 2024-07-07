@@ -3,14 +3,23 @@ import Role from "../models/Role";
 import Shop from "../models/Shop";
 import Wallet from "../models/Wallet";
 import User from "../models/user";
+import { generateJWT } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import { userValidationSchema } from "../validations/userValidation";
 
 export const loginUser=async(req:any,res:any)=>{
     try {
-        res.status(200).send({response:'Connect',statusCode:200});
+        const {documentId}=req.body;
+        if(!documentId)
+            return buildErrorResponse(res, constants.errors.docIdNotgExists, 404);
+
+        let userData=await User.findOne({documentId});
+        
+        let token=await generateJWT(userData?._id,documentId);
+
+        return buildObjectResponse(res,{tokenData:token});
     } catch (error) {
-        res.status(501).send({response:"Server error",status:501});
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
 
@@ -42,7 +51,7 @@ export const createUser=async(req:any,res:any)=>{
 
 export const completeRegistration=async(req:any,res:any)=>{
     const { userData,shop,role } = req.body;
-    const {email,name,address,dob,gender,qrCode,upiId}=userData
+    const {email,name,address,dob,gender,qrCode,upiId,phoneNumber,businessCode}=userData
     try {
         let roleData=await Role.findOne({role});
         if(!roleData)
@@ -77,10 +86,12 @@ export const completeRegistration=async(req:any,res:any)=>{
             gender:gender,
             qrCode:qrCode,
             upiId:upiId,
-            isProfileDone:true
+            isProfileDone:true,
+            phoneNumber,
+            businessCode
         }
         await User.findByIdAndUpdate(isUserExist?._id,updatedUserData)
-    
+        
         return buildResponse(res,constants.success.profileUpdated,200);
     } catch (error) {
         console.log(error, 'error');

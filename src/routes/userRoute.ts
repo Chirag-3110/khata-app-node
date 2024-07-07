@@ -3,7 +3,7 @@ import { checkUserVerify, completeRegistration, createUser, getUserProfile, logi
 const userRoute = express.Router();
 const verifyToken = require('../middleware/auth'); 
 
-userRoute.get("/api/user/login",loginUser);
+userRoute.post("/api/user/login",loginUser);
 userRoute.post("/api/user/create-user",createUser);
 userRoute.post("/api/user/complete-registration",completeRegistration);
 userRoute.get("/api/user/check-user-profile",checkUserVerify);

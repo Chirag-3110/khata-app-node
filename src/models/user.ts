@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import { number } from 'yup';
 
 interface User extends Document {
     name: string;
@@ -19,6 +20,8 @@ interface User extends Document {
     qrCode: string;
     upiId: string;
     isProfileDone:boolean;
+    phoneNumber:number;
+    businessCode:string
 }
 
 const userSchema = new Schema<User>({
@@ -86,6 +89,13 @@ const userSchema = new Schema<User>({
     isProfileDone: {
       type:Boolean,
       default: false,
+    },
+    phoneNumber:{
+        type:Number,
+        maxlength:10
+    },
+    businessCode: {
+        type:String
     }
 });
 

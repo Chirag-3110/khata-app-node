@@ -21,4 +21,9 @@ const roles={
   Customer:"CUSTOMER",
   Vender:"VENDER"
 }
-export { constants,roles }
+
+const NOTIFICATION_TYPE={
+  REMINDER:"REMINDER"
+}
+
+export { constants,roles,NOTIFICATION_TYPE }
