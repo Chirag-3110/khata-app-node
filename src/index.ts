@@ -4,6 +4,7 @@ import mongoConnect from './database/mongo';
 import userRoute from './routes/userRoute';
 import roleRoute from './routes/roleRoute';
 import adRoute from './routes/adRoute';
+import notificationRoute from './routes/notificationRoute';
 
 const app = express();
 const server = http.createServer(app);
@@ -26,3 +27,4 @@ app.get("/",(req:any,res:any)=>{
 app.use(userRoute);
 app.use(roleRoute);
 app.use(adRoute);
+app.use(notificationRoute);

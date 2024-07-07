@@ -4,6 +4,9 @@ const constants = {
       registeredUserSuccessfully: 'User registered successfully',
       tokenUpdated: 'Device registered or FCM token updated successfully',
       logoutSuccessfully: 'Successfully logged out',
+      notificationSuccessfully:"Successfully trigger notification",
+      notificatinoStatusUpdatedSuccessfully:"Successfully updated the notification",
+      deletedNotification:"Successfully deleted notification"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -13,7 +16,9 @@ const constants = {
       invalidEmail: 'Invalid email',
       emailAlreadyExist: 'Email already exists',
       internalServerError: 'Internal server error',
-      docIdNotgExists:"Firebase document id is not exists"
+      docIdNotgExists:"Firebase document id is not exists",
+      invalidNotificationId: 'Invalid notification ID',
+      notificationNotFound: 'Notification not found',
     },
 };
 
@@ -26,4 +31,9 @@ const NOTIFICATION_TYPE={
   REMINDER:"REMINDER"
 }
 
-export { constants,roles,NOTIFICATION_TYPE }
+const NOTIFICATION_STATUS={
+  UNSEEN:"Unseen",
+  SEEN:"Seen"
+}
+
+export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS }

@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import { NOTIFICATION_STATUS } from '../constants';
 
 interface Notification extends Document {
   title: string;
@@ -6,6 +7,8 @@ interface Notification extends Document {
   userId: Schema.Types.ObjectId;
   status: string;
   notificationType: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const notificationSchema = new Schema<Notification>({
@@ -24,11 +27,19 @@ const notificationSchema = new Schema<Notification>({
   },
   status: {
     type: String,
-    required: true,
+    default:NOTIFICATION_STATUS.UNSEEN,
   },
   notificationType: {
     type: String,
     required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },  
+  updatedAt: {
+      type: Date,
+      default: Date.now,
   },
 });
 
