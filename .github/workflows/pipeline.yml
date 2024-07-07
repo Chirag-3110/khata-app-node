@@ -88,5 +88,17 @@ jobs:
             docker rm testing || true
             docker run -d --name testing -p 3000:3000 testing
 
+     - name: Debug Docker container status 
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          script_stop: false
+          script: |
+            docker ps -a
+            docker logs testing || true
+
       - name: Check disk usage after deployment
         run: df -h
