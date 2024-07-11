@@ -1,0 +1,33 @@
+name: Cleanup Artifacts
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"  
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: List Artifacts
+        run: |
+          gh api -X GET repos/${{ github.repository }}/actions/artifacts --paginate > artifacts.json
+          cat artifacts.json | jq '.artifacts[] | select(.expired == false) | {id: .id, name: .name, created_at: .created_at}' > active_artifacts.json
+          cat active_artifacts.json
+
+      - name: Delete Old Artifacts
+        run: |
+          # Define the number of artifacts to keep
+          KEEP=5
+          # Get the artifact IDs to delete
+          jq -r 'sort_by(.created_at) | .[:-env.KEEP] | .[].id' active_artifacts.json > artifacts_to_delete.txt
+          
+          # Delete each artifact
+          while read ARTIFACT_ID; do
+            echo "Deleting artifact ID: $ARTIFACT_ID"
+            gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID
+          done < artifacts_to_delete.txt
+
+      - name: Check remaining artifacts
+        run: |
+          gh api -X GET repos/${{ github.repository }}/actions/artifacts --paginate
