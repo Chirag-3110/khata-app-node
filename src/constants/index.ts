@@ -6,7 +6,9 @@ const constants = {
       logoutSuccessfully: 'Successfully logged out',
       notificationSuccessfully:"Successfully trigger notification",
       notificatinoStatusUpdatedSuccessfully:"Successfully updated the notification",
-      deletedNotification:"Successfully deleted notification"
+      deletedNotification:"Successfully deleted notification",
+      customerAdded:"New customer added successfully",
+      customerDeleted:"Customer deleted successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -19,6 +21,11 @@ const constants = {
       docIdNotgExists:"Firebase document id is not exists",
       invalidNotificationId: 'Invalid notification ID',
       notificationNotFound: 'Notification not found',
+      phoneNotExists: 'Phone number not exists',
+      customerNotExists:"Customer not exists",
+      invalidCustomer:"Invalid customer Id",
+      customerAlreadyAdded:"Customer already added by you",
+      roleRequired:"Role is required"
     },
 };
 

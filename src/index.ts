@@ -5,6 +5,7 @@ import userRoute from './routes/userRoute';
 import roleRoute from './routes/roleRoute';
 import adRoute from './routes/adRoute';
 import notificationRoute from './routes/notificationRoute';
+import customerRoute from './routes/customerRoute';
 
 const app = express();
 const server = http.createServer(app);
@@ -28,3 +29,4 @@ app.use(userRoute);
 app.use(roleRoute);
 app.use(adRoute);
 app.use(notificationRoute);
+app.use(customerRoute);

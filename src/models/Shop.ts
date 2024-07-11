@@ -20,6 +20,10 @@ interface Shop extends Document {
     coordinates: Coordinates;
     createdAt: Date;
     updatedAt: Date;
+    isSubscribed:boolean;
+    subscriptionType:string;
+    subPurchaseDate:Date,
+    subExpireDate:Date
 }
 
 const coordinatesSchema = new Schema<Coordinates>({
@@ -87,6 +91,21 @@ const shopSchema = new Schema<Shop>({
         type: Date,
         default: Date.now,
     },
+    isSubscribed:{
+        type:Boolean,
+        default:false
+    },
+    subscriptionType:{
+        type:String
+    },
+    subPurchaseDate:{
+        type:Date,
+        default:Date.now()
+    },
+    subExpireDate:{
+        type:Date,
+        default:Date.now()
+    }
 });
 
 const Shop = model<Shop>('shop', shopSchema);
