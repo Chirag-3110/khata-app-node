@@ -1,7 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 
 interface Transaction extends Document {
-  userId: Schema.Types.ObjectId;
+  customerId: Schema.Types.ObjectId;
   walletId: Schema.Types.ObjectId;
   amount: Schema.Types.Decimal128; 
   transactionDate: Date;
@@ -13,7 +13,7 @@ interface Transaction extends Document {
 }
 
 const transactionSchema = new Schema<Transaction>({
-  userId: {
+  customerId: {
     type: Schema.Types.ObjectId,
     ref: 'user',
     required: true,
@@ -30,10 +30,10 @@ const transactionSchema = new Schema<Transaction>({
   transactionDate: {
     type: Date,
     required: true,
+    default: new Date()
   },
   transactionRef: {
     type: String,
-    required: true,
   },
   status: {
     type: String,
@@ -41,7 +41,6 @@ const transactionSchema = new Schema<Transaction>({
   },
   transactionType: {
     type: String,
-    required: true,
   },
   dueDate: {
     type: Date,

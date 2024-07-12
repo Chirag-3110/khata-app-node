@@ -8,7 +8,8 @@ const constants = {
       notificatinoStatusUpdatedSuccessfully:"Successfully updated the notification",
       deletedNotification:"Successfully deleted notification",
       customerAdded:"New customer added successfully",
-      customerDeleted:"Customer deleted successfully"
+      customerDeleted:"Customer deleted successfully",
+      transactionDone:"Transaction is completed successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -25,7 +26,8 @@ const constants = {
       customerNotExists:"Customer not exists",
       invalidCustomer:"Invalid customer Id",
       customerAlreadyAdded:"Customer already added by you",
-      roleRequired:"Role is required"
+      roleRequired:"Role is required",
+      amountRequired:"Amount is required"
     },
 };
 
@@ -43,4 +45,10 @@ const NOTIFICATION_STATUS={
   SEEN:"Seen"
 }
 
-export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS }
+const TRANSACTION_STATUS={
+  PENDING:"Pending",
+  COMPLETE:"Completed",
+  PARTIAL_DONE:"PartialDone"
+}
+
+export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS }

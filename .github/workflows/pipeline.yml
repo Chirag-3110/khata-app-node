@@ -14,18 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Delete old artifacts
+        run: |
+          gh api -X GET repos/${{ github.repository }}/actions/artifacts --paginate > artifacts.json
+          jq '.artifacts[] | select(.expired == false) | {id: .id, name: .name, created_at: .created_at}' artifacts.json > active_artifacts.json
+          KEEP=5
+          jq -r 'sort_by(.created_at) | .[:-env.KEEP] | .[].id' active_artifacts.json > artifacts_to_delete.txt
+          while read ARTIFACT_ID; do
+            echo "Deleting artifact ID: $ARTIFACT_ID"
+            gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID
+          done < artifacts_to_delete.txt
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-
-      - name: Cache npm dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm install
@@ -44,17 +47,6 @@ jobs:
         with:
           name: docker-image
           path: testing.tar.gz
-
-      - name: Delete old artifacts
-        run: |
-          gh api -X GET repos/${{ github.repository }}/actions/artifacts --paginate > artifacts.json
-          jq '.artifacts[] | select(.expired == false) | {id: .id, name: .name, created_at: .created_at}' artifacts.json > active_artifacts.json
-          KEEP=5
-          jq -r 'sort_by(.created_at) | .[:-env.KEEP] | .[].id' active_artifacts.json > artifacts_to_delete.txt
-          while read ARTIFACT_ID; do
-            echo "Deleting artifact ID: $ARTIFACT_ID"
-            gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID
-          done < artifacts_to_delete.txt
 
   deploy:
     runs-on: self-hosted
@@ -98,4 +90,23 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            cd
+            cd ~/docker-image/extracted-image
+            docker load -i testing.tar
+            docker stop testing || true
+            docker rm testing || true
+            docker run -d --name testing -p 3000:3000 testing
+
+      - name: Debug Docker container status 
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          script_stop: false
+          script: |
+            docker ps -a
+            docker logs testing || true
+
+      - name: Check disk usage after deployment
+        run: df -h
