@@ -14,29 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install GitHub CLI
-        run: |
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-          sudo apt update
-          sudo apt install gh -y
-
-      - name: Delete old artifacts
-        run: |
-          gh api -X GET repos/${{ github.repository }}/actions/artifacts --paginate > artifacts.json
-          jq '.artifacts[] | select(.expired == false) | {id: .id, name: .name, created_at: .created_at}' artifacts.json > active_artifacts.json
-          KEEP=5
-          jq -r 'sort_by(.created_at) | .[:-env.KEEP] | .[].id' active_artifacts.json > artifacts_to_delete.txt
-          while read ARTIFACT_ID; do
-            echo "Deleting artifact ID: $ARTIFACT_ID"
-            gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID
-          done < artifacts_to_delete.txt
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+
+      - name: Remove previous artifacts
+        run: |
+          rm -f testing.tar testing.tar.gz
 
       - name: Install dependencies
         run: npm install
