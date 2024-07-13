@@ -9,7 +9,8 @@ const constants = {
       deletedNotification:"Successfully deleted notification",
       customerAdded:"New customer added successfully",
       customerDeleted:"Customer deleted successfully",
-      transactionDone:"Transaction is completed successfully"
+      transactionDone:"Transaction is completed successfully",
+      transactionStatusUpdate:"Transaction status is updated"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -27,7 +28,9 @@ const constants = {
       invalidCustomer:"Invalid customer Id",
       customerAlreadyAdded:"Customer already added by you",
       roleRequired:"Role is required",
-      amountRequired:"Amount is required"
+      amountRequired:"Amount is required",
+      transactionNotFound:"Transaction not found",
+      invalidTransactionId:"Invalid transaction Id"
     },
 };
 
