@@ -19,19 +19,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Remove previous artifacts
-        run: |
-          rm -f testing.tar testing.tar.gz
-
-      - name: Clean up old artifacts
-        env:
-          GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
-        run: |
-          artifacts=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.artifacts | sort_by(.created_at) | reverse | .[20:] | .[].id')
-          for artifact in $artifacts; do
-            curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }}/actions/artifacts/$artifact
-          done
-
       - name: Install dependencies
         run: npm install
 
@@ -50,24 +37,11 @@ jobs:
       - name: Show size of archived Docker image file
         run: du -h testing.tar.gz
 
-      - name: Check artifact storage capacity before upload
-        env:
-          GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
-        run: |
-          curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.total_count, .total_size_in_bytes'
-
       - name: Upload Docker image file
         uses: actions/upload-artifact@v2
         with:
           name: docker-image
           path: testing.tar.gz
-
-      - name: Check artifact storage capacity after upload
-        env:
-          GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
-        run: |
-          curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.total_count, .total_size_in_bytes'
-
   deploy:
     runs-on: self-hosted
     needs: build

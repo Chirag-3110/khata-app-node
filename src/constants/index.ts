@@ -10,7 +10,8 @@ const constants = {
       customerAdded:"New customer added successfully",
       customerDeleted:"Customer deleted successfully",
       transactionDone:"Transaction is completed successfully",
-      transactionStatusUpdate:"Transaction status is updated"
+      transactionStatusUpdate:"Transaction status is updated",
+      transactionDueDateUpdate:"Transaction due date updated successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -30,7 +31,8 @@ const constants = {
       roleRequired:"Role is required",
       amountRequired:"Amount is required",
       transactionNotFound:"Transaction not found",
-      invalidTransactionId:"Invalid transaction Id"
+      invalidTransactionId:"Invalid transaction Id",
+      transactionDueDateUpdate:"Transaction due date is already updated once by you"
     },
 };
 

@@ -91,7 +91,7 @@ export const payAmountToVender=async(req:any,res:any)=>{
         const findTransaction=await Transaction.findById(transactionId);
         
         if(!findTransaction)
-        return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+            return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
     
         const numberValue = parseFloat(findTransaction.amount.toString());
         const date1Only = moment(findTransaction?.dueDate).startOf('day');
@@ -111,7 +111,6 @@ export const payAmountToVender=async(req:any,res:any)=>{
                 );
                 console.log("Complete transaction directly")
             }else{
-
                 const transactionData={
                     customerId:findTransaction?.customerId,
                     venderId:findTransaction?.venderId,
@@ -123,8 +122,7 @@ export const payAmountToVender=async(req:any,res:any)=>{
                 const transaction=new Transaction(transactionData);
 
                 const childTransaction=await transaction.save();
-                console.log(checkUserExists?.walletId,"Child");
-                
+
                 await Transaction.findByIdAndUpdate(
                     transactionId,
                     { status: TRANSACTION_STATUS.PARTIAL_DONE, childTransaction:childTransaction?._id },
@@ -141,12 +139,71 @@ export const payAmountToVender=async(req:any,res:any)=>{
         } else {
             console.log('date1 is after date2');
             if(amount==numberValue){
+                await Transaction.findByIdAndUpdate(
+                    transactionId,
+                    { status: TRANSACTION_STATUS.COMPLETE },
+                    { new: true }
+                );
                 console.log("Complete transaction directly,but dedut credit")
             }else{
-                console.log('partial done, but deduct')
+                const transactionData={
+                    customerId:findTransaction?.customerId,
+                    venderId:findTransaction?.venderId,
+                    amount:amount,
+                    status:TRANSACTION_STATUS.COMPLETE,
+                    dueDate:findTransaction?.dueDate
+                }
+
+                const transaction=new Transaction(transactionData);
+
+                const childTransaction=await transaction.save();
+
+                await Transaction.findByIdAndUpdate(
+                    transactionId,
+                    { status: TRANSACTION_STATUS.PARTIAL_DONE, childTransaction:childTransaction?._id },
+                    { new: true }
+                );
+                console.log('partial done')
             }
+            await Wallet.findByIdAndUpdate(
+                checkUserExists?.walletId,
+                { credit: currentCredit - 5 },
+                { new: true }
+            );
             return buildResponse(res,constants.success.transactionDone,200);
         }
+        
+    } catch (error) {
+        console.log(error,"error")
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+
+export const updateDueDateByCustomer=async(req:any,res:any)=>{
+    try {
+        const {transactionId,dueDate}=req.body;
+
+        if(!transactionId)
+            return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
+
+        const findTransaction=await Transaction.findById(transactionId);
+        
+        if(!findTransaction)
+            return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+
+        const dueDateUpdatedCount = (findTransaction.dueDateUpdatedCount ? findTransaction.dueDateUpdatedCount.valueOf() : 0) + 1;
+
+        if(findTransaction?.dueDateUpdatedCount==1)
+            return buildErrorResponse(res, constants.errors.transactionDueDateUpdate, 406);
+        
+        await Transaction.findByIdAndUpdate(
+            transactionId,
+            { dueDate: dueDate,dueDateUpdatedCount:dueDateUpdatedCount},
+            { new: true }
+        );
+
+        return buildResponse(res,constants.success.transactionDueDateUpdate,200);
         
     } catch (error) {
         console.log(error,"error")
