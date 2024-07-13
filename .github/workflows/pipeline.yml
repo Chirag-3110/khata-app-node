@@ -19,6 +19,10 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Remove previous artifacts
+        run: |
+          rm -f testing.tar testing.tar.gz
+
       - name: Clean up old artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
