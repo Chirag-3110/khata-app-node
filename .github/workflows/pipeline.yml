@@ -41,14 +41,32 @@ jobs:
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
 
+      - name: Show size of Docker image file
+        run: du -h testing.tar
+
       - name: Archive Docker image file
         run: tar -czf testing.tar.gz testing.tar
+
+      - name: Show size of archived Docker image file
+        run: du -h testing.tar.gz
+
+      - name: Check artifact storage capacity before upload
+        env:
+          GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
+        run: |
+          curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.total_count, .total_size_in_bytes'
 
       - name: Upload Docker image file
         uses: actions/upload-artifact@v2
         with:
           name: docker-image
           path: testing.tar.gz
+
+      - name: Check artifact storage capacity after upload
+        env:
+          GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
+        run: |
+          curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.total_count, .total_size_in_bytes'
 
   deploy:
     runs-on: self-hosted
