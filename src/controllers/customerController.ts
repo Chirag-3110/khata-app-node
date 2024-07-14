@@ -77,19 +77,27 @@ export const deleteCustomer=async(req:any,res:any)=>{
 export const getCustomersOfVender=async(req:any,res:any)=>{
     try {
         const {userId}=req.user;
+        const {role}=req.query;
+
         const page = parseInt(req.query.page as string) || 1; 
         const limit = parseInt(req.query.limit as string) || 10;
 
         const skip = (page - 1) * limit;
+        let filters: { venderId: any; role?: any } = { venderId: userId };
 
-        const customers = await Customer.find({ venderId: userId })
+        if(role){
+            const roles = await Role.findOne({role:role});
+            filters = {...filters,role:roles?._id}
+        }
+
+        const customers = await Customer.find(filters)
         .populate("customerId")
         .populate("role")
         .populate("venderId")
         .skip(skip)
         .limit(limit);
 
-        const totalCustomers = await Customer.countDocuments({ venderId: userId });
+        const totalCustomers = await Customer.countDocuments(filters);
         const totalPages = Math.ceil(totalCustomers / limit);
 
         return buildObjectResponse(res, {
