@@ -21,7 +21,6 @@ interface User extends Document {
     upiId: string;
     isProfileDone:boolean;
     phoneNumber:number;
-    businessCode:string
 }
 
 const userSchema = new Schema<User>({
@@ -94,9 +93,6 @@ const userSchema = new Schema<User>({
         type:Number,
         maxlength:10
     },
-    businessCode: {
-        type:String
-    }
 });
 
 const User = model<User>('user', userSchema);

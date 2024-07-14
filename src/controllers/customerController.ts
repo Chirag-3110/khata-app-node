@@ -6,20 +6,26 @@ import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 
 export const createNewCustomer=async(req:any,res:any)=>{
-    const { email,role } = req.body;
+    const { phoneNumber,role } = req.body;
     try {
-        if(!email)
-            return buildErrorResponse(res, constants.errors.invalidEmail, 404);
+        if(!phoneNumber)
+            return buildErrorResponse(res, constants.errors.invalidPhone, 404);
         
         if(!role)
             return buildErrorResponse(res, constants.errors.roleRequired, 404);
         
-        const checkUserExists=await User.findOne({email:email});
+        if(!role)
+            return buildErrorResponse(res, constants.errors.roleRequired, 404);
+        
+        const checkUserExists=await User.findOne({phoneNumber:phoneNumber});
 
         if(!checkUserExists)
             return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
         const roles = await Role.findOne({role:role});
+
+        if(!roles)
+            return buildErrorResponse(res, constants.errors.roleNotFound, 404);
 
         const isCustomerExists=await Customer.findOne({
             venderId:req?.user?.userId,

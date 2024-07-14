@@ -80,104 +80,133 @@ export const listTransaction=async(req:any,res:any)=>{
     }
 }
 
-export const payAmountToVender=async(req:any,res:any)=>{
+export const payAmountToVender = async (req: any, res: any) => {
     try {
-        const {transactionId,amount}=req.body;
-        const {userId}=req.user;
-
-        if(!transactionId)
+        const { transactionId, amount } = req.body;
+        const { userId } = req.user;
+    
+        if (!transactionId)
             return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
-
-        const findTransaction=await Transaction.findById(transactionId);
-        
-        if(!findTransaction)
+    
+        const findTransaction = await Transaction.findById(transactionId);
+    
+        if (!findTransaction)
             return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+
+        if(findTransaction.status === TRANSACTION_STATUS.COMPLETE)
+            return buildErrorResponse(res, constants.errors.transactionIsCompleted, 404);
     
         const numberValue = parseFloat(findTransaction.amount.toString());
-        const date1Only = moment(findTransaction?.dueDate).startOf('day');
+    
+        let finalAmountAfterPartial = amount;
+    
+        const childTransactionIds = findTransaction.childTransaction || [];
+        
+        if (childTransactionIds.length > 0) {
+            const childTransactions = await Transaction.find({ _id: { $in: childTransactionIds } });
+            const childTransactionAmount = childTransactions.reduce((sum, child) => sum + parseFloat(child.amount.toString()), 0);
+            finalAmountAfterPartial = numberValue - childTransactionAmount;
+        }
+
+
+        console.log(typeof amount,typeof finalAmountAfterPartial,"ss");
+        
+    
+        const date1Only = moment(findTransaction.dueDate).startOf('day');
         const date2Only = moment().startOf('day');
-
-        const checkUserExists=await User.findById(userId);
-
+    
+        const checkUserExists = await User.findById(userId);
+    
         const result = await Wallet.findById(checkUserExists?.walletId);
         const currentCredit = (result?.credit as number) ?? 0;
-
+  
         if (date2Only.isSameOrBefore(date1Only)) {
-            if(amount==numberValue){
-                await Transaction.findByIdAndUpdate(
-                    transactionId,
-                    { status: TRANSACTION_STATUS.COMPLETE },
-                    { new: true }
-                );
-                console.log("Complete transaction directly")
-            }else{
-                const transactionData={
-                    customerId:findTransaction?.customerId,
-                    venderId:findTransaction?.venderId,
-                    amount:amount,
-                    status:TRANSACTION_STATUS.COMPLETE,
-                    dueDate:findTransaction?.dueDate
-                }
-
-                const transaction=new Transaction(transactionData);
-
-                const childTransaction=await transaction.save();
-
-                await Transaction.findByIdAndUpdate(
-                    transactionId,
-                    { status: TRANSACTION_STATUS.PARTIAL_DONE, childTransaction:childTransaction?._id },
-                    { new: true }
-                );
-                console.log('partial done')
-            }
-            await Wallet.findByIdAndUpdate(
-                checkUserExists?.walletId,
-                { credit: currentCredit + 2 },
+            if (amount === numberValue) {
+            await Transaction.findByIdAndUpdate(
+                transactionId,
+                { status: TRANSACTION_STATUS.COMPLETE },
                 { new: true }
             );
-            return buildResponse(res,constants.success.transactionDone,200);
+            console.log("Complete transaction directly");
+            } else {
+            if (finalAmountAfterPartial !== amount) {
+                return buildErrorResponse(res, constants.errors.cannotDoMorePartial, 404);
+            } else {
+                const transactionData = {
+                customerId: findTransaction.customerId,
+                venderId: findTransaction.venderId,
+                amount: amount,
+                status: TRANSACTION_STATUS.COMPLETE,
+                dueDate: findTransaction.dueDate
+                }
+    
+                const transaction = new Transaction(transactionData);
+                const childTransaction = await transaction.save();
+    
+                await Transaction.findByIdAndUpdate(
+                transactionId,
+                {
+                    status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.COMPLETE : TRANSACTION_STATUS.PARTIAL_DONE,
+                    $push: { childTransaction: childTransaction._id }
+                },
+                { new: true }
+                );
+                console.log('partial done');
+            }
+            }
+            await Wallet.findByIdAndUpdate(
+            checkUserExists?.walletId,
+            { credit: currentCredit + 2 },
+            { new: true }
+            );
+            return buildResponse(res, constants.success.transactionDone, 200);
         } else {
             console.log('date1 is after date2');
-            if(amount==numberValue){
-                await Transaction.findByIdAndUpdate(
-                    transactionId,
-                    { status: TRANSACTION_STATUS.COMPLETE },
-                    { new: true }
-                );
-                console.log("Complete transaction directly,but dedut credit")
-            }else{
-                const transactionData={
-                    customerId:findTransaction?.customerId,
-                    venderId:findTransaction?.venderId,
-                    amount:amount,
-                    status:TRANSACTION_STATUS.COMPLETE,
-                    dueDate:findTransaction?.dueDate
-                }
-
-                const transaction=new Transaction(transactionData);
-
-                const childTransaction=await transaction.save();
-
-                await Transaction.findByIdAndUpdate(
-                    transactionId,
-                    { status: TRANSACTION_STATUS.PARTIAL_DONE, childTransaction:childTransaction?._id },
-                    { new: true }
-                );
-                console.log('partial done')
-            }
-            await Wallet.findByIdAndUpdate(
-                checkUserExists?.walletId,
-                { credit: currentCredit - 5 },
+            if (amount === numberValue) {
+            await Transaction.findByIdAndUpdate(
+                transactionId,
+                { status: TRANSACTION_STATUS.COMPLETE },
                 { new: true }
             );
-            return buildResponse(res,constants.success.transactionDone,200);
+            console.log("Complete transaction directly, but deduct credit");
+            } else {
+            if (finalAmountAfterPartial !== amount) {
+                return buildErrorResponse(res, constants.errors.cannotDoMorePartial, 404);
+            } else {
+                const transactionData = {
+                customerId: findTransaction.customerId,
+                venderId: findTransaction.venderId,
+                amount: amount,
+                status: TRANSACTION_STATUS.COMPLETE,
+                dueDate: findTransaction.dueDate
+                }
+    
+                const transaction = new Transaction(transactionData);
+                const childTransaction = await transaction.save();
+    
+                await Transaction.findByIdAndUpdate(
+                transactionId,
+                {
+                    status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.COMPLETE : TRANSACTION_STATUS.PARTIAL_DONE,
+                    $push: { childTransaction: childTransaction._id }
+                },
+                { new: true }
+                );
+                console.log('partial done');
+            }
+            }
+            await Wallet.findByIdAndUpdate(
+            checkUserExists?.walletId,
+            { credit: currentCredit - 5 },
+            { new: true }
+            );
+            return buildResponse(res, constants.success.transactionDone, 200);
         }
-        
     } catch (error) {
-        console.log(error,"error")
+        console.log(error, "error");
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
-}
+};
 
 
 export const updateDueDateByCustomer=async(req:any,res:any)=>{

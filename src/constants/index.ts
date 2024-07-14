@@ -32,7 +32,10 @@ const constants = {
       amountRequired:"Amount is required",
       transactionNotFound:"Transaction not found",
       invalidTransactionId:"Invalid transaction Id",
-      transactionDueDateUpdate:"Transaction due date is already updated once by you"
+      transactionDueDateUpdate:"Transaction due date is already updated once by you",
+      cannotDoMorePartial:"Cannot do more partial payments",
+      transactionIsCompleted:"Transaction is already completed",
+      invalidPhone:"Invalid Phone number"
     },
 };
 

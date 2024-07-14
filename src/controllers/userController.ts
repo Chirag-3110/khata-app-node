@@ -51,7 +51,7 @@ export const createUser=async(req:any,res:any)=>{
 
 export const completeRegistration=async(req:any,res:any)=>{
     const { userData,shop,role } = req.body;
-    const {email,name,address,dob,gender,qrCode,upiId,phoneNumber,businessCode}=userData
+    const {email,name,address,dob,gender,qrCode,upiId,phoneNumber}=userData
     try {
         let roleData=await Role.findOne({role});
         if(!roleData)
@@ -87,8 +87,7 @@ export const completeRegistration=async(req:any,res:any)=>{
             qrCode:qrCode,
             upiId:upiId,
             isProfileDone:true,
-            phoneNumber,
-            businessCode
+            phoneNumber
         }
         await User.findByIdAndUpdate(isUserExist?._id,updatedUserData)
         

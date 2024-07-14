@@ -24,7 +24,8 @@ interface Shop extends Document {
     subscriptionType:string;
     subPurchaseDate:Date,
     subExpireDate:Date,
-    category:string
+    category:string,
+    businessCode:string
 }
 
 const coordinatesSchema = new Schema<Coordinates>({
@@ -108,6 +109,9 @@ const shopSchema = new Schema<Shop>({
         default:Date.now()
     },
     category:{
+        type:String
+    },
+    businessCode: {
         type:String
     }
 });

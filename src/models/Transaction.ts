@@ -9,7 +9,7 @@ interface Transaction extends Document {
   status: string;
   transactionType: string;
   dueDate: Date;
-  childTransaction: Schema.Types.ObjectId;
+  childTransaction: Schema.Types.ObjectId[];
   dueDateUpdatedCount:Number;
 }
 
@@ -46,10 +46,12 @@ const transactionSchema = new Schema<Transaction>({
   dueDate: {
     type: Date,
   },
-  childTransaction: {
-    type: Schema.Types.ObjectId,
-    ref: 'Transaction',
-  },
+  childTransaction: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Transaction',
+    },
+  ],
   dueDateUpdatedCount:{
     type:Number,
     default:0
