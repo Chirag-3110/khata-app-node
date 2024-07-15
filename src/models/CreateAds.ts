@@ -1,5 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
-import Shop from './Shop';
+
 
 interface CreateAds extends Document {
     ShopId: Schema.Types.ObjectId;
