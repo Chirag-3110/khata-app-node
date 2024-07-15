@@ -38,7 +38,7 @@ export const createAd = async (req: Request, res: Response) => {
 // Ftech an Ad
 export const getAds = async (req: Request, res: Response) => {
   try {
-    const ads = await CreateAds.find();
+    const ads = await CreateAds.aggregate([{$sample: {size: 5}}]);
     res.status(200).json({ message: "Ads fetched Successfully", ads });
   } catch (error) {
     console.error("Failed to fetch ads:", error);
