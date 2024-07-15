@@ -112,3 +112,102 @@ export const getCustomersOfVender=async(req:any,res:any)=>{
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+export const getVenderOfCustomer=async(req:any,res:any)=>{
+    try {
+        const {userId}=req.user;
+        console.log(userId,"user")
+
+        const page = parseInt(req.query.page as string) || 1; 
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const venders = await Customer.find({customerId: userId})
+        .populate("role")
+        .populate({
+            path: 'venderId',
+            populate: {
+                path: 'shopId',
+            },
+        })
+        .skip(skip)
+        .limit(limit);
+
+        const totalVenders = await Customer.countDocuments({customerId: userId});
+        const totalPages = Math.ceil(totalVenders / limit);
+
+        return buildObjectResponse(res, {
+            venders,
+            totalPages,
+            currentPage: page,
+            totalItems: totalVenders
+        });
+
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const getRandowShopsNearBy=async(req:any,res:any)=>{
+    try {
+
+        const venderRoleId=await Role.findOne({role:roles.Vender});
+
+        if(!venderRoleId)
+            return buildErrorResponse(res, constants.errors.roleRequired, 404);
+
+        const page = parseInt(req.query.page as string) || 1; 
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const customerIdsAndVenderIds = await Customer.aggregate([
+            {
+              $project: {
+                userIds: {
+                  $setUnion: ["$customerId", "$venderId"]
+                }
+              }
+            },
+            {
+              $unwind: "$userIds"
+            },
+            {
+              $group: {
+                _id: null,
+                userIds: { $addToSet: "$userIds" }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                userIds: 1
+              }
+            }
+          ]);
+      
+          const userIds = customerIdsAndVenderIds.length > 0 ? customerIdsAndVenderIds[0].userIds : [];
+      
+          // Find users whose _id is not in the list of userIds
+          const unconnectedUsers = await User.find({
+            _id: { $nin: userIds }
+          });
+
+          console.log(unconnectedUsers,"cus");
+          
+
+        // return buildObjectResponse(res, {
+        //     venders,
+        //     totalPages,
+        //     currentPage: page,
+        //     totalItems: totalVenders
+        // });
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
