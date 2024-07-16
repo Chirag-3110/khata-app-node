@@ -150,61 +150,28 @@ export const getVenderOfCustomer=async(req:any,res:any)=>{
     }
 }
 
-export const getRandowShopsNearBy=async(req:any,res:any)=>{
+export const getRandomShopsNearBy=async(req:any,res:any)=>{
     try {
-
+        const {userId}=req.user;
         const venderRoleId=await Role.findOne({role:roles.Vender});
 
         if(!venderRoleId)
             return buildErrorResponse(res, constants.errors.roleRequired, 404);
 
-        const page = parseInt(req.query.page as string) || 1; 
-        const limit = parseInt(req.query.limit as string) || 10;
+        const customerIdsAndVenderIds = await Customer.find({customerId:userId});
 
-        const skip = (page - 1) * limit;
+        const venderIds = customerIdsAndVenderIds.map(item => item.venderId);
 
-        const customerIdsAndVenderIds = await Customer.aggregate([
-            {
-              $project: {
-                userIds: {
-                  $setUnion: ["$customerId", "$venderId"]
-                }
-              }
-            },
-            {
-              $unwind: "$userIds"
-            },
-            {
-              $group: {
-                _id: null,
-                userIds: { $addToSet: "$userIds" }
-              }
-            },
-            {
-              $project: {
-                _id: 0,
-                userIds: 1
-              }
-            }
-          ]);
-      
-          const userIds = customerIdsAndVenderIds.length > 0 ? customerIdsAndVenderIds[0].userIds : [];
-      
-          // Find users whose _id is not in the list of userIds
-          const unconnectedUsers = await User.find({
-            _id: { $nin: userIds }
-          });
+        const unconnectedVenders = await User.find({
+            _id: { $nin: venderIds },
+            activeStatus:true,
+            isProfileDone:true
+        }).populate("shopId");
+    
 
-          console.log(unconnectedUsers,"cus");
-          
-
-        // return buildObjectResponse(res, {
-        //     venders,
-        //     totalPages,
-        //     currentPage: page,
-        //     totalItems: totalVenders
-        // });
-        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+        return buildObjectResponse(res, {
+            unconnectedVenders
+        });
 
     } catch (error) {
         console.log(error, 'error');

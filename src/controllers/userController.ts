@@ -100,7 +100,7 @@ export const completeRegistration=async(req:any,res:any)=>{
 
 export const checkUserVerify=async (req:any,res:any) => {
     const { documentId } = req.query;
-
+console.log(documentId,"di")
     try {
         if(!documentId)
             return buildErrorResponse(res, constants.errors.docIdNotgExists, 404);
