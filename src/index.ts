@@ -24,7 +24,7 @@ server.listen(3000, () => {
 });
 
 app.get("/",(req:any,res:any)=>{
-    res.send("Server is UP!")
+    res.send("Server is UP!!!")
 });
 
 app.use(userRoute);
