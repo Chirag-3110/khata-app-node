@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import { string } from 'yup';
 
 interface Coordinates {
     latitude: number;
@@ -25,7 +26,10 @@ interface Shop extends Document {
     subPurchaseDate:Date,
     subExpireDate:Date,
     category:string,
-    businessCode:string
+    businessCode:string,
+    shopProfilePic:string,
+    shopImages:string[],
+    ratings:Number
 }
 
 const coordinatesSchema = new Schema<Coordinates>({
@@ -113,6 +117,16 @@ const shopSchema = new Schema<Shop>({
     },
     businessCode: {
         type:String
+    },
+    shopProfilePic: {
+        type:String
+    },
+    shopImages:[{
+        type:String
+    }],
+    ratings:{
+        type:Number,
+        default:0
     }
 });
 
