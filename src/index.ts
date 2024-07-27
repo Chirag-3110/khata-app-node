@@ -8,6 +8,7 @@ import notificationRoute from './routes/notificationRoute';
 import customerRoute from './routes/customerRoute';
 import walletRoute from './routes/walletRoute';
 import transactionRoute from './routes/transactionRoute';
+import reviewRoute from './routes/reviewRoute';
 
 const app = express();
 const server = http.createServer(app);
@@ -34,3 +35,4 @@ app.use(notificationRoute);
 app.use(customerRoute);
 app.use(walletRoute);
 app.use(transactionRoute);
+app.use(reviewRoute);

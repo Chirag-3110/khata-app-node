@@ -135,3 +135,15 @@ export const getUserProfile=async(req:any,res:any) => {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+export const getShopById=async(req:any,res:any) => {
+    const {shopId}=req.params;
+    try {
+        let shopData = await Shop.findById(shopId)
+
+        return buildObjectResponse(res,{shop:shopData});
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}

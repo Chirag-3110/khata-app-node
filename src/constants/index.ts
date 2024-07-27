@@ -11,7 +11,8 @@ const constants = {
       customerDeleted:"Customer deleted successfully",
       transactionDone:"Transaction is completed successfully",
       transactionStatusUpdate:"Transaction status is updated",
-      transactionDueDateUpdate:"Transaction due date updated successfully"
+      transactionDueDateUpdate:"Transaction due date updated successfully",
+      reviewAddedSuccessfully:"Review Added Successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -35,7 +36,10 @@ const constants = {
       transactionDueDateUpdate:"Transaction due date is already updated once by you",
       cannotDoMorePartial:"Cannot do more partial payments",
       transactionIsCompleted:"Transaction is already completed",
-      invalidPhone:"Invalid Phone number"
+      invalidPhone:"Invalid Phone number",
+      shopIdInvalid:"Invalid Shop Id",
+      ratingDescription:"Rating description is required",
+      ratingError:"Rating value is requred"
     },
 };
 
