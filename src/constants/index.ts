@@ -12,7 +12,8 @@ const constants = {
       transactionDone:"Transaction is completed successfully",
       transactionStatusUpdate:"Transaction status is updated",
       transactionDueDateUpdate:"Transaction due date updated successfully",
-      reviewAddedSuccessfully:"Review Added Successfully"
+      reviewAddedSuccessfully:"Review Added Successfully",
+      reminderAddedSuccess:"Reminder added successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -39,7 +40,10 @@ const constants = {
       invalidPhone:"Invalid Phone number",
       shopIdInvalid:"Invalid Shop Id",
       ratingDescription:"Rating description is required",
-      ratingError:"Rating value is requred"
+      ratingError:"Rating value is requred",
+      reminderDataReqired:"Reminder date is required",
+      reminderTypeRequired:"Reminder type is required",
+    
     },
 };
 

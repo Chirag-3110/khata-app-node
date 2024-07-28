@@ -9,6 +9,7 @@ import customerRoute from './routes/customerRoute';
 import walletRoute from './routes/walletRoute';
 import transactionRoute from './routes/transactionRoute';
 import reviewRoute from './routes/reviewRoute';
+import reminderRoute from './routes/reminderRoute';
 
 const app = express();
 const server = http.createServer(app);
@@ -36,3 +37,4 @@ app.use(customerRoute);
 app.use(walletRoute);
 app.use(transactionRoute);
 app.use(reviewRoute);
+app.use(reminderRoute);

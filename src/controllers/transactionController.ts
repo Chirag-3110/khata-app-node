@@ -80,6 +80,41 @@ export const listTransaction=async(req:any,res:any)=>{
     }
 }
 
+export const listTransactionsOfCustomers=async(req:any,res:any)=>{
+    try {
+        const {userId}=req.user;
+        
+        const page = parseInt(req.query.page as string) || 1; 
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const transactions = await Transaction.find({ customerId: userId })
+        .populate({
+            path: 'venderId',
+            populate: {
+                path: 'shopId',
+            },
+        })
+        .skip(skip)
+        .limit(limit);
+
+        const totaltransactions = await Transaction.countDocuments({ customerId: userId });
+        const totalPages = Math.ceil(totaltransactions / limit);
+
+        return buildObjectResponse(res, {
+            transactions,
+            totalPages,
+            currentPage: page,
+            totalItems: totaltransactions
+        });
+
+    } catch (error) {
+        console.log(error,"error")
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
 export const payAmountToVender = async (req: any, res: any) => {
     try {
         const { transactionId, amount } = req.body;
