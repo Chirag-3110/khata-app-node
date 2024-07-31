@@ -48,8 +48,8 @@ export const listReviewsByVenderId=async(req:any,res:any)=>{
 
         const customers = await Review.find({ shopId: userId })
         .populate("customerId")
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalCustomers = await Review.countDocuments({ shopId: userId });
         const totalPages = Math.ceil(totalCustomers / limit);
@@ -57,8 +57,6 @@ export const listReviewsByVenderId=async(req:any,res:any)=>{
         return buildObjectResponse(res, {
             customers,
             totalPages,
-
-
             currentPage: page,
             totalItems: totalCustomers
         });
@@ -84,8 +82,8 @@ export const listReviewsByCustomerId=async(req:any,res:any)=>{
 
         const venders = await Review.find({ customerId: userId })
         .populate("shopId")
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalCustomers = await Review.countDocuments({ customerId: userId });
         const totalPages = Math.ceil(totalCustomers / limit);

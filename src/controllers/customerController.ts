@@ -94,8 +94,8 @@ export const getCustomersOfVender=async(req:any,res:any)=>{
         .populate("customerId")
         .populate("role")
         .populate("venderId")
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalCustomers = await Customer.countDocuments(filters);
         const totalPages = Math.ceil(totalCustomers / limit);
@@ -131,8 +131,8 @@ export const getVenderOfCustomer=async(req:any,res:any)=>{
                 path: 'shopId',
             },
         })
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalVenders = await Customer.countDocuments({customerId: userId});
         const totalPages = Math.ceil(totalVenders / limit);

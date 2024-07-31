@@ -57,8 +57,8 @@ export const listRemindersByVenderId=async(req:any,res:any)=>{
         .populate("customerId")
         .populate("transactionId")
         .populate("venderId")
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalCustomers = await Reminder.countDocuments({ venderId: userId });
         const totalPages = Math.ceil(totalCustomers / limit);
@@ -93,8 +93,8 @@ export const listRemindersByCustomerId=async(req:any,res:any)=>{
         .populate("customerId")
         .populate("transactionId")
         .populate("venderId")
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalCustomers = await Reminder.countDocuments({ customerId: userId });
         const totalPages = Math.ceil(totalCustomers / limit);
@@ -129,8 +129,8 @@ export const listRemindersByTransactionId=async(req:any,res:any)=>{
         .populate("customerId")
         .populate("transactionId")
         .populate("venderId")
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalCustomers = await Reminder.countDocuments({ transactionId: transactionId });
         const totalPages = Math.ceil(totalCustomers / limit);

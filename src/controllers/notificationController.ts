@@ -27,8 +27,8 @@ export const getUserNotification=async(req:any,res:any)=>{
 
         const notifications = await Notification.find({ userId: userId })
         .populate("userId")
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totalNotifications = await Notification.countDocuments({ userId: userId });
         const totalPages = Math.ceil(totalNotifications / limit);
