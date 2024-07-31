@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import mongoose,{ Types } from "mongoose";
 import { TRANSACTION_STATUS, constants, roles } from "../constants";
 import Role from "../models/Role";
 import Customer from "../models/customer";
@@ -29,8 +29,9 @@ export const createNewTransaction=async(req:any,res:any)=>{
             customerId:customerId,
             venderId:venderId,
             amount:amount,
+            dueDate:dueDate,
             status:TRANSACTION_STATUS.PENDING,
-            dueDate:dueDate
+            transactionStatus:TRANSACTION_STATUS.PENDING
         }
 
         const transaction=new Transaction(transactionData);
@@ -61,8 +62,8 @@ export const listTransaction=async(req:any,res:any)=>{
             },
         })
         .populate('venderId')
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totaltransactions = await Transaction.countDocuments({ venderId: userId });
         const totalPages = Math.ceil(totaltransactions / limit);
@@ -96,8 +97,8 @@ export const listTransactionsOfCustomers=async(req:any,res:any)=>{
                 path: 'shopId',
             },
         })
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
         const totaltransactions = await Transaction.countDocuments({ customerId: userId });
         const totalPages = Math.ceil(totaltransactions / limit);
@@ -159,35 +160,36 @@ export const payAmountToVender = async (req: any, res: any) => {
             if (amount === numberValue) {
             await Transaction.findByIdAndUpdate(
                 transactionId,
-                { status: TRANSACTION_STATUS.COMPLETE },
+                { status: TRANSACTION_STATUS.CUSTOMER_PAID },
                 { new: true }
             );
             console.log("Complete transaction directly");
             } else {
-            if (finalAmountAfterPartial !== amount) {
-                return buildErrorResponse(res, constants.errors.cannotDoMorePartial, 404);
-            } else {
-                const transactionData = {
-                customerId: findTransaction.customerId,
-                venderId: findTransaction.venderId,
-                amount: amount,
-                status: TRANSACTION_STATUS.COMPLETE,
-                dueDate: findTransaction.dueDate
+                if (finalAmountAfterPartial !== amount) {
+                    return buildErrorResponse(res, constants.errors.cannotDoMorePartial, 404);
+                } else {
+                    const transactionData = {
+                        customerId: findTransaction.customerId,
+                        venderId: findTransaction.venderId,
+                        amount: amount,
+                        status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
+                        dueDate: findTransaction.dueDate,
+                        transactionStatus:TRANSACTION_STATUS.PENDING
+                    }
+        
+                    const transaction = new Transaction(transactionData);
+                    const childTransaction = await transaction.save();
+        
+                    await Transaction.findByIdAndUpdate(
+                        transactionId,
+                        {
+                            status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL : TRANSACTION_STATUS.PARTIAL_DONE,
+                            $push: { childTransaction: childTransaction._id }
+                        },
+                        { new: true }
+                    );
+                    console.log('partial done');
                 }
-    
-                const transaction = new Transaction(transactionData);
-                const childTransaction = await transaction.save();
-    
-                await Transaction.findByIdAndUpdate(
-                transactionId,
-                {
-                    status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.COMPLETE : TRANSACTION_STATUS.PARTIAL_DONE,
-                    $push: { childTransaction: childTransaction._id }
-                },
-                { new: true }
-                );
-                console.log('partial done');
-            }
             }
             await Wallet.findByIdAndUpdate(
             checkUserExists?.walletId,
@@ -200,7 +202,7 @@ export const payAmountToVender = async (req: any, res: any) => {
             if (amount === numberValue) {
             await Transaction.findByIdAndUpdate(
                 transactionId,
-                { status: TRANSACTION_STATUS.COMPLETE },
+                { status: TRANSACTION_STATUS.CUSTOMER_PAID },
                 { new: true }
             );
             console.log("Complete transaction directly, but deduct credit");
@@ -209,11 +211,12 @@ export const payAmountToVender = async (req: any, res: any) => {
                 return buildErrorResponse(res, constants.errors.cannotDoMorePartial, 404);
             } else {
                 const transactionData = {
-                customerId: findTransaction.customerId,
-                venderId: findTransaction.venderId,
-                amount: amount,
-                status: TRANSACTION_STATUS.COMPLETE,
-                dueDate: findTransaction.dueDate
+                    customerId: findTransaction.customerId,
+                    venderId: findTransaction.venderId,
+                    amount: amount,
+                    status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
+                    dueDate: findTransaction.dueDate,
+                    transactionStatus:TRANSACTION_STATUS.PENDING
                 }
     
                 const transaction = new Transaction(transactionData);
@@ -222,7 +225,7 @@ export const payAmountToVender = async (req: any, res: any) => {
                 await Transaction.findByIdAndUpdate(
                 transactionId,
                 {
-                    status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.COMPLETE : TRANSACTION_STATUS.PARTIAL_DONE,
+                    status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL : TRANSACTION_STATUS.PARTIAL_DONE,
                     $push: { childTransaction: childTransaction._id }
                 },
                 { new: true }
@@ -269,6 +272,113 @@ export const updateDueDateByCustomer=async(req:any,res:any)=>{
 
         return buildResponse(res,constants.success.transactionDueDateUpdate,200);
         
+    } catch (error) {
+        console.log(error,"error")
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const updateTransactionStatus=async(req:any,res:any)=>{
+    try {
+        
+        const {transactionId} = req.params;
+
+        if (!transactionId)
+            return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
+    
+        const findTransaction = await Transaction.findById(transactionId);
+    
+        if (!findTransaction)
+            return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            if (findTransaction.childTransaction.length === 0) {
+                await Transaction.findByIdAndUpdate(
+                  transactionId,
+                  {
+                    status: TRANSACTION_STATUS.COMPLETE,
+                    transactionStatus: TRANSACTION_STATUS.COMPLETE
+                  },
+                  { new: true, session }
+                );
+              } else {
+                await Transaction.findByIdAndUpdate(
+                  transactionId,
+                  {
+                    status: TRANSACTION_STATUS.COMPLETE,
+                    transactionStatus: TRANSACTION_STATUS.COMPLETE
+                  },
+                  { new: true, session }
+                );
+        
+                await Transaction.updateMany(
+                  { _id: { $in: findTransaction.childTransaction } },
+                  { transactionStatus: TRANSACTION_STATUS.COMPLETE,status: TRANSACTION_STATUS.COMPLETE, },
+                  { session }
+                );
+            }
+            
+            await session.commitTransaction();
+            session.endSession();
+
+            return buildResponse(res, constants.success.transactionStatusUpdated, 200);
+
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+            console.error('Error updating transaction status:', error);
+            return buildErrorResponse(res, constants.errors.errorUpdateTransaction, 500);
+        }
+        
+    } catch (error) {
+        console.log(error,"error")
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+} 
+
+export const listTransactionUsingVenderId=async(req:any,res:any)=>{
+    try {
+        const {userId}=req.user;
+        const {venderId}=req.params
+
+        if(!venderId)
+            return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+
+        const isCustomerExists=await Customer.findOne({customerId:userId,venderId:venderId});
+    
+        if(!isCustomerExists)
+            return buildErrorResponse(res, constants.errors.customerNotExists, 404);
+
+        // console.log(isCustomerExists?._id,'sss');
+        
+        const page = parseInt(req.query.page as string) || 1; 
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const transactions = await Transaction.find({ customerId: isCustomerExists?._id })
+        .populate({
+            path: 'venderId',
+            populate: {
+                path: 'shopId',
+            },
+        })
+        // .skip(skip)
+        // .limit(limit);
+
+        const totaltransactions = await Transaction.countDocuments({ customerId: isCustomerExists?._id });
+        const totalPages = Math.ceil(totaltransactions / limit);
+
+        return buildObjectResponse(res, {
+            transactions,
+            totalPages,
+            currentPage: page,
+            totalItems: totaltransactions
+        });
+
     } catch (error) {
         console.log(error,"error")
         return buildErrorResponse(res, constants.errors.internalServerError, 500);

@@ -13,7 +13,8 @@ const constants = {
       transactionStatusUpdate:"Transaction status is updated",
       transactionDueDateUpdate:"Transaction due date updated successfully",
       reviewAddedSuccessfully:"Review Added Successfully",
-      reminderAddedSuccess:"Reminder added successfully"
+      reminderAddedSuccess:"Reminder added successfully",
+      transactionStatusUpdated:"Transaction status updated successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -43,6 +44,7 @@ const constants = {
       ratingError:"Rating value is requred",
       reminderDataReqired:"Reminder date is required",
       reminderTypeRequired:"Reminder type is required",
+      errorUpdateTransaction:"Transaction status is not updated"
     
     },
 };
@@ -64,7 +66,9 @@ const NOTIFICATION_STATUS={
 const TRANSACTION_STATUS={
   PENDING:"Pending",
   COMPLETE:"Completed",
-  PARTIAL_DONE:"PartialDone"
+  PARTIAL_DONE:"PartialDone",
+  CUSTOMER_PAID:"CustomerPaidFull",
+  CUSTOMER_PAID_PARTIAL:"CustomerPaidPartial"
 }
 
 export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS }
