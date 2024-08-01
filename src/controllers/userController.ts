@@ -100,7 +100,6 @@ export const completeRegistration=async(req:any,res:any)=>{
 
 export const checkUserVerify=async (req:any,res:any) => {
     const { documentId } = req.query;
-console.log(documentId,"di")
     try {
         if(!documentId)
             return buildErrorResponse(res, constants.errors.docIdNotgExists, 404);
@@ -142,6 +141,71 @@ export const getShopById=async(req:any,res:any) => {
         let shopData = await Shop.findById(shopId)
 
         return buildObjectResponse(res,{shop:shopData});
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const updatedShopStatus=async(req:any,res:any) => {
+    const {userId}=req.user;
+    try {
+        if (!userId)
+            return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+    
+        const findUser = await User.findById(userId);
+    
+        if (!findUser)
+            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+        const checkForRole=await Role.findById(findUser?.role)
+
+        if(checkForRole?.role === roles.Customer)
+            return buildErrorResponse(res, constants.errors.userNotVender, 401);
+
+        const userShop=await Shop.findById(findUser?.shopId)
+
+        if(!userShop)
+            return buildErrorResponse(res, constants.errors.shopNotFound, 401);
+
+        // console.log(userShop,'Shop');
+
+        await Shop.findByIdAndUpdate(
+            userShop?._id,
+            {
+              status: !userShop?.status 
+            },
+            { new: true }
+        )
+
+        return buildResponse(res, constants.success.shopStatusChanged, 200);
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const updateUserStatus=async(req:any,res:any) => {
+    const {userId}=req.params;
+    try {
+        if (!userId)
+            return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+    
+        const findUser = await User.findById(userId);
+    
+        if (!findUser)
+            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+        await User.findByIdAndUpdate(
+            userId,
+            {
+                activeStatus: !findUser?.activeStatus 
+            },
+            { new: true }
+        )
+
+        return buildResponse(res, findUser?.activeStatus?constants.success.userDeactivated:constants.success.userActivated, 200);
+
     } catch (error) {
         console.log(error, 'error');
         return buildErrorResponse(res, constants.errors.internalServerError, 500);

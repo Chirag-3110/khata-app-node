@@ -14,7 +14,10 @@ const constants = {
       transactionDueDateUpdate:"Transaction due date updated successfully",
       reviewAddedSuccessfully:"Review Added Successfully",
       reminderAddedSuccess:"Reminder added successfully",
-      transactionStatusUpdated:"Transaction status updated successfully"
+      transactionStatusUpdated:"Transaction status updated successfully",
+      shopStatusChanged:"Shop Status Changed",
+      userDeactivated:"User is deactivated",
+      userActivated:"User is activated"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -44,8 +47,9 @@ const constants = {
       ratingError:"Rating value is requred",
       reminderDataReqired:"Reminder date is required",
       reminderTypeRequired:"Reminder type is required",
-      errorUpdateTransaction:"Transaction status is not updated"
-    
+      errorUpdateTransaction:"Transaction status is not updated",
+      userNotVender:"User is not vender type",
+      shopNotFound:"Shop not found"
     },
 };
 
