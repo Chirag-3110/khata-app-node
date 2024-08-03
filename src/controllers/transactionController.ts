@@ -9,24 +9,19 @@ import Wallet from "../models/Wallet";
 const moment = require('moment');
 
 export const createNewTransaction=async(req:any,res:any)=>{
-    const { customerId,amount,dueDate,venderId } = req.body;
-    const {userId}=req.user;
+    const { userId,amount,dueDate,venderId } = req.body;
     try {
-        if(!customerId)
+        if(!userId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
         
         if(!amount)
             return buildErrorResponse(res, constants.errors.amountRequired, 404);
 
-        const isCustomerExists=await Customer.findById(customerId);
-    
-        if(!isCustomerExists)
-            return buildErrorResponse(res, constants.errors.customerNotExists, 404);
-
-        const checkUserExists=await User.findById(userId);
+        if(!dueDate)
+            return buildErrorResponse(res, constants.errors.invalidDueDate, 404);
 
         const transactionData={
-            customerId:customerId,
+            customerId:userId,
             venderId:venderId,
             amount:amount,
             dueDate:dueDate,
@@ -55,13 +50,9 @@ export const listTransaction=async(req:any,res:any)=>{
         const skip = (page - 1) * limit;
 
         const transactions = await Transaction.find({ venderId: userId })
-        .populate({
-            path: 'customerId',
-            populate: {
-                path: 'customerId',
-            },
-        })
+        .populate('customerId')
         .populate('venderId')
+        .sort({ transactionDate:-1 })
         // .skip(skip)
         // .limit(limit);
 
@@ -97,6 +88,7 @@ export const listTransactionsOfCustomers=async(req:any,res:any)=>{
                 path: 'shopId',
             },
         })
+        .sort({ transactionDate:-1 })
         // .skip(skip)
         // .limit(limit);
 
@@ -346,30 +338,24 @@ export const listTransactionUsingVenderId=async(req:any,res:any)=>{
 
         if(!venderId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
-
-        const isCustomerExists=await Customer.findOne({customerId:userId,venderId:venderId});
-    
-        if(!isCustomerExists)
-            return buildErrorResponse(res, constants.errors.customerNotExists, 404);
-
-        // console.log(isCustomerExists?._id,'sss');
         
         const page = parseInt(req.query.page as string) || 1; 
         const limit = parseInt(req.query.limit as string) || 10;
 
         const skip = (page - 1) * limit;
 
-        const transactions = await Transaction.find({ customerId: isCustomerExists?._id })
+        const transactions = await Transaction.find({ customerId:userId,venderId:venderId })
         .populate({
             path: 'venderId',
             populate: {
                 path: 'shopId',
             },
         })
+        .sort({ transactionDate:-1 })
         // .skip(skip)
         // .limit(limit);
 
-        const totaltransactions = await Transaction.countDocuments({ customerId: isCustomerExists?._id });
+        const totaltransactions = await Transaction.countDocuments({ customerId:userId,venderId:venderId });
         const totalPages = Math.ceil(totaltransactions / limit);
 
         return buildObjectResponse(res, {

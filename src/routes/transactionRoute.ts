@@ -7,10 +7,10 @@ const verifyToken = require('../middleware/auth');
 
 transactionRoute.get("/api/transaction/get-vender-transaction",verifyToken,listTransaction);
 transactionRoute.get("/api/transaction/get-customer-transaction",verifyToken,listTransactionsOfCustomers);
+transactionRoute.get(`/api/transaction/get-transaction-by-venderId/:venderId`,verifyToken,listTransactionUsingVenderId);
 transactionRoute.post(`/api/transaction/create-new-transaction`,verifyToken,createNewTransaction);
 transactionRoute.post(`/api/transaction/pay-amount`,verifyToken,payAmountToVender);
 transactionRoute.put(`/api/transaction/update-due-date-customer`,verifyToken,updateDueDateByCustomer);
 transactionRoute.put(`/api/transaction/update-transaction-status/:transactionId`,verifyToken,updateTransactionStatus);
-transactionRoute.put(`/api/transaction/get-transaction-by-venderId/:venderId`,verifyToken,listTransactionUsingVenderId);
 
 export default transactionRoute;

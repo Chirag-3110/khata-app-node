@@ -17,7 +17,7 @@ interface Transaction extends Document {
 const transactionSchema = new Schema<Transaction>({
   customerId: {
     type: Schema.Types.ObjectId,
-    ref: 'Customer',
+    ref: 'user',
     required: true,
   },
   venderId: {

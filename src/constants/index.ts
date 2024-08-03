@@ -49,7 +49,8 @@ const constants = {
       reminderTypeRequired:"Reminder type is required",
       errorUpdateTransaction:"Transaction status is not updated",
       userNotVender:"User is not vender type",
-      shopNotFound:"Shop not found"
+      shopNotFound:"Shop not found",
+      invalidDueDate:"Invalid due date"
     },
 };
 
