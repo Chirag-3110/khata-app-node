@@ -1,13 +1,7 @@
 import mongoose, { Types } from "mongoose";
 import { TRANSACTION_STATUS, constants, roles } from "../constants";
-import Role from "../models/Role";
-import Customer from "../models/customer";
 import User from "../models/user";
-import {
-  buildErrorResponse,
-  buildObjectResponse,
-  buildResponse,
-} from "../utils/responseUtils";
+import {buildErrorResponse,buildObjectResponse,buildResponse,} from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
 import Wallet from "../models/Wallet";
 const moment = require("moment");
@@ -53,7 +47,7 @@ export const listTransaction = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
-    const transactions = await Transaction.find({ venderId: userId })
+    const transactions = await Transaction.find({ venderId: userId,status: { $ne: TRANSACTION_STATUS.COMPLETE }, transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } })
       .populate("customerId")
       .populate("venderId")
       .sort({ transactionDate: -1 });
@@ -86,7 +80,7 @@ export const listTransactionsOfCustomers = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
-    const transactions = await Transaction.find({ customerId: userId })
+    const transactions = await Transaction.find({ customerId: userId, status: { $ne: TRANSACTION_STATUS.COMPLETE }, transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } })
       .populate({
         path: "venderId",
         populate: {
@@ -175,33 +169,29 @@ export const payAmountToVender = async (req: any, res: any) => {
         console.log("Complete transaction directly");
       } else {
         if (finalAmountAfterPartial != amount) {
-          return buildErrorResponse(
-            res,
-            constants.errors.cannotDoMorePartial,
-            404
-          );
+          return buildErrorResponse(res,constants.errors.cannotDoMorePartial,404);
         } else {
-          const transactionData = {
-            customerId: findTransaction.customerId,
-            venderId: findTransaction.venderId,
-            amount: amount,
-            status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
-            dueDate: findTransaction.dueDate,
-            transactionStatus: TRANSACTION_STATUS.PENDING,
-          };
+            const transactionData = {
+                customerId: findTransaction.customerId,
+                venderId: findTransaction.venderId,
+                amount: amount,
+                status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
+                dueDate: findTransaction.dueDate,
+                transactionStatus: TRANSACTION_STATUS.PENDING,
+            };
 
-          const transaction = new Transaction(transactionData);
-          const childTransaction = await transaction.save();
+            const transaction = new Transaction(transactionData);
+            const childTransaction = await transaction.save();
 
-          await Transaction.findByIdAndUpdate(
-            transactionId,
-            {
-              status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
-              $push: { childTransaction: childTransaction._id },
-            },
-            { new: true }
-          );
-          console.log("partial done");
+            await Transaction.findByIdAndUpdate(
+                transactionId,
+                {
+                status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
+                $push: { childTransaction: childTransaction._id },
+                },
+                { new: true }
+            );
+            console.log("partial done");
         }
       }
       await Wallet.findByIdAndUpdate(
@@ -393,6 +383,8 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
     const transactions = await Transaction.find({
       customerId: userId,
       venderId: venderId,
+      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE }
     })
       .populate({
         path: "venderId",
@@ -420,4 +412,33 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
     console.log(error, "error");
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
   }
+};
+
+export const getTransactionDetailById = async (req: any, res: any) => {
+    try {
+      const { transactionId } = req.params;
+  
+      if (!transactionId)
+        return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
+
+      const transactions = await Transaction.findById(transactionId)
+        .populate({
+          path: "venderId",
+          populate: {
+            path: "shopId",
+          },
+        })
+        .populate("customerId")
+        .populate({
+            path: "childTransaction",
+            populate: {
+              path: "venderId customerId",
+            },
+        });
+
+      return buildObjectResponse(res, {transaction:transactions,});
+    } catch (error) {
+      console.log(error, "error");
+      return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
 };

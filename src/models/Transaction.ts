@@ -50,7 +50,7 @@ const transactionSchema = new Schema<Transaction>({
   childTransaction: [
     {
       type: Schema.Types.ObjectId,
-      ref: 'Transaction',
+      ref: 'transaction',
     },
   ],
   dueDateUpdatedCount:{
