@@ -175,7 +175,7 @@ export const payAmountToVender = async (req: any, res: any) => {
                     await Transaction.findByIdAndUpdate(
                         transactionId,
                         {
-                            status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL : TRANSACTION_STATUS.PARTIAL_DONE,
+                            status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
                             $push: { childTransaction: childTransaction._id }
                         },
                         { new: true }
@@ -217,7 +217,7 @@ export const payAmountToVender = async (req: any, res: any) => {
                 await Transaction.findByIdAndUpdate(
                 transactionId,
                 {
-                    status: findTransaction.status === TRANSACTION_STATUS.PARTIAL_DONE ? TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL : TRANSACTION_STATUS.PARTIAL_DONE,
+                    status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
                     $push: { childTransaction: childTransaction._id }
                 },
                 { new: true }
