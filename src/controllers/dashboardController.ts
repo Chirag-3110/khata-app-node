@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { constants, roles } from "../constants";
+import { constants, roles, TRANSACTION_STATUS } from "../constants";
 import Role from "../models/Role";
 import Customer from "../models/customer";
 import User from "../models/user";
@@ -28,11 +28,46 @@ export const getVenderDashboardData=async(req:any,res:any) => {
 
         const connectedVenders=await Customer.countDocuments({customerId:userId});
 
+        const transactionAsVenderCompeletd=await Transaction.find({venderId:userId,transactionStatus:TRANSACTION_STATUS.COMPLETE});
+
+        let completedAmount=0;
+
+        transactionAsVenderCompeletd?.map((trasaction:any)=>{
+            if(trasaction?.childTransaction==0){
+                completedAmount += parseInt(trasaction?.amount)
+            }
+        })
+
+        const transactionAsVenderPending=await Transaction.find({venderId:userId,transactionStatus:{ $ne:TRANSACTION_STATUS.COMPLETE }});
+
+        let pendingAmount=0;
+
+        transactionAsVenderPending?.map((trasaction:any)=>{
+            if(trasaction?.childTransaction==0){
+                pendingAmount += parseInt(trasaction?.amount)
+            }
+        })
+
+        const transactionAsCustomerComplete=await Transaction.find({customerId:userId,transactionStatus:TRANSACTION_STATUS.COMPLETE });
+
+        let paidAmount=0;
+
+        transactionAsCustomerComplete?.map((trasaction:any)=>{
+            if(trasaction?.childTransaction==0){
+                paidAmount += parseInt(trasaction?.amount)
+            }
+        })
+
         venderDashboardData={
             ...venderDashboardData,
             recentTransactions:recentTransactions,
             connectedCustomers:connectedCustomers,
-            connectedVenders:connectedVenders
+            connectedVenders:connectedVenders,
+            amountDetails:{
+                pendingAmount:pendingAmount,
+                collectedAmount:completedAmount,
+                paidAmount:paidAmount
+            }
         }
 
         return buildObjectResponse(res, {data:venderDashboardData});

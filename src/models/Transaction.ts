@@ -11,7 +11,7 @@ interface Transaction extends Document {
   dueDate: Date;
   childTransaction: Schema.Types.ObjectId[];
   dueDateUpdatedCount:Number;
-  transactionStatus:string
+  transactionStatus:string,
 }
 
 const transactionSchema = new Schema<Transaction>({

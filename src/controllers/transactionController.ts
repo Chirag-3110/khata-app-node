@@ -1,5 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import { TRANSACTION_STATUS, constants, roles } from "../constants";
+import { TRANSACTION_STATUS, TRANSACTION_TYPE, constants, roles } from "../constants";
 import User from "../models/user";
 import {buildErrorResponse,buildObjectResponse,buildResponse,} from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
@@ -25,6 +25,7 @@ export const createNewTransaction = async (req: any, res: any) => {
       dueDate: dueDate,
       status: TRANSACTION_STATUS.PENDING,
       transactionStatus: TRANSACTION_STATUS.PENDING,
+      transactionType:TRANSACTION_TYPE.PARENT
     };
 
     const transaction = new Transaction(transactionData);
@@ -47,15 +48,26 @@ export const listTransaction = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
-    const transactions = await Transaction.find({ venderId: userId,status: { $ne: TRANSACTION_STATUS.COMPLETE }, transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } })
+    const transactions = await Transaction.find({ 
+      venderId: userId,
+      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
+    })
       .populate("customerId")
       .populate("venderId")
+      .populate({
+        path: "childTransaction"
+      })
       .sort({ transactionDate: -1 });
     // .skip(skip)
     // .limit(limit);
 
     const totaltransactions = await Transaction.countDocuments({
       venderId: userId,
+      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
     });
     const totalPages = Math.ceil(totaltransactions / limit);
 
@@ -80,19 +92,30 @@ export const listTransactionsOfCustomers = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
-    const transactions = await Transaction.find({ customerId: userId, status: { $ne: TRANSACTION_STATUS.COMPLETE }, transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } })
-      .populate({
-        path: "venderId",
-        populate: {
-          path: "shopId",
-        },
-      })
-      .sort({ transactionDate: -1 });
+    const transactions = await Transaction.find({ 
+      customerId: userId, 
+      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } ,
+      transactionType:TRANSACTION_TYPE.PARENT
+    })
+    .populate({
+      path: "venderId",
+      populate: {
+        path: "shopId",
+      },
+    })
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
     // .skip(skip)
     // .limit(limit);
 
     const totaltransactions = await Transaction.countDocuments({
       customerId: userId,
+      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } ,
+      transactionType:TRANSACTION_TYPE.PARENT
     });
     const totalPages = Math.ceil(totaltransactions / limit);
 
@@ -178,6 +201,7 @@ export const payAmountToVender = async (req: any, res: any) => {
                 status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
                 dueDate: findTransaction.dueDate,
                 transactionStatus: TRANSACTION_STATUS.PENDING,
+                transactionType:TRANSACTION_TYPE.CHILD
             };
 
             const transaction = new Transaction(transactionData);
@@ -186,8 +210,8 @@ export const payAmountToVender = async (req: any, res: any) => {
             await Transaction.findByIdAndUpdate(
                 transactionId,
                 {
-                status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
-                $push: { childTransaction: childTransaction._id },
+                  status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
+                  $push: { childTransaction: childTransaction._id },
                 },
                 { new: true }
             );
@@ -224,6 +248,7 @@ export const payAmountToVender = async (req: any, res: any) => {
             status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
             dueDate: findTransaction.dueDate,
             transactionStatus: TRANSACTION_STATUS.PENDING,
+            transactionType:TRANSACTION_TYPE.CHILD
           };
 
           const transaction = new Transaction(transactionData);
@@ -384,21 +409,28 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
       customerId: userId,
       venderId: venderId,
       status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
-      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE }
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
     })
-      .populate({
-        path: "venderId",
-        populate: {
-          path: "shopId",
-        },
-      })
-      .sort({ transactionDate: -1 });
+    .populate({
+      path: "venderId",
+      populate: {
+        path: "shopId",
+      },
+    })
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
     // .skip(skip)
     // .limit(limit);
 
     const totaltransactions = await Transaction.countDocuments({
       customerId: userId,
       venderId: venderId,
+      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
     });
     const totalPages = Math.ceil(totaltransactions / limit);
 
