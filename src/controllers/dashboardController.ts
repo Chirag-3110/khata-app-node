@@ -1,10 +1,11 @@
 import { Types } from "mongoose";
-import { constants, roles, TRANSACTION_STATUS } from "../constants";
+import { constants, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
 import Role from "../models/Role";
 import Customer from "../models/customer";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
+import moment from "moment";
 
 export const getVenderDashboardData=async(req:any,res:any) => {
     const {userId}=req.user;
@@ -22,39 +23,70 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         if (!userId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
 
-        const recentTransactions=await Transaction.find({venderId:userId}).populate("customerId").sort({ transactionDate:-1 }).limit(3);
+        const startOfMonth = moment().startOf('month').toDate();
+        const endOfMonth = moment().endOf('month').toDate();
+
+        const recentTransactions=await Transaction.find({venderId:userId,transactionType:TRANSACTION_TYPE.PARENT})
+        .populate("customerId")
+        .populate({
+            path: "childTransaction"
+        })
+        .sort({ transactionDate: -1 })
+        .limit(3);
 
         const connectedCustomers=await Customer.countDocuments({venderId:userId});
 
         const connectedVenders=await Customer.countDocuments({customerId:userId});
 
-        const transactionAsVenderCompeletd=await Transaction.find({venderId:userId,transactionStatus:TRANSACTION_STATUS.COMPLETE});
-
+        const transactionAsVenderCompleted = await Transaction.find({
+            venderId: userId,
+            transactionType: TRANSACTION_TYPE.PARENT,
+            transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+        }).populate({
+            path: "childTransaction"
+        })
+        
         let completedAmount=0;
 
-        transactionAsVenderCompeletd?.map((trasaction:any)=>{
-            if(trasaction?.childTransaction==0){
+        transactionAsVenderCompleted?.map((trasaction:any)=>{
+            if(trasaction.transactionStatus == TRANSACTION_STATUS.COMPLETE){
                 completedAmount += parseInt(trasaction?.amount)
+            }else{
+                trasaction?.childTransaction?.map((childTransaction:any)=>{
+                    if(childTransaction.transactionStatus == TRANSACTION_STATUS.COMPLETE)
+                        completedAmount += parseInt(childTransaction?.amount)
+                })
             }
         })
-
-        const transactionAsVenderPending=await Transaction.find({venderId:userId,transactionStatus:{ $ne:TRANSACTION_STATUS.COMPLETE }});
 
         let pendingAmount=0;
 
-        transactionAsVenderPending?.map((trasaction:any)=>{
-            if(trasaction?.childTransaction==0){
+        transactionAsVenderCompleted?.map((trasaction:any)=>{
+            if(trasaction.transactionStatus == TRANSACTION_STATUS.PENDING){
                 pendingAmount += parseInt(trasaction?.amount)
+                trasaction?.childTransaction?.map((childTransaction:any)=>{
+                    if(childTransaction.transactionStatus == TRANSACTION_STATUS.COMPLETE)
+                        pendingAmount -= parseInt(childTransaction?.amount)
+                })
             }
         })
 
-        const transactionAsCustomerComplete=await Transaction.find({customerId:userId,transactionStatus:TRANSACTION_STATUS.COMPLETE });
+        const transactionAsCustomerComplete = await Transaction.find({
+            customerId: userId,
+            transactionType: TRANSACTION_TYPE.PARENT,
+            transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+        });
 
         let paidAmount=0;
 
         transactionAsCustomerComplete?.map((trasaction:any)=>{
-            if(trasaction?.childTransaction==0){
+            if(trasaction.transactionStatus == TRANSACTION_STATUS.COMPLETE){
                 paidAmount += parseInt(trasaction?.amount)
+            }else{
+                trasaction?.childTransaction?.map((childTransaction:any)=>{
+                    if(childTransaction.transactionStatus == TRANSACTION_STATUS.COMPLETE)
+                        paidAmount += parseInt(childTransaction?.amount)
+                })
             }
         })
 
