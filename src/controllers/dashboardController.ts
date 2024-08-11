@@ -211,9 +211,10 @@ export const dashboardSearch=async(req:any,res:any) => {
     const {userId}=req.user;
     const {searchQuery}=req.query
 
-    console.log(searchQuery,'sss');
-    
     try {
+        if(!searchQuery || searchQuery==undefined){
+            return buildObjectResponse(res, {data:[]});
+        }
         if (!userId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
 
@@ -221,13 +222,30 @@ export const dashboardSearch=async(req:any,res:any) => {
         
         const role=await Role.findById(findUser?.role)
 
+        const searchCustomer=await Role.findOne({role:roles.Customer});
+
+        let results:any=[];
+
         if(role?.role == roles.Customer){
-            // customer search
+            const regexPattern = new RegExp(searchQuery, 'i'); 
+            results = await Shop.find({
+                name: { $regex: regexPattern },
+                ownerName: { $regex: regexPattern },
+            }).populate("user");
         }else{
-            // vecnder searh
+            const regexPattern = new RegExp(searchQuery, 'i'); 
+            const users = await User.find({ name: { $regex: regexPattern},role: searchCustomer?._id }).select('_id');
+
+            const userIds = users.map(user => user._id);
+            results = await Customer.find({
+                customerId: { $in: userIds },
+                venderId: userId
+            })
+            .populate("customerId")
+            .populate("venderId");   
         }
 
-        return buildObjectResponse(res, {data:'customerDashboardData'});
+        return buildObjectResponse(res, {data:results});
 
     } catch (error) {
         console.log(error, 'error');
