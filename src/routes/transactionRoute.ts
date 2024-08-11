@@ -1,7 +1,7 @@
 import express from 'express';
 import { checkUserVerify, completeRegistration, createUser, getUserProfile, loginUser } from '../controllers/userController';
 import { getWalletData } from '../controllers/walletController';
-import { createNewTransaction, getTransactionDetailById, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateTransactionStatus,  } from '../controllers/transactionController';
+import { createNewTransaction, getTransactionDetailById, listCompletedTransactionOfVender, listCompleteTransactionsOfCustomers, listCompleteTransactionUsingVenderId, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateTransactionStatus,  } from '../controllers/transactionController';
 const transactionRoute = express.Router();
 const verifyToken = require('../middleware/auth'); 
 
@@ -13,5 +13,8 @@ transactionRoute.post(`/api/transaction/pay-amount`,verifyToken,payAmountToVende
 transactionRoute.put(`/api/transaction/update-due-date-customer`,verifyToken,updateDueDateByCustomer);
 transactionRoute.put(`/api/transaction/update-transaction-status/:transactionId`,verifyToken,updateTransactionStatus);
 transactionRoute.get(`/api/transaction/get-transaction-by-id/:transactionId`,verifyToken,getTransactionDetailById);
+transactionRoute.get(`/api/transaction/get-completed-transaction-of-vender`,verifyToken,listCompletedTransactionOfVender);
+transactionRoute.get(`/api/transaction/get-completed-transaction-of-customer`,verifyToken,listCompleteTransactionsOfCustomers);
+transactionRoute.get(`/api/transaction/get-completed-transaction-by-venderId/:venderId`,verifyToken,listCompleteTransactionUsingVenderId);
 
 export default transactionRoute;

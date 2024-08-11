@@ -50,7 +50,7 @@ export const listTransaction = async (req: any, res: any) => {
 
     const transactions = await Transaction.find({ 
       venderId: userId,
-      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
       transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
       transactionType:TRANSACTION_TYPE.PARENT
     })
@@ -94,7 +94,7 @@ export const listTransactionsOfCustomers = async (req: any, res: any) => {
 
     const transactions = await Transaction.find({ 
       customerId: userId, 
-      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
       transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } ,
       transactionType:TRANSACTION_TYPE.PARENT
     })
@@ -408,7 +408,7 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
     const transactions = await Transaction.find({
       customerId: userId,
       venderId: venderId,
-      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
       transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
       transactionType:TRANSACTION_TYPE.PARENT
     })
@@ -474,3 +474,156 @@ export const getTransactionDetailById = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
+
+export const listCompleteTransactionsOfCustomers = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const transactions = await Transaction.find({ 
+      customerId: userId, 
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE } ,
+      transactionType:TRANSACTION_TYPE.PARENT
+    })
+    .populate({
+      path: "venderId",
+      populate: {
+        path: "shopId",
+      },
+    })
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
+    // .skip(skip)
+    // .limit(limit);
+
+    const totaltransactions = await Transaction.countDocuments({
+      customerId: userId,
+      // status: { $ne: TRANSACTION_STATUS.PENDING }, 
+      transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE } ,
+      transactionType:TRANSACTION_TYPE.PARENT
+    });
+    const totalPages = Math.ceil(totaltransactions / limit);
+
+    return buildObjectResponse(res, {
+      transactions,
+      totalPages,
+      currentPage: page,
+      totalItems: totaltransactions,
+    });
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const listCompletedTransactionOfVender = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+    // const {status}=req.body;
+
+    // if(status==undefined){
+    //   buildErrorResponse(res, constants.errors.statusRequired, 400);
+    // }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const transactions = await Transaction.find({ 
+      venderId: userId,
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
+    })
+      .populate("customerId")
+      .populate("venderId")
+      .populate({
+        path: "childTransaction"
+      })
+      .sort({ transactionDate: -1 });
+    // .skip(skip)
+    // .limit(limit);
+
+    const totaltransactions = await Transaction.countDocuments({
+      venderId: userId,
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
+    });
+    const totalPages = Math.ceil(totaltransactions / limit);
+
+    return buildObjectResponse(res, {
+      transactions,
+      totalPages,
+      currentPage: page,
+      totalItems: totaltransactions,
+    });
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const listCompleteTransactionUsingVenderId = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+    const { venderId } = req.params;
+
+    if (!venderId)
+      return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const transactions = await Transaction.find({
+      customerId: userId,
+      venderId: venderId,
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
+    })
+    .populate({
+      path: "venderId",
+      populate: {
+        path: "shopId",
+      },
+    })
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
+    // .skip(skip)
+    // .limit(limit);
+
+    const totaltransactions = await Transaction.countDocuments({
+      customerId: userId,
+      venderId: venderId,
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
+      transactionType:TRANSACTION_TYPE.PARENT
+    });
+    const totalPages = Math.ceil(totaltransactions / limit);
+
+    return buildObjectResponse(res, {
+      transactions,
+      totalPages,
+      currentPage: page,
+      totalItems: totaltransactions,
+    });
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+// filter trasaction new api
