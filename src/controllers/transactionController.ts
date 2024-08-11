@@ -625,5 +625,3 @@ export const listCompleteTransactionUsingVenderId = async (req: any, res: any) =
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
   }
 };
-
-// filter trasaction new api

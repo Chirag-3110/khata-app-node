@@ -5,6 +5,6 @@ const verifyToken = require('../middleware/auth');
 
 dashboardRoute.get("/api/dashobard/get-vender-dashboard-data",verifyToken,getVenderDashboardData);
 dashboardRoute.get("/api/dashobard/get-customer-dashboard-data",verifyToken,getCustomerDashboardData);
-dashboardRoute.post("/api/dashobard/search",verifyToken,dashboardSearch);
+dashboardRoute.get("/api/dashobard/search",verifyToken,dashboardSearch);
 
 export default dashboardRoute;
