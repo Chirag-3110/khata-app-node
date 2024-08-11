@@ -38,5 +38,8 @@ app.use(customerRoute);
 app.use(walletRoute);
 app.use(transactionRoute);
 app.use(reviewRoute);
-app.use(reminderRoute);
 app.use(dashboardRoute);
+app.use(reminderRoute);
+
+
+
