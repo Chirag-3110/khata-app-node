@@ -50,7 +50,9 @@ const constants = {
       errorUpdateTransaction:"Transaction status is not updated",
       userNotVender:"User is not vender type",
       shopNotFound:"Shop not found",
-      invalidDueDate:"Invalid due date"
+      invalidDueDate:"Invalid due date",
+      statusRequired:"Status is required",
+      reviewAlreadyExists:"Review is already given to this shop"
     },
 };
 

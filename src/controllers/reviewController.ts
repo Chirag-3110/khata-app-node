@@ -22,6 +22,15 @@ export const addNewReview=async(req:any,res:any)=>{
         if(!ratings)
             return buildErrorResponse(res, constants.errors.ratingError, 404);
 
+        const checkForReview=await Review.find({
+            customerId: customerId,
+            shopId: shopId
+        })
+
+        if(checkForReview?.length>0){
+            return buildErrorResponse(res,constants.errors.reviewAlreadyExists,406);
+        }
+
         const review=new Review(req.body);
 
         await review.save();

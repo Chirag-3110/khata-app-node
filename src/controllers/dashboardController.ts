@@ -7,6 +7,7 @@ import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils
 import Transaction from "../models/Transaction";
 import moment from "moment";
 import Review from "../models/Review";
+import Wallet from "../models/Wallet";
 
 export const getVenderDashboardData=async(req:any,res:any) => {
     const {userId}=req.user;
@@ -121,11 +122,15 @@ export const getCustomerDashboardData=async(req:any,res:any) => {
             latestReviews:[],
             amountDetails:{
                 pendingAmount:0,
-                paidAmount:0
+                paidAmount:0,
+                bonusAmount:0
             }
         }
         if (!userId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+
+        const findUser=await User.findById(userId);
+        // console.log(findUser?.walletId,"ise")
 
         const startOfMonth = moment().startOf('month').toDate();
         const endOfMonth = moment().endOf('month').toDate();
@@ -175,17 +180,72 @@ export const getCustomerDashboardData=async(req:any,res:any) => {
             }
         })
 
+        let bonusAmount:any=0;
+
+        if(findUser?.walletId){
+            const walletData=await Wallet.findById(findUser?.walletId);
+            bonusAmount=walletData?.credit;
+        }
+
+
         customerDashboardData={
             ...customerDashboardData,
             recentTransactions:recentTransactions,
             latestReviews:recentReview,
             amountDetails:{
                 pendingAmount:pendingAmount,
-                paidAmount:paidAmount
+                paidAmount:paidAmount,
+                bonusAmount:bonusAmount
             }
         }
 
         return buildObjectResponse(res, {data:customerDashboardData});
+
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const dashboardSearch=async(req:any,res:any) => {
+    const {userId}=req.user;
+    const {searchQuery}=req.query
+
+    try {
+        if(!searchQuery || searchQuery==undefined){
+            return buildObjectResponse(res, {data:[]});
+        }
+        if (!userId)
+            return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+
+        const findUser=await User.findById(userId);
+        
+        const role=await Role.findById(findUser?.role)
+
+        const searchCustomer=await Role.findOne({role:roles.Customer});
+
+        let results:any=[];
+
+        if(role?.role == roles.Customer){
+            const regexPattern = new RegExp(searchQuery, 'i'); 
+            results = await Shop.find({
+                name: { $regex: regexPattern },
+                ownerName: { $regex: regexPattern },
+            }).populate("user");
+        }else{
+            const regexPattern = new RegExp(searchQuery, 'i'); 
+            const users = await User.find({ name: { $regex: regexPattern},role: searchCustomer?._id }).select('_id');
+
+            const userIds = users.map(user => user._id);
+            results = await Customer.find({
+                customerId: { $in: userIds },
+                venderId: userId
+            })
+            .populate("customerId")
+            .populate("venderId");   
+        }
+
+        return buildObjectResponse(res, {data:results});
 
     } catch (error) {
         console.log(error, 'error');

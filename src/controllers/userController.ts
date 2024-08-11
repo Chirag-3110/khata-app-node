@@ -68,7 +68,7 @@ export const completeRegistration=async(req:any,res:any)=>{
 
         let shopId=null;
         if(role === roles.Vender){
-            const newShop=new Shop(shop);
+            const newShop=new Shop({...shop,user:isUserExist?._id});
             const shopDoc=await newShop.save();
             shopId=shopDoc?._id;
         }
