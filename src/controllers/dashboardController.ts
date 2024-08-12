@@ -8,6 +8,7 @@ import Transaction from "../models/Transaction";
 import moment from "moment";
 import Review from "../models/Review";
 import Wallet from "../models/Wallet";
+import Shop from "../models/Shop";
 
 export const getVenderDashboardData=async(req:any,res:any) => {
     const {userId}=req.user;
