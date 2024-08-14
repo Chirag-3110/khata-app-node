@@ -12,6 +12,11 @@ interface Transaction extends Document {
   childTransaction: Schema.Types.ObjectId[];
   dueDateUpdatedCount:Number;
   transactionStatus:string,
+  dueDateStatus:string,
+  requestedDueDate:Date,
+  otp:string,
+  description:string,
+  createdBy:string
 }
 
 const transactionSchema = new Schema<Transaction>({
@@ -60,6 +65,21 @@ const transactionSchema = new Schema<Transaction>({
   transactionStatus:{
     type: String,
     required: true,
+  },
+  dueDateStatus:{
+    type: String,
+  },
+  requestedDueDate:{
+    type: Date,
+  },
+  otp:{
+    type: String,
+  },
+  description:{
+    type: String,
+  },
+  createdBy:{
+    type: String,
   }
 });
 

@@ -11,13 +11,16 @@ const constants = {
       customerDeleted:"Customer deleted successfully",
       transactionDone:"Transaction is completed successfully",
       transactionStatusUpdate:"Transaction status is updated",
-      transactionDueDateUpdate:"Transaction due date updated successfully",
+      transactionDueDateUpdate:"Transaction due date requested is accepted",
       reviewAddedSuccessfully:"Review Added Successfully",
       reminderAddedSuccess:"Reminder added successfully",
       transactionStatusUpdated:"Transaction status updated successfully",
       shopStatusChanged:"Shop Status Changed",
       userDeactivated:"User is deactivated",
-      userActivated:"User is activated"
+      userActivated:"User is activated",
+      dueDateRequested:"Due date update is requested",
+      transactionDueDateReject:"Transaction due date requested is rejected",
+      transactionSuccesfullStarted:"Transaction successfully started"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -52,7 +55,10 @@ const constants = {
       shopNotFound:"Shop not found",
       invalidDueDate:"Invalid due date",
       statusRequired:"Status is required",
-      reviewAlreadyExists:"Review is already given to this shop"
+      reviewAlreadyExists:"Review is already given to this shop",
+      unableToChange:"Unable to change status of transaction",
+      emptyOtp:"Empty otp",
+      invalidOtp:"Invalid OTP"
     },
 };
 
@@ -62,7 +68,8 @@ const roles={
 }
 
 const NOTIFICATION_TYPE={
-  REMINDER:"REMINDER"
+  REMINDER:"REMINDER",
+  TRANSACTION:"TRANSACTION"
 }
 
 const NOTIFICATION_STATUS={
@@ -75,7 +82,8 @@ const TRANSACTION_STATUS={
   COMPLETE:"Completed",
   PARTIAL_DONE:"PartialDone",
   CUSTOMER_PAID:"CustomerPaidFull",
-  CUSTOMER_PAID_PARTIAL:"CustomerPaidPartial"
+  CUSTOMER_PAID_PARTIAL:"CustomerPaidPartial",
+  PRE_PENDING:"PrePending"
 }
 
 const TRANSACTION_TYPE={
@@ -83,4 +91,11 @@ const TRANSACTION_TYPE={
   CHILD:"CHILD"
 }
 
-export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE }
+const DUE_DATE_STATUS={
+  ACCEPT:"accept",
+  REJECT:"reject",
+  REQUESTED:"requested",
+  PENDING:"pending"
+}
+
+export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS }
