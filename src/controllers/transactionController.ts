@@ -1,13 +1,15 @@
 import mongoose, { Types } from "mongoose";
-import { TRANSACTION_STATUS, TRANSACTION_TYPE, constants, roles } from "../constants";
+import { DUE_DATE_STATUS, NOTIFICATION_TYPE, TRANSACTION_STATUS, TRANSACTION_TYPE, constants, roles } from "../constants";
 import User from "../models/user";
 import {buildErrorResponse,buildObjectResponse,buildResponse,} from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
 import Wallet from "../models/Wallet";
+import { generateOTP } from "../utils";
+import Notification from "../models/Notification";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
-  const { userId, amount, dueDate, venderId } = req.body;
+  const { userId, amount, dueDate, venderId, description, createdBy } = req.body;
   try {
     if (!userId)
       return buildErrorResponse(res, constants.errors.invalidUserId, 404);
@@ -18,21 +20,83 @@ export const createNewTransaction = async (req: any, res: any) => {
     if (!dueDate)
       return buildErrorResponse(res, constants.errors.invalidDueDate, 404);
 
-    const transactionData = {
+    const otp = await generateOTP();
+
+    let transactionData = {
       customerId: userId,
       venderId: venderId,
       amount: amount,
       dueDate: dueDate,
-      status: TRANSACTION_STATUS.PENDING,
-      transactionStatus: TRANSACTION_STATUS.PENDING,
-      transactionType:TRANSACTION_TYPE.PARENT
-    };
+      status: createdBy == roles.Vender?TRANSACTION_STATUS.PRE_PENDING:TRANSACTION_STATUS.PENDING,
+      transactionStatus: createdBy == roles.Vender?TRANSACTION_STATUS.PRE_PENDING:TRANSACTION_STATUS.PENDING,
+      transactionType: TRANSACTION_TYPE.PARENT,
+      dueDateStatus: DUE_DATE_STATUS.PENDING,
+      description:description,
+      otp:"0000",
+      // otp:otp,
+      createdBy:createdBy?createdBy:roles.Vender
+    }
+
+    if(createdBy !== roles.Customer){
+      const notificationBody={
+        title:"Transaction initialization",
+        description:`${otp} is your transaction otp. please share this otp with the vender for transaction completion`,
+        notificationType:NOTIFICATION_TYPE.TRANSACTION,
+        userId:userId
+      }
+      const notification=new Notification(notificationBody);
+      await notification.save();
+    }
 
     const transaction = new Transaction(transactionData);
 
-    await transaction.save();
+    const response = await transaction.save();
 
-    return buildResponse(res, constants.success.transactionDone, 200);
+    return buildObjectResponse(res, {transactonId:response?._id});
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const verifyTransaction = async (req: any, res: any) => {
+  const { transactionId, otp } = req.body;
+  try {
+    if (!transactionId)
+      return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
+
+    if (!otp)
+      return buildErrorResponse(res, constants.errors.emptyOtp, 404);
+
+    const findTransaction = await Transaction.findById(transactionId);
+
+    if (!findTransaction)
+      return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+
+    console.log(findTransaction?.otp,"find",otp)
+
+    if(findTransaction?.otp !== otp)
+      return buildErrorResponse(res, constants.errors.invalidOtp, 404);
+
+    await Transaction.findByIdAndUpdate(
+      transactionId,
+      {
+        status: TRANSACTION_STATUS.PENDING,
+        transactionStatus: TRANSACTION_STATUS.PENDING
+      },
+      { new: true }
+    );
+
+    const notificationBody={
+      title:"Transaction completed",
+      description:`Your transaction is successfull completed with the vender`,
+      notificationType:NOTIFICATION_TYPE.TRANSACTION,
+      userId:findTransaction?.customerId
+    }
+    const notification=new Notification(notificationBody);
+    await notification.save();
+
+    return buildResponse(res, constants.success.transactionSuccesfullStarted ,200);
   } catch (error) {
     console.log(error, "error");
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
@@ -283,36 +347,71 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
     const { transactionId, dueDate } = req.body;
 
     if (!transactionId)
-      return buildErrorResponse(
-        res,
-        constants.errors.invalidTransactionId,
-        404
-      );
+      return buildErrorResponse(res,constants.errors.invalidTransactionId,404);
 
     const findTransaction = await Transaction.findById(transactionId);
 
     if (!findTransaction)
       return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
 
-    const dueDateUpdatedCount =
-      (findTransaction.dueDateUpdatedCount
-        ? findTransaction.dueDateUpdatedCount.valueOf()
-        : 0) + 1;
-
     if (findTransaction?.dueDateUpdatedCount == 1)
-      return buildErrorResponse(
-        res,
-        constants.errors.transactionDueDateUpdate,
-        406
-      );
+      return buildErrorResponse(res,constants.errors.transactionDueDateUpdate,406);
 
     await Transaction.findByIdAndUpdate(
       transactionId,
-      { dueDate: dueDate, dueDateUpdatedCount: dueDateUpdatedCount },
+      {
+        dueDateStatus: DUE_DATE_STATUS.REQUESTED,
+        requestedDueDate: dueDate,
+      },
       { new: true }
     );
 
-    return buildResponse(res, constants.success.transactionDueDateUpdate, 200);
+    return buildResponse(res, constants.success.dueDateRequested, 200);
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const acceptRejectDueDateRequest = async (req: any, res: any) => {
+  try {
+    const { transactionId, status } = req.body;
+
+    if (!transactionId)
+      return buildErrorResponse(res,constants.errors.invalidTransactionId,404);
+
+    const findTransaction = await Transaction.findById(transactionId);
+
+    if (!findTransaction)
+      return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+
+    if (findTransaction?.dueDateUpdatedCount == 1)
+      return buildErrorResponse(res,constants.errors.transactionDueDateUpdate,406);
+
+    if(status == DUE_DATE_STATUS.ACCEPT){
+      const dueDateUpdatedCount = (findTransaction.dueDateUpdatedCount? findTransaction.dueDateUpdatedCount.valueOf(): 0) + 1;
+
+      await Transaction.findByIdAndUpdate(
+        transactionId,
+        { dueDate: findTransaction?.requestedDueDate, dueDateUpdatedCount: dueDateUpdatedCount, dueDateStatus: DUE_DATE_STATUS.ACCEPT },
+        { new: true }
+      );
+  
+      return buildResponse(res, constants.success.transactionDueDateUpdate, 200);
+
+    } else if (status == DUE_DATE_STATUS.REJECT){
+      await Transaction.findByIdAndUpdate(
+        transactionId,
+        { dueDateStatus: DUE_DATE_STATUS.REJECT },
+        { new: true }
+      );
+
+      return buildResponse(res, constants.success.transactionDueDateReject, 200);
+    }
+    else {
+      return buildErrorResponse(res, constants.errors.unableToChange, 400);
+    }
+
   } catch (error) {
     console.log(error, "error");
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
@@ -526,11 +625,6 @@ export const listCompleteTransactionsOfCustomers = async (req: any, res: any) =>
 export const listCompletedTransactionOfVender = async (req: any, res: any) => {
   try {
     const { userId } = req.user;
-    // const {status}=req.body;
-
-    // if(status==undefined){
-    //   buildErrorResponse(res, constants.errors.statusRequired, 400);
-    // }
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
