@@ -357,11 +357,14 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
     if (findTransaction?.dueDateUpdatedCount == 1)
       return buildErrorResponse(res,constants.errors.transactionDueDateUpdate,406);
 
+    const dueDateUpdatedCount = (findTransaction.dueDateUpdatedCount? findTransaction.dueDateUpdatedCount.valueOf(): 0) + 1;
+
     await Transaction.findByIdAndUpdate(
       transactionId,
       {
         dueDateStatus: DUE_DATE_STATUS.REQUESTED,
         requestedDueDate: dueDate,
+        dueDateUpdatedCount: dueDateUpdatedCount
       },
       { new: true }
     );
@@ -385,15 +388,10 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
     if (!findTransaction)
       return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
 
-    if (findTransaction?.dueDateUpdatedCount == 1)
-      return buildErrorResponse(res,constants.errors.transactionDueDateUpdate,406);
-
     if(status == DUE_DATE_STATUS.ACCEPT){
-      const dueDateUpdatedCount = (findTransaction.dueDateUpdatedCount? findTransaction.dueDateUpdatedCount.valueOf(): 0) + 1;
-
       await Transaction.findByIdAndUpdate(
         transactionId,
-        { dueDate: findTransaction?.requestedDueDate, dueDateUpdatedCount: dueDateUpdatedCount, dueDateStatus: DUE_DATE_STATUS.ACCEPT },
+        { dueDate: findTransaction?.requestedDueDate, dueDateStatus: DUE_DATE_STATUS.ACCEPT },
         { new: true }
       );
   
