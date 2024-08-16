@@ -138,7 +138,7 @@ export const getUserProfile=async(req:any,res:any) => {
 export const getShopById=async(req:any,res:any) => {
     const {shopId}=req.params;
     try {
-        let shopData = await Shop.findById(shopId)
+        let shopData = await Shop.findById(shopId).populate("user")
 
         return buildObjectResponse(res,{shop:shopData});
     } catch (error) {
@@ -203,6 +203,18 @@ export const updateUserStatus=async(req:any,res:any) => {
             },
             { new: true }
         )
+
+        const userShop=await Shop.findById(findUser?.shopId)
+
+        if(userShop){
+            await Shop.findByIdAndUpdate(
+                userShop?._id,
+                {
+                  status: !userShop?.status 
+                },
+                { new: true }
+            )
+        }
 
         return buildResponse(res, findUser?.activeStatus?constants.success.userDeactivated:constants.success.userActivated, 200);
 

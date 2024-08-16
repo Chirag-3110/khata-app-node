@@ -231,7 +231,9 @@ export const dashboardSearch=async(req:any,res:any) => {
             const regexPattern = new RegExp(searchQuery, 'i'); 
             results = await Shop.find({
                 name: { $regex: regexPattern },
-                ownerName: { $regex: regexPattern },
+                ownerName: { $regex: regexPattern },    
+                canBeSearchable: true,
+                status:true
             }).populate("user");
         }else{
             const regexPattern = new RegExp(searchQuery, 'i'); 

@@ -58,7 +58,8 @@ const constants = {
       reviewAlreadyExists:"Review is already given to this shop",
       unableToChange:"Unable to change status of transaction",
       emptyOtp:"Empty otp",
-      invalidOtp:"Invalid OTP"
+      invalidOtp:"Invalid OTP",
+      reminderAlreadyExists:"Today's transaction reminder is already added"
     },
 };
 

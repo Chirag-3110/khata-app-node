@@ -1,3 +1,4 @@
+import moment from "moment";
 import { constants, roles } from "../constants";
 import Reminder from "../models/reminder";
 import Transaction from "../models/Transaction";
@@ -17,23 +18,37 @@ export const addNewReminder=async(req:any,res:any)=>{
         if(!reminderMedium)
             return buildErrorResponse(res, constants.errors.reminderTypeRequired, 404);
 
-        const findTransaction=await Transaction.findById(transactionId);
-        if(!findTransaction)
+        const existingTransactionReminders = await Reminder.find({ transactionId: transactionId });
+
+        if (existingTransactionReminders?.length > 0) {
+            const lastReminder = existingTransactionReminders[existingTransactionReminders.length - 1];
+            const createdAtTime = moment(lastReminder.createdAt);
+            const currentTime = moment();
+
+            const hoursDifference = currentTime.diff(createdAtTime, 'hours');
+
+            if (hoursDifference < 24) {
+                return buildErrorResponse(res, constants.errors.reminderAlreadyExists, 400);
+            }
+        }
+
+        const findTransaction = await Transaction.findById(transactionId);
+        if (!findTransaction)
             return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
 
-        const reminderData={
+        const reminderData = {
             customerId: findTransaction?.customerId,
             venderId: findTransaction?.venderId,
-            reminderDate:reminderDate,
-            reminderMedium:reminderMedium,
-            transactionId:transactionId
-        }
-        // console.log(reminderData,'tr')
-        const reminder=new Reminder(reminderData);
+            reminderDate: reminderDate,
+            reminderMedium: reminderMedium,
+            transactionId: transactionId
+        };
 
+        const reminder = new Reminder(reminderData);
         await reminder.save();
-        
-        return buildResponse(res,constants.success.reminderAddedSuccess,200);
+
+        return buildResponse(res, constants.success.reminderAddedSuccess, 200);
+
     } catch (error) {
         console.log(error,"error")
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
