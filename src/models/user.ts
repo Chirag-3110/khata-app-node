@@ -1,6 +1,11 @@
 import { Schema, model, Document } from 'mongoose';
 import { number } from 'yup';
 
+export interface DeviceInfoInterface extends Document {
+    deviceId: string;
+    fcmToken: string;
+    os: string;
+}
 interface User extends Document {
     name: string;
     email: string;
@@ -10,7 +15,7 @@ interface User extends Document {
     createdAt: Date;
     updatedAt: Date;
     documentId: string;
-    deviceToken: string[];
+    deviceToken: DeviceInfoInterface[];
     activeStatus: boolean;
     walletId: Schema.Types.ObjectId;
     isEmailVerified: boolean;
@@ -22,6 +27,7 @@ interface User extends Document {
     isProfileDone:boolean;
     phoneNumber:number;
 }
+
 
 const userSchema = new Schema<User>({
     name: {
@@ -56,9 +62,22 @@ const userSchema = new Schema<User>({
         type: String,
         required:true
     },
-    deviceToken: [{
-        type: String,
-    }],
+    deviceToken: [
+        new Schema(
+            {
+              deviceId: {
+                type: String
+              },
+              os: {
+                type: String
+              },
+              fcmToken: {
+                type: String
+              }
+            },
+            { _id: false, timestamps: true }
+        )
+    ],
     activeStatus: {
         type: Boolean,
     },

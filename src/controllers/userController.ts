@@ -223,3 +223,58 @@ export const updateUserStatus=async(req:any,res:any) => {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+export const registerDevice = async (req: any, res: any) => {
+    const { fcmToken, os, deviceId } = req.body;
+    const {userId} = req.user;
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return buildErrorResponse(res, constants.errors.userNotFound, 404);
+      }
+  
+      const devices = user.deviceToken ?? [];
+      const existingDevice = devices.find((device: any) => device.deviceId === deviceId);
+  
+      if (existingDevice) {
+        existingDevice.fcmToken = fcmToken;
+        existingDevice.os = os;
+      } else {
+        const newDevice: any = { deviceId, fcmToken, os };
+        user.deviceToken.push(newDevice);
+      }
+      await user.save();
+  
+      return buildObjectResponse(res, { message: constants.success.tokenUpdated });
+    } catch (error) {
+      return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+};
+export const logoutUser = async (req: any, res: any) => {
+    const { deviceId } = req.body;
+    const {userId} = req.user;
+  
+    try {
+      if (!deviceId) {
+        return buildErrorResponse(res, constants.errors.deviceIdRequired, 404);
+      }
+  
+      const user = await User.findById(userId);
+      if (!user) {
+        return buildErrorResponse(res, constants.errors.userNotFound, 404);
+      }
+  
+      const devices = user.deviceToken;
+      const deviceIndex = devices.findIndex((device: any) => device.deviceId === deviceId);
+  
+      if (deviceIndex !== -1) {
+        devices.splice(deviceIndex, 1);
+        await user.save();
+      }
+  
+      return buildObjectResponse(res, { message: constants.success.logoutSuccessfully });
+    } catch (error) {
+      console.log(error);
+      return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+};

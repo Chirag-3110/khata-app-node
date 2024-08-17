@@ -59,7 +59,8 @@ const constants = {
       unableToChange:"Unable to change status of transaction",
       emptyOtp:"Empty otp",
       invalidOtp:"Invalid OTP",
-      reminderAlreadyExists:"Today's transaction reminder is already added"
+      reminderAlreadyExists:"Today's transaction reminder is already added",
+      deviceIdRequired:"Device ID is required"
     },
 };
 
