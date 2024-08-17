@@ -78,7 +78,8 @@ export const listReviewsByVenderId=async(req:any,res:any)=>{
 
 export const listReviewsByCustomerId=async(req:any,res:any)=>{
     try {
-        const {userId}=req.user;
+        const {userId}=req.params;
+
         const page = parseInt(req.query.page as string) || 1; 
         const limit = parseInt(req.query.limit as string) || 10;
 

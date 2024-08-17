@@ -1,5 +1,5 @@
 import express from 'express';
-import { changeNotificationStatus, deleteNotification, getUnreadNotificaionOfUser, getUserNotification, triggerNotification } from '../controllers/notificationController';
+import { changeNotificationStatus, deleteAllNotification, deleteNotification, getUnreadNotificaionOfUser, getUserNotification, markNotificationSeenUnseen, triggerNotification } from '../controllers/notificationController';
 const verifyToken = require('../middleware/auth')
 const notificationRoute = express.Router();
 
@@ -8,5 +8,7 @@ notificationRoute.get("/api/notification/get-user-notification",verifyToken,getU
 notificationRoute.get("/api/notification/get-unread-notification",verifyToken,getUnreadNotificaionOfUser);
 notificationRoute.put("/api/notification/change-notification-status",verifyToken,changeNotificationStatus);
 notificationRoute.delete("/api/notification/delete-notification/:notificationId",verifyToken,deleteNotification);
+notificationRoute.delete("/api/notification/delete-all-notification",verifyToken,deleteAllNotification);
+notificationRoute.put("/api/notification/mark-seen-unseen-notification",verifyToken,markNotificationSeenUnseen);
 
 export default notificationRoute;

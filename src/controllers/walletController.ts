@@ -5,6 +5,7 @@ import Customer from "../models/customer";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import Wallet from "../models/Wallet";
+import WalletTransaction from "../models/walletTransaction";
 
 export const getWalletData=async(req:any,res:any)=>{
     try {
@@ -24,6 +25,36 @@ export const getWalletData=async(req:any,res:any)=>{
 
     } catch (error) {
         console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const getWalletTransactionList=async(req:any,res:any)=>{
+    try {
+        const {userId}=req.user;
+        const page = parseInt(req.query.page as string) || 1; 
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const findUser=await User.findById(userId);
+// console.log(findUser?.walletId);
+
+        const transactions = await WalletTransaction.find({ walletAddress: findUser?.walletId })
+        // .skip(skip)
+        // .limit(limit);
+
+        const totalTransactions = await WalletTransaction.countDocuments({ walletAddress: findUser?.walletId });
+        const totalPages = Math.ceil(totalTransactions / limit);
+
+        return buildObjectResponse(res, {
+            transactions,
+            // totalPages,
+            // currentPage: page,
+            // totalItems: totalTransactions
+        });
+
+    } catch (error) {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }

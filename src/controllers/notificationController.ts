@@ -92,3 +92,52 @@ export const deleteNotification=async(req:any,res:any)=>{
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+export const deleteAllNotification=async(req:any,res:any)=>{
+    try {
+        const { userId } = req.user;
+
+        // console.log(userId);
+        
+
+        if (!Types.ObjectId.isValid(userId)) {
+            return buildErrorResponse(res, constants.errors.invalidUserId, 400);
+        }
+
+        await Notification.deleteMany({ userId });
+
+        return buildResponse(res, constants.success.deleteAllNoti, 200);
+      
+
+    } catch (error) {
+        console.log(error,'error');
+        
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const markNotificationSeenUnseen = async (req: any, res: any) => {
+    try {
+        const { notificationId, status } = req.body;
+
+        if (!notificationId || ![NOTIFICATION_STATUS.SEEN, NOTIFICATION_STATUS.UNSEEN].includes(status)) {
+            return buildErrorResponse(res, constants.errors.invalidRequest, 400);
+        }
+
+        const notification = await Notification.findByIdAndUpdate(
+            notificationId,
+            { status, updatedAt: new Date() },
+            { new: true }
+        );
+
+        if (!notification) {
+            return buildErrorResponse(res, constants.errors.notificationNotFound, 404);
+        }
+
+        return buildResponse(res, constants.success.notificatinoStatusUpdatedSuccessfully, 200);
+        
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}

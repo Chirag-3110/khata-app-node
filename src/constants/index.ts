@@ -20,7 +20,8 @@ const constants = {
       userActivated:"User is activated",
       dueDateRequested:"Due date update is requested",
       transactionDueDateReject:"Transaction due date requested is rejected",
-      transactionSuccesfullStarted:"Transaction successfully started"
+      transactionSuccesfullStarted:"Transaction successfully started",
+      deleteAllNoti:"All notifications are deleted"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -60,7 +61,8 @@ const constants = {
       emptyOtp:"Empty otp",
       invalidOtp:"Invalid OTP",
       reminderAlreadyExists:"Today's transaction reminder is already added",
-      deviceIdRequired:"Device ID is required"
+      deviceIdRequired:"Device ID is required",
+      invalidRequest:"Invalid request"
     },
 };
 
@@ -100,4 +102,13 @@ const DUE_DATE_STATUS={
   PENDING:"pending"
 }
 
-export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS }
+const WALLET_TRANSACTION_TYPE={
+  WITHDRAW:"withdraw",
+  DEPOSIT:"deposit"
+}
+
+const TRANSACTION_MODULES={
+  TRANSACTION:"TRANSACTION"
+}
+
+export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }

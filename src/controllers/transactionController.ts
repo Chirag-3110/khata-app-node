@@ -1,11 +1,12 @@
 import mongoose, { Types } from "mongoose";
-import { DUE_DATE_STATUS, NOTIFICATION_TYPE, TRANSACTION_STATUS, TRANSACTION_TYPE, constants, roles } from "../constants";
+import { DUE_DATE_STATUS, NOTIFICATION_TYPE, TRANSACTION_MODULES, TRANSACTION_STATUS, TRANSACTION_TYPE, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
 import User from "../models/user";
 import {buildErrorResponse,buildObjectResponse,buildResponse,} from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
 import Wallet from "../models/Wallet";
 import { generateOTP } from "../utils";
 import Notification from "../models/Notification";
+import WalletTransaction from "../models/walletTransaction";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -199,13 +200,10 @@ export const payAmountToVender = async (req: any, res: any) => {
   try {
     const { transactionId, amount } = req.body;
     const { userId } = req.user;
+console.log(transactionId, amount,'ssnsjonosoj');
 
     if (!transactionId)
-      return buildErrorResponse(
-        res,
-        constants.errors.invalidTransactionId,
-        404
-      );
+      return buildErrorResponse(res,constants.errors.invalidTransactionId,404);
 
     const findTransaction = await Transaction.findById(transactionId);
 
@@ -214,10 +212,7 @@ export const payAmountToVender = async (req: any, res: any) => {
 
     if (findTransaction.status === TRANSACTION_STATUS.COMPLETE)
       return buildErrorResponse(
-        res,
-        constants.errors.transactionIsCompleted,
-        404
-      );
+        res,constants.errors.transactionIsCompleted,404);
 
     const numberValue = parseFloat(findTransaction.amount.toString());
 
@@ -229,10 +224,7 @@ export const payAmountToVender = async (req: any, res: any) => {
       const childTransactions = await Transaction.find({
         _id: { $in: childTransactionIds },
       });
-      const childTransactionAmount = childTransactions.reduce(
-        (sum, child) => sum + parseFloat(child.amount.toString()),
-        0
-      );
+      const childTransactionAmount = childTransactions.reduce((sum, child) => sum + parseFloat(child.amount.toString()),0);
       finalAmountAfterPartial = numberValue - childTransactionAmount;
     }
 
@@ -287,6 +279,14 @@ export const payAmountToVender = async (req: any, res: any) => {
         { credit: currentCredit + 2 },
         { new: true }
       );
+      const walletData={
+        walletAddress: checkUserExists?.walletId,
+        amount: 2,
+        transactionType:WALLET_TRANSACTION_TYPE.DEPOSIT,
+        module:TRANSACTION_MODULES.TRANSACTION
+      }
+      const walletTransaction=new WalletTransaction(walletData);
+      await walletTransaction.save();
       return buildResponse(res, constants.success.transactionDone, 200);
     } else {
       console.log("date1 is after date2");
@@ -334,6 +334,14 @@ export const payAmountToVender = async (req: any, res: any) => {
         { credit: currentCredit - 5 },
         { new: true }
       );
+      const walletData={
+        walletAddress: checkUserExists?.walletId,
+        amount: 5,
+        transactionType: WALLET_TRANSACTION_TYPE.WITHDRAW,
+        module: TRANSACTION_MODULES.TRANSACTION
+      }
+      const walletTransaction=new WalletTransaction(walletData);
+      await walletTransaction.save();
       return buildResponse(res, constants.success.transactionDone, 200);
     }
   } catch (error) {
