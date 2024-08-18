@@ -1,9 +1,10 @@
 import moment from "moment";
-import { constants, roles } from "../constants";
+import { constants, NOTIFICATION_TYPE, roles } from "../constants";
 import Reminder from "../models/reminder";
 import Transaction from "../models/Transaction";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
+import Notification from "../models/Notification";
 
 export const addNewReminder=async(req:any,res:any)=>{
     try {
@@ -46,6 +47,15 @@ export const addNewReminder=async(req:any,res:any)=>{
 
         const reminder = new Reminder(reminderData);
         await reminder.save();
+
+        const notificationBody={
+            title:"Reminder",
+            description:`You have recieved a new reminder for your next payment`,
+            notificationType:NOTIFICATION_TYPE.REMINDER,
+            userId:findTransaction?.customerId
+        }
+        const notification=new Notification(notificationBody);
+        await notification.save();
 
         return buildResponse(res, constants.success.reminderAddedSuccess, 200);
 

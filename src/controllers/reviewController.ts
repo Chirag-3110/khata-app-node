@@ -1,5 +1,6 @@
-import { constants, roles } from "../constants";
+import { constants, NOTIFICATION_TYPE, roles } from "../constants";
 import Customer from "../models/customer";
+import Notification from "../models/Notification";
 import Review from "../models/Review";
 import Role from "../models/Role";
 import User from "../models/user";
@@ -25,7 +26,9 @@ export const addNewReview=async(req:any,res:any)=>{
         const checkForReview=await Review.find({
             customerId: customerId,
             shopId: shopId
-        })
+        });
+
+        const shopUser=await User.findById(shopId);
 
         if(checkForReview?.length>0){
             return buildErrorResponse(res,constants.errors.reviewAlreadyExists,406);
@@ -34,6 +37,15 @@ export const addNewReview=async(req:any,res:any)=>{
         const review=new Review(req.body);
 
         await review.save();
+
+        const notificationBody={
+            title:"New Review",
+            description:`${shopUser?.name} has added their review`,
+            notificationType:NOTIFICATION_TYPE.REVIEW,
+            userId:customerId
+        }
+        const notification=new Notification(notificationBody);
+        await notification.save();
         
         return buildResponse(res,constants.success.reviewAddedSuccessfully,200);
     } catch (error) {

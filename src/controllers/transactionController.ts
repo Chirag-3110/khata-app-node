@@ -88,14 +88,24 @@ export const verifyTransaction = async (req: any, res: any) => {
       { new: true }
     );
 
-    const notificationBody={
-      title:"Transaction completed",
-      description:`Your transaction is successfull completed with the vender`,
-      notificationType:NOTIFICATION_TYPE.TRANSACTION,
-      userId:findTransaction?.customerId
-    }
-    const notification=new Notification(notificationBody);
-    await notification.save();
+    const notificationBodies = [
+      {
+        title: "Transaction completed",
+        description: `Your transaction is successfully completed with the vendor`,
+        notificationType: NOTIFICATION_TYPE.TRANSACTION,
+        userId: findTransaction?.customerId,
+      },
+      {
+        title: "Transaction completed",
+        description: `Your transaction is successfully completed`,
+        notificationType: NOTIFICATION_TYPE.TRANSACTION,
+        userId: findTransaction?.venderId,
+      },
+    ];
+    
+    // add fcm notification also
+
+    await Notification.insertMany(notificationBodies);
 
     return buildResponse(res, constants.success.transactionSuccesfullStarted ,200);
   } catch (error) {
@@ -287,7 +297,25 @@ console.log(transactionId, amount,'ssnsjonosoj');
       }
       const walletTransaction=new WalletTransaction(walletData);
       await walletTransaction.save();
-      return buildResponse(res, constants.success.transactionDone, 200);
+      const notificationBodies = [
+        {
+          title: "Payment Done",
+          description: `${amount} is paid to transaction with id ${transactionId}`,
+          notificationType: NOTIFICATION_TYPE.TRANSACTION,
+          userId: findTransaction?.customerId,
+        },
+        {
+          title: "Amount Recieved",
+          description: `${amount} is recieved with transaction id ${transactionId}`,
+          notificationType: NOTIFICATION_TYPE.TRANSACTION,
+          userId: findTransaction?.venderId,
+        },
+      ];
+      
+      // add fcm notification also
+  
+      await Notification.insertMany(notificationBodies);
+      // return buildResponse(res, constants.success.transactionDone, 200);
     } else {
       console.log("date1 is after date2");
       if (amount == numberValue) {
@@ -342,8 +370,27 @@ console.log(transactionId, amount,'ssnsjonosoj');
       }
       const walletTransaction=new WalletTransaction(walletData);
       await walletTransaction.save();
-      return buildResponse(res, constants.success.transactionDone, 200);
     }
+    const notificationBodies = [
+      {
+        title: "Payment Done",
+        description: `${amount} is paid to transaction with id ${transactionId}`,
+        notificationType: NOTIFICATION_TYPE.TRANSACTION,
+        userId: findTransaction?.customerId,
+      },
+      {
+        title: "Amount Recieved",
+        description: `${amount} is recieved with transaction id ${transactionId}`,
+        notificationType: NOTIFICATION_TYPE.TRANSACTION,
+        userId: findTransaction?.venderId,
+      },
+    ];
+    
+    // add fcm notification also
+
+    await Notification.insertMany(notificationBodies);
+    return buildResponse(res, constants.success.transactionDone, 200);
+
   } catch (error) {
     console.log(error, "error");
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
@@ -377,6 +424,17 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
       { new: true }
     );
 
+    const findUser = await User.findById(findTransaction?.customerId);
+
+    const notificationBody={
+      title:"Due date update request",
+      description:`${findUser?.name} has raised a request for due date update`,
+      notificationType:NOTIFICATION_TYPE.TRANSACTION,
+      userId:transactionId?.venderId
+    }
+    const notification=new Notification(notificationBody);
+    await notification.save();
+
     return buildResponse(res, constants.success.dueDateRequested, 200);
   } catch (error) {
     console.log(error, "error");
@@ -402,6 +460,15 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
         { dueDate: findTransaction?.requestedDueDate, dueDateStatus: DUE_DATE_STATUS.ACCEPT },
         { new: true }
       );
+
+      const notificationBody={
+        title:"Due date update accepted",
+        description:`Your request for due date update is accepted`,
+        notificationType:NOTIFICATION_TYPE.TRANSACTION,
+        userId:transactionId?.customerId
+      }
+      const notification=new Notification(notificationBody);
+      await notification.save();
   
       return buildResponse(res, constants.success.transactionDueDateUpdate, 200);
 
@@ -411,6 +478,15 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
         { dueDateStatus: DUE_DATE_STATUS.REJECT },
         { new: true }
       );
+
+      const notificationBody={
+        title:"Due date update rejected",
+        description:`Your request for due date update is rejected`,
+        notificationType:NOTIFICATION_TYPE.TRANSACTION,
+        userId:transactionId?.customerId
+      }
+      const notification=new Notification(notificationBody);
+      await notification.save();
 
       return buildResponse(res, constants.success.transactionDueDateReject, 200);
     }
