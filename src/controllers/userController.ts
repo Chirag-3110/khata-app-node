@@ -224,6 +224,41 @@ export const updateUserStatus=async(req:any,res:any) => {
     }
 }
 
+export const editProfile = async (req:any, res:any) => {
+    const { userId, address, dob, gender, name, qrCode, upiId } = req.body;
+  
+    try {
+      if (!userId) {
+        return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+      }
+  
+      const findUser = await User.findById(userId);
+  
+      if (!findUser) {
+        return buildErrorResponse(res, constants.errors.userNotFound, 404);
+      }
+  
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          address: address || findUser.address,
+          dob: dob || findUser.dob,
+          gender: gender || findUser.gender,
+          name: name || findUser.name,
+          qrCode: qrCode || findUser.qrCode,
+          upiId: upiId || findUser.upiId,
+        },
+        { new: true }
+      );
+  
+      return buildResponse(res, constants.success.userProfileUpdate, 200);
+  
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+};  
+
 export const registerDevice = async (req: any, res: any) => {
     const { fcmToken, os, deviceId } = req.body;
     const {userId} = req.user;
@@ -250,6 +285,7 @@ export const registerDevice = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
+
 export const logoutUser = async (req: any, res: any) => {
     const { deviceId } = req.body;
     const {userId} = req.user;

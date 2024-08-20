@@ -1,22 +1,55 @@
 import { Schema, model, Document } from 'mongoose';
-import { boolean, number } from 'yup';
+import { ENQUIRY_STATUS } from '../constants';
+
+interface Category extends Document {
+    name: string;
+    description?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+const CategorySchema = new Schema<Category>({
+    name: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    description: {
+        type: String,
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    }
+});
+
+const Category = model<Category>('category', CategorySchema);
 
 interface Enquiry extends Document {
     createdAt: Date;
     updatedAt: Date;
-    category:Schema.Types.ObjectId;
-    userId:Schema.Types.ObjectId;
-    venderId:Schema.Types.ObjectId;
-    status:string;
-    description:string;
-    feedbacks: object[]
+    category: Schema.Types.ObjectId;
+    userId: Schema.Types.ObjectId;
+    venderId: Schema.Types.ObjectId;
+    status: string;
+    description: string;
+    feedbacks: {
+        comment: string;
+        createdAt: Date;
+        userId: Schema.Types.ObjectId;
+    }[];
 }
 
 const EnquirySchema = new Schema<Enquiry>({
-    // role: {
-    //     type: Schema.Types.ObjectId,
-    //     ref: 'roles', 
-    // },
+    category: {
+        type: Schema.Types.ObjectId,
+        ref: 'category',
+        required: true,
+    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -25,20 +58,43 @@ const EnquirySchema = new Schema<Enquiry>({
         type: Date,
         default: Date.now,
     },
-    // EnquiryId:{
-    //     type:Schema.Types.ObjectId,
-    //     ref:"user"
-    // },
-    venderId:{
-        type:Schema.Types.ObjectId,
-        ref:"user"
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: "user",
+        required: true,
     },
-    // activeStatus:{
-    //     type:Boolean,
-    //     default:true
-    // }
+    venderId: {
+        type: Schema.Types.ObjectId,
+        ref: "user",
+        required: true,
+    },
+    status: {
+        type: String,
+        default: ENQUIRY_STATUS.OPEN,
+    },
+    description: {
+        type: String,
+        required: true,
+    },
+    feedbacks: [
+        {
+            comment: {
+                type: String,
+                required: true,
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now,
+            },
+            userId: {
+                type: Schema.Types.ObjectId,
+                ref: "user",
+                required: true,
+            },
+        }
+    ],
 });
 
 const Enquiry = model<Enquiry>('enquiry', EnquirySchema);
 
-export default Enquiry;
+export { Enquiry, Category };
