@@ -22,7 +22,8 @@ const constants = {
       transactionDueDateReject:"Transaction due date requested is rejected",
       transactionSuccesfullStarted:"Transaction successfully started",
       deleteAllNoti:"All notifications are deleted",
-      userProfileUpdate:"User profile updated successfully"
+      userProfileUpdate:"User profile updated successfully",
+      shopProfileUpdate:"Shop updated successfully"
     },
     errors: {
       roleNotFound:"Role not found",
