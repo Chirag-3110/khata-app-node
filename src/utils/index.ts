@@ -1,3 +1,5 @@
+import moment from "moment";
+
 const JWT_SECRET = 'khatak_app'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
@@ -30,6 +32,14 @@ export const generateOTP = async () => {
   });
   return otp;
 };
+
+export const generateRandomTransactionRef=()=>{
+  const year = moment().format('YYYY');
+  const date = moment().format('DDMMYY');
+  const randomDigits = Math.floor(100000 + Math.random() * 900000);
+  const uniqueId = `${year}${date}${randomDigits}`;
+  return uniqueId;
+}
 
 // export const sendNotification=async(title:string,body:string,tokens:string[],data:any={})=>{
 //   const message = {

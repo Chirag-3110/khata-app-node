@@ -23,7 +23,10 @@ const constants = {
       transactionSuccesfullStarted:"Transaction successfully started",
       deleteAllNoti:"All notifications are deleted",
       userProfileUpdate:"User profile updated successfully",
-      shopProfileUpdate:"Shop updated successfully"
+      shopProfileUpdate:"Shop updated successfully",
+      enquiryAdded:"Enquiry added successfully",
+      enquiryReopen:"Enquiry reopened successfully",
+      enquiryClosed:"Enquiry closed successfully",
     },
     errors: {
       roleNotFound:"Role not found",
@@ -64,7 +67,9 @@ const constants = {
       invalidOtp:"Invalid OTP",
       reminderAlreadyExists:"Today's transaction reminder is already added",
       deviceIdRequired:"Device ID is required",
-      invalidRequest:"Invalid request"
+      invalidRequest:"Invalid request",
+      enquiryIdNotValid:"Enquiry id not valid",
+      enquiryNotFound:"Enquiry not found"
     },
 };
 
@@ -76,7 +81,8 @@ const roles={
 const NOTIFICATION_TYPE={
   REMINDER:"REMINDER",
   TRANSACTION:"TRANSACTION",
-  REVIEW:"REVIEW"
+  REVIEW:"REVIEW",
+  ENQUIRY:"ENQUIRY"
 }
 
 const NOTIFICATION_STATUS={

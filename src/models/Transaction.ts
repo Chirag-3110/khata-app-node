@@ -16,7 +16,7 @@ interface Transaction extends Document {
   requestedDueDate:Date,
   otp:string,
   description:string,
-  createdBy:string
+  createdBy:string,
 }
 
 const transactionSchema = new Schema<Transaction>({

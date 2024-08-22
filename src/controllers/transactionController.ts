@@ -4,7 +4,7 @@ import User from "../models/user";
 import {buildErrorResponse,buildObjectResponse,buildResponse,} from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
 import Wallet from "../models/Wallet";
-import { generateOTP } from "../utils";
+import { generateOTP, generateRandomTransactionRef } from "../utils";
 import Notification from "../models/Notification";
 import WalletTransaction from "../models/walletTransaction";
 const moment = require("moment");
@@ -35,8 +35,13 @@ export const createNewTransaction = async (req: any, res: any) => {
       description:description,
       otp:"0000",
       // otp:otp,
-      createdBy:createdBy?createdBy:roles.Vender
+      createdBy:createdBy?createdBy:roles.Vender,
+      transactionRef:generateRandomTransactionRef()
     }
+
+    const transaction = new Transaction(transactionData);
+
+    const response = await transaction.save();
 
     if(createdBy !== roles.Customer){
       const notificationBody={
@@ -48,10 +53,6 @@ export const createNewTransaction = async (req: any, res: any) => {
       const notification=new Notification(notificationBody);
       await notification.save();
     }
-
-    const transaction = new Transaction(transactionData);
-
-    const response = await transaction.save();
 
     return buildObjectResponse(res, {transactonId:response?._id});
   } catch (error) {

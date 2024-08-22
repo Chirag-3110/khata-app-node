@@ -27,7 +27,7 @@ const CategorySchema = new Schema<Category>({
     }
 });
 
-const Category = model<Category>('category', CategorySchema);
+const Category = model<Category>('categories', CategorySchema);
 
 interface Enquiry extends Document {
     createdAt: Date;
@@ -47,7 +47,7 @@ interface Enquiry extends Document {
 const EnquirySchema = new Schema<Enquiry>({
     category: {
         type: Schema.Types.ObjectId,
-        ref: 'category',
+        ref: 'categories',
         required: true,
     },
     createdAt: {
@@ -80,7 +80,6 @@ const EnquirySchema = new Schema<Enquiry>({
         {
             comment: {
                 type: String,
-                required: true,
             },
             createdAt: {
                 type: Date,
@@ -89,7 +88,6 @@ const EnquirySchema = new Schema<Enquiry>({
             userId: {
                 type: Schema.Types.ObjectId,
                 ref: "user",
-                required: true,
             },
         }
     ],
