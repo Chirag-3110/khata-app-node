@@ -115,98 +115,6 @@ export const verifyTransaction = async (req: any, res: any) => {
   }
 };
 
-export const listTransaction = async (req: any, res: any) => {
-  try {
-    const { userId } = req.user;
-
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-
-    const skip = (page - 1) * limit;
-
-    const transactions = await Transaction.find({ 
-      venderId: userId,
-      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
-      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
-      transactionType:TRANSACTION_TYPE.PARENT
-    })
-      .populate("customerId")
-      .populate("venderId")
-      .populate({
-        path: "childTransaction"
-      })
-      .sort({ transactionDate: -1 });
-    // .skip(skip)
-    // .limit(limit);
-
-    const totaltransactions = await Transaction.countDocuments({
-      venderId: userId,
-      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
-      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
-      transactionType:TRANSACTION_TYPE.PARENT
-    });
-    const totalPages = Math.ceil(totaltransactions / limit);
-
-    return buildObjectResponse(res, {
-      transactions,
-      totalPages,
-      currentPage: page,
-      totalItems: totaltransactions,
-    });
-  } catch (error) {
-    console.log(error, "error");
-    return buildErrorResponse(res, constants.errors.internalServerError, 500);
-  }
-};
-
-export const listTransactionsOfCustomers = async (req: any, res: any) => {
-  try {
-    const { userId } = req.user;
-
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-
-    const skip = (page - 1) * limit;
-
-    const transactions = await Transaction.find({ 
-      customerId: userId, 
-      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
-      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } ,
-      transactionType:TRANSACTION_TYPE.PARENT
-    })
-    .populate({
-      path: "venderId",
-      populate: {
-        path: "shopId",
-      },
-    })
-    .populate({
-      path: "childTransaction"
-    })
-    .sort({ transactionDate: -1 });
-    // .skip(skip)
-    // .limit(limit);
-
-    const totaltransactions = await Transaction.countDocuments({
-      customerId: userId,
-      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
-      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } ,
-      transactionType:TRANSACTION_TYPE.PARENT
-    });
-    const totalPages = Math.ceil(totaltransactions / limit);
-
-    return buildObjectResponse(res, {
-      transactions,
-      totalPages,
-      currentPage: page,
-      totalItems: totaltransactions,
-    });
-  } catch (error) {
-    console.log(error, "error");
-    return buildErrorResponse(res, constants.errors.internalServerError, 500);
-  }
-};
-
 export const payAmountToVender = async (req: any, res: any) => {
   try {
     const { transactionId, amount } = req.body;
@@ -574,6 +482,158 @@ export const updateTransactionStatus = async (req: any, res: any) => {
   }
 };
 
+export const getTransactionDetailById = async (req: any, res: any) => {
+  try {
+    const { transactionId } = req.params;
+
+    if (!transactionId)
+      return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
+
+    const transactions = await Transaction.findById(transactionId)
+      .populate({
+        path: "venderId",
+        populate: {
+          path: "shopId",
+        },
+      })
+      .populate("customerId")
+      .populate({
+          path: "childTransaction",
+          populate: {
+            path: "venderId customerId",
+          },
+      });
+
+    return buildObjectResponse(res, {transaction:transactions,});
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const listTransaction = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const { fromDate, toDate } = req.query;
+
+    console.log(fromDate, toDate, 'dates');
+
+    let dateFilter: any = {};
+    if (fromDate) {
+      const correctedFromDate = moment(fromDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').toISOString();
+      dateFilter.$gte = new Date(correctedFromDate);
+    }
+    if (toDate) {
+      const correctedToDate = moment(toDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').add(1, 'day').toISOString();
+      dateFilter.$lt = new Date(correctedToDate);
+    }
+
+    console.log(dateFilter, 'dateFilter');
+
+    const transactions = await Transaction.find({
+      venderId: userId,
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
+      transactionType: TRANSACTION_TYPE.PARENT,
+      ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
+    })
+      .populate("customerId")
+      .populate("venderId")
+      .populate({
+        path: "childTransaction"
+      })
+      .sort({ transactionDate: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totaltransactions = await Transaction.countDocuments({
+      venderId: userId,
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
+      transactionType: TRANSACTION_TYPE.PARENT,
+      ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
+    });
+
+    const totalPages = Math.ceil(totaltransactions / limit);
+
+    return buildObjectResponse(res, {
+      transactions,
+      totalPages,
+      currentPage: page,
+      totalItems: totaltransactions,
+    });
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const listTransactionsOfCustomers = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const { fromDate, toDate } = req.query;
+
+    let dateFilter: any = {};
+    if (fromDate) {
+      const correctedFromDate = moment(fromDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').toISOString();
+      dateFilter.$gte = new Date(correctedFromDate);
+    }
+    if (toDate) {
+      const correctedToDate = moment(toDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').add(1, 'day').toISOString();
+      dateFilter.$lt = new Date(correctedToDate);
+    }
+
+    console.log(dateFilter, 'dateFilter');
+
+    const transactions = await Transaction.find({ 
+      customerId: userId, 
+      // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } ,
+      transactionType:TRANSACTION_TYPE.PARENT,
+      ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
+    })
+    .populate({
+      path: "venderId",
+      populate: {
+        path: "shopId",
+      },
+    })
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
+    // .skip(skip)
+    // .limit(limit);
+
+    const totaltransactions = await Transaction.countDocuments({
+      customerId: userId,
+      status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE } ,
+      transactionType:TRANSACTION_TYPE.PARENT
+    });
+    const totalPages = Math.ceil(totaltransactions / limit);
+
+    return buildObjectResponse(res, {
+      transactions,
+      totalPages,
+      currentPage: page,
+      totalItems: totaltransactions,
+    });
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
 export const listTransactionUsingVenderId = async (req: any, res: any) => {
   try {
     const { userId } = req.user;
@@ -587,12 +647,29 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
+    const { fromDate, toDate } = req.query;
+
+    console.log(fromDate, toDate, 'dates');
+
+    let dateFilter: any = {};
+    if (fromDate) {
+      const correctedFromDate = moment(fromDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').toISOString();
+      dateFilter.$gte = new Date(correctedFromDate);
+    }
+    if (toDate) {
+      const correctedToDate = moment(toDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').add(1, 'day').toISOString();
+      dateFilter.$lt = new Date(correctedToDate);
+    }
+
+    console.log(dateFilter, 'dateFilter');
+
     const transactions = await Transaction.find({
       customerId: userId,
       venderId: venderId,
       // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
       transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
-      transactionType:TRANSACTION_TYPE.PARENT
+      transactionType:TRANSACTION_TYPE.PARENT,
+      ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
     .populate({
       path: "venderId",
@@ -628,35 +705,6 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
   }
 };
 
-export const getTransactionDetailById = async (req: any, res: any) => {
-    try {
-      const { transactionId } = req.params;
-  
-      if (!transactionId)
-        return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
-
-      const transactions = await Transaction.findById(transactionId)
-        .populate({
-          path: "venderId",
-          populate: {
-            path: "shopId",
-          },
-        })
-        .populate("customerId")
-        .populate({
-            path: "childTransaction",
-            populate: {
-              path: "venderId customerId",
-            },
-        });
-
-      return buildObjectResponse(res, {transaction:transactions,});
-    } catch (error) {
-      console.log(error, "error");
-      return buildErrorResponse(res, constants.errors.internalServerError, 500);
-    }
-};
-
 export const listCompleteTransactionsOfCustomers = async (req: any, res: any) => {
   try {
     const { userId } = req.user;
@@ -666,11 +714,28 @@ export const listCompleteTransactionsOfCustomers = async (req: any, res: any) =>
 
     const skip = (page - 1) * limit;
 
+    const { fromDate, toDate } = req.query;
+
+    console.log(fromDate, toDate, 'dates');
+
+    let dateFilter: any = {};
+    if (fromDate) {
+      const correctedFromDate = moment(fromDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').toISOString();
+      dateFilter.$gte = new Date(correctedFromDate);
+    }
+    if (toDate) {
+      const correctedToDate = moment(toDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').add(1, 'day').toISOString();
+      dateFilter.$lt = new Date(correctedToDate);
+    }
+
+    console.log(dateFilter, 'dateFilter');
+
     const transactions = await Transaction.find({ 
       customerId: userId, 
       // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
       transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE } ,
-      transactionType:TRANSACTION_TYPE.PARENT
+      transactionType:TRANSACTION_TYPE.PARENT,
+      ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
     .populate({
       path: "venderId",
@@ -714,11 +779,28 @@ export const listCompletedTransactionOfVender = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
+    const { fromDate, toDate } = req.query;
+
+    console.log(fromDate, toDate, 'dates');
+
+    let dateFilter: any = {};
+    if (fromDate) {
+      const correctedFromDate = moment(fromDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').toISOString();
+      dateFilter.$gte = new Date(correctedFromDate);
+    }
+    if (toDate) {
+      const correctedToDate = moment(toDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').add(1, 'day').toISOString();
+      dateFilter.$lt = new Date(correctedToDate);
+    }
+
+    console.log(dateFilter, 'dateFilter');
+
     const transactions = await Transaction.find({ 
       venderId: userId,
       // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
       transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
-      transactionType:TRANSACTION_TYPE.PARENT
+      transactionType:TRANSACTION_TYPE.PARENT,
+      ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
       .populate("customerId")
       .populate("venderId")
@@ -802,3 +884,4 @@ export const listCompleteTransactionUsingVenderId = async (req: any, res: any) =
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
   }
 };
+

@@ -156,7 +156,7 @@ export const reopenCloseEnquiry = async (req: any, res: any) => {
         )
 
         const notificationBody={
-            title:findRole?.role == roles.Vender?"Enquiry Closed":"Enquiry Closed",
+            title:findRole?.role == roles.Vender?"Enquiry Closed":"Enquiry Reopened",
             description:findRole?.role == roles.Vender?`${findUser?.name} has closed the enquiry.`:`${findUser?.name} has reopened the enquiry.`,
             notificationType:NOTIFICATION_TYPE.ENQUIRY,
             userId:findRole?.role == roles.Vender?findEnq?.userId:findEnq?.venderId
