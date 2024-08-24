@@ -23,7 +23,6 @@ const notificationSchema = new Schema<Notification>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'user',
-    required: true,
   },
   status: {
     type: String,

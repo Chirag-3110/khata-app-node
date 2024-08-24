@@ -339,7 +339,7 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
       title:"Due date update request",
       description:`${findUser?.name} has raised a request for due date update`,
       notificationType:NOTIFICATION_TYPE.TRANSACTION,
-      userId:transactionId?.venderId
+      userId:findTransaction?.venderId
     }
     const notification=new Notification(notificationBody);
     await notification.save();
@@ -374,7 +374,7 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
         title:"Due date update accepted",
         description:`Your request for due date update is accepted`,
         notificationType:NOTIFICATION_TYPE.TRANSACTION,
-        userId:transactionId?.customerId
+        userId:findTransaction?.customerId
       }
       const notification=new Notification(notificationBody);
       await notification.save();
