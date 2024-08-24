@@ -10,8 +10,9 @@ interface Refer extends Document {
     creditAmount:string;
     isExipred:boolean;
     createdAt: Date;
-    updatedAt: Date;
+    updatedAt: Date
 }
+
 
 const ReferSchema = new Schema<Refer>({
     userId: {
