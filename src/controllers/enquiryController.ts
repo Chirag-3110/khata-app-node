@@ -92,6 +92,7 @@ export const listEnquiry = async (req: any, res: any) => {
         path: findRole?.role == roles.Vender?"userId":"venderId"
       })
       .populate('feedbacks.userId')
+      .populate('category')
       // .skip(skip)
       // .limit(limit);
   
