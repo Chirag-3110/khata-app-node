@@ -1,11 +1,13 @@
 import { constants, roles } from "../constants";
+import * as yup from 'yup';
+
 import Role from "../models/Role";
 import Shop from "../models/Shop";
 import Wallet from "../models/Wallet";
 import User from "../models/user";
 import { generateJWT } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
-import { userValidationSchema } from "../validations/userValidation";
+import { shopUpdateSchema, userValidationSchema } from "../validations/userValidation";
 
 export const loginUser=async(req:any,res:any)=>{
     try {
@@ -224,6 +226,80 @@ export const updateUserStatus=async(req:any,res:any) => {
     }
 }
 
+export const editProfile = async (req:any, res:any) => {
+    const { userId, address, dob, gender, name, qrCode, upiId } = req.body;
+  
+    try {
+      if (!userId) {
+        return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+      }
+  
+      const findUser = await User.findById(userId);
+  
+      if (!findUser) {
+        return buildErrorResponse(res, constants.errors.userNotFound, 404);
+      }
+  
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          address: address || findUser.address,
+          dob: dob || findUser.dob,
+          gender: gender || findUser.gender,
+          name: name || findUser.name,
+          qrCode: qrCode || findUser.qrCode,
+          upiId: upiId || findUser.upiId,
+        },
+        { new: true }
+      );
+  
+      return buildResponse(res, constants.success.userProfileUpdate, 200);
+  
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+};  
+
+export const editShopDetails = async (req: any, res: any) => {
+    try {
+        await shopUpdateSchema.validate(req.body, { abortEarly: false });
+        const { shopId, name, location, ownerName, pan, gstNum, localListing, canBeSearchable, category, businessCode, openTime, closeDate } = req.body;
+        const findShop = await Shop.findById(shopId);
+  
+        if (!findShop) {
+            return buildErrorResponse(res, constants.errors.shopNotFound, 404);
+        }
+    
+        const updatedShop = await Shop.findByIdAndUpdate(
+            shopId,
+            {
+            name: name || findShop.name,
+            location: location || findShop.location,
+            ownerName: ownerName || findShop.ownerName,
+            pan: pan || findShop.pan,
+            gstNum: gstNum || findShop.gstNum,
+            localListing: localListing !== undefined ? localListing : findShop.localListing,
+            canBeSearchable: canBeSearchable !== undefined ? canBeSearchable : findShop.canBeSearchable,
+            category: category || findShop.category,
+            businessCode: businessCode || findShop.businessCode,
+            openTime: openTime ? new Date(openTime) : findShop.openTime,
+            closeDate: closeDate ? new Date(closeDate) : findShop.closeDate,
+            },
+            { new: true }
+        );
+    
+        return buildResponse(res, constants.success.shopProfileUpdate, 200);
+    } catch (error) {
+        if (error instanceof yup.ValidationError) {
+            return buildErrorResponse(res, error.errors.join(', '), 400);
+        } 
+        console.error("Error updating shop details:", error);
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+  };
+  
+
 export const registerDevice = async (req: any, res: any) => {
     const { fcmToken, os, deviceId } = req.body;
     const {userId} = req.user;
@@ -250,6 +326,7 @@ export const registerDevice = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
+
 export const logoutUser = async (req: any, res: any) => {
     const { deviceId } = req.body;
     const {userId} = req.user;

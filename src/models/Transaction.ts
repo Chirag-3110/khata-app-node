@@ -16,7 +16,7 @@ interface Transaction extends Document {
   requestedDueDate:Date,
   otp:string,
   description:string,
-  createdBy:string
+  createdBy:string,
 }
 
 const transactionSchema = new Schema<Transaction>({
@@ -36,8 +36,7 @@ const transactionSchema = new Schema<Transaction>({
   },
   transactionDate: {
     type: Date,
-    required: true,
-    default: new Date()
+    default: Date.now,
   },
   transactionRef: {
     type: String,

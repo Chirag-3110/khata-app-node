@@ -1,5 +1,5 @@
 import express from 'express';
-import { checkUserVerify, completeRegistration, createUser, getShopById, getUserProfile, loginUser, logoutUser, registerDevice, updatedShopStatus, updateUserStatus,  } from '../controllers/userController';
+import { checkUserVerify, completeRegistration, createUser, editProfile, editShopDetails, getShopById, getUserProfile, loginUser, logoutUser, registerDevice, updatedShopStatus, updateUserStatus,  } from '../controllers/userController';
 const userRoute = express.Router();
 const verifyToken = require('../middleware/auth'); 
 
@@ -11,6 +11,8 @@ userRoute.get(`/api/user/get-user-profile/:documentId`,getUserProfile);
 userRoute.get(`/api/user/get-shop/:shopId`,verifyToken,getShopById);
 userRoute.put(`/api/user/update-shop-status`,verifyToken,updatedShopStatus);
 userRoute.put(`/api/user/update-user-status/:userId`,verifyToken,updateUserStatus);
+userRoute.put(`/api/user/update-user-detail`,verifyToken,editProfile);
+userRoute.put(`/api/user/update-shop-detail`,verifyToken,editShopDetails);
 userRoute.put(`/api/user/register-device`,verifyToken,registerDevice);
 userRoute.put(`/api/user/log-out`,verifyToken,logoutUser);
 

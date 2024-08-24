@@ -21,7 +21,12 @@ const constants = {
       dueDateRequested:"Due date update is requested",
       transactionDueDateReject:"Transaction due date requested is rejected",
       transactionSuccesfullStarted:"Transaction successfully started",
-      deleteAllNoti:"All notifications are deleted"
+      deleteAllNoti:"All notifications are deleted",
+      userProfileUpdate:"User profile updated successfully",
+      shopProfileUpdate:"Shop updated successfully",
+      enquiryAdded:"Enquiry added successfully",
+      enquiryReopen:"Enquiry reopened successfully",
+      enquiryClosed:"Enquiry closed successfully",
     },
     errors: {
       roleNotFound:"Role not found",
@@ -62,7 +67,9 @@ const constants = {
       invalidOtp:"Invalid OTP",
       reminderAlreadyExists:"Today's transaction reminder is already added",
       deviceIdRequired:"Device ID is required",
-      invalidRequest:"Invalid request"
+      invalidRequest:"Invalid request",
+      enquiryIdNotValid:"Enquiry id not valid",
+      enquiryNotFound:"Enquiry not found"
     },
 };
 
@@ -74,7 +81,8 @@ const roles={
 const NOTIFICATION_TYPE={
   REMINDER:"REMINDER",
   TRANSACTION:"TRANSACTION",
-  REVIEW:"REVIEW"
+  REVIEW:"REVIEW",
+  ENQUIRY:"ENQUIRY"
 }
 
 const NOTIFICATION_STATUS={
@@ -112,4 +120,10 @@ const TRANSACTION_MODULES={
   TRANSACTION:"TRANSACTION"
 }
 
-export { constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }
+const ENQUIRY_STATUS={
+  OPEN:"Open",
+  CLOSE:"Close",
+  REOPEN:"Reopen"
+}
+
+export { ENQUIRY_STATUS,constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }
