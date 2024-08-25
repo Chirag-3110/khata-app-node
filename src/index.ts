@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import cors from 'cors';
 import mongoConnect from './database/mongo';
 import userRoute from './routes/userRoute';
 import roleRoute from './routes/roleRoute';
@@ -12,10 +13,12 @@ import reviewRoute from './routes/reviewRoute';
 import reminderRoute from './routes/reminderRoute';
 import dashboardRoute from './routes/dashboardRoute.';
 import enquiryRoute from './routes/enquiryRoute';
+import adminUserRoute from './routes/admin/usersRoute';
 
 const app = express();
 const server = http.createServer(app);
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({
     extended: true
@@ -42,6 +45,7 @@ app.use(reviewRoute);
 app.use(dashboardRoute);
 app.use(reminderRoute);
 app.use(enquiryRoute);
+app.use(adminUserRoute);
 
 
 

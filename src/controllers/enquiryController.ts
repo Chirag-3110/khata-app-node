@@ -147,7 +147,7 @@ export const reopenCloseEnquiry = async (req: any, res: any) => {
         await Enquiry.findByIdAndUpdate(
             enquiryId,
             {
-                status: findRole?.role == roles.Vender ? ENQUIRY_STATUS.CLOSE : ENQUIRY_STATUS.REOPEN,
+                status: findRole?.role == roles.Vender ? ENQUIRY_STATUS.CLOSE : ENQUIRY_STATUS.OPEN,
                 $push: { feedbacks: {
                     comment:description,
                     userId:userId
