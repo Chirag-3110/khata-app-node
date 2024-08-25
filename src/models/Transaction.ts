@@ -36,7 +36,6 @@ const transactionSchema = new Schema<Transaction>({
   },
   transactionDate: {
     type: Date,
-    default: Date.now,
   },
   transactionRef: {
     type: String,
