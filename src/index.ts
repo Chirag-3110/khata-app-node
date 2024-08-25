@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import cors from 'cors';
 import mongoConnect from './database/mongo';
 import userRoute from './routes/userRoute';
 import roleRoute from './routes/roleRoute';
@@ -17,6 +18,7 @@ import adminUserRoute from './routes/admin/usersRoute';
 const app = express();
 const server = http.createServer(app);
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({
     extended: true
