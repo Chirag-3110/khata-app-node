@@ -16,7 +16,7 @@ import enquiryRoute from './routes/enquiryRoute';
 import adminUserRoute from './routes/admin/usersRoute';
 
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app)
 
 app.use(cors());
 app.use(express.json());
