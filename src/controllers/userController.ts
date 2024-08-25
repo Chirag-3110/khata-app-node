@@ -41,10 +41,11 @@ export const createUser=async(req:any,res:any)=>{
         await userValidationSchema.validate(req.body);
         
         const user= new User({email:email?.toLowerCase(),documentId})
-        await user.save();
+        const response = await user.save();
         console.log(req.body);
     
-        return buildResponse(res,constants.success.registeredUserSuccessfully,200);
+        return buildObjectResponse(res, {userId:response?._id});
+
     } catch (error) {
         console.log(error, 'error');
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
@@ -301,8 +302,7 @@ export const editShopDetails = async (req: any, res: any) => {
   
 
 export const registerDevice = async (req: any, res: any) => {
-    const { fcmToken, os, deviceId } = req.body;
-    const {userId} = req.user;
+    const { fcmToken, os, deviceId, userId } = req.body;
     try {
       const user = await User.findById(userId);
       if (!user) {

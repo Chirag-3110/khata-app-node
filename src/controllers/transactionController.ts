@@ -36,8 +36,12 @@ export const createNewTransaction = async (req: any, res: any) => {
       otp:"0000",
       // otp:otp,
       createdBy:createdBy?createdBy:roles.Vender,
-      transactionRef:generateRandomTransactionRef()
+      transactionRef:generateRandomTransactionRef(),
+      transactionDate: moment().format()
     }
+
+    console.log(transactionData,'Data');
+    
 
     const transaction = new Transaction(transactionData);
 

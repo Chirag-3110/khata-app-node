@@ -171,3 +171,34 @@ export const reopenCloseEnquiry = async (req: any, res: any) => {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };  
+
+export const listEnquiryUsingVenderId = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+    const {venderId}=req.query;
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+    
+    const enquiry = await Enquiry.find({ userId:userId,venderId:venderId })
+    .populate('feedbacks.userId')
+    .populate('category')
+    // .skip(skip)
+    // .limit(limit);
+
+    const totalenquiry = await Enquiry.countDocuments({ userId:userId,venderId:venderId });
+    const totalPages = Math.ceil(totalenquiry / limit);
+
+    return buildObjectResponse(res, {
+      enquiry,
+      // totalPages,
+      // currentPage: page,
+      // totalItems: totalenquiry,
+    });
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+}; 
