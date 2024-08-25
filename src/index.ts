@@ -12,6 +12,7 @@ import reviewRoute from './routes/reviewRoute';
 import reminderRoute from './routes/reminderRoute';
 import dashboardRoute from './routes/dashboardRoute.';
 import enquiryRoute from './routes/enquiryRoute';
+import adminUserRoute from './routes/admin/usersRoute';
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use(reviewRoute);
 app.use(dashboardRoute);
 app.use(reminderRoute);
 app.use(enquiryRoute);
+app.use(adminUserRoute);
 
 
 
