@@ -29,7 +29,8 @@ interface Shop extends Document {
     businessCode:string,
     shopProfilePic:string,
     shopImages:string[],
-    ratings:Number
+    ratings:Number,
+    customDueDate:Date
 }
 
 const coordinatesSchema = new Schema<Coordinates>({
@@ -127,6 +128,9 @@ const shopSchema = new Schema<Shop>({
     ratings:{
         type:Number,
         default:0
+    },
+    customDueDate:{
+        type:Date,
     }
 });
 

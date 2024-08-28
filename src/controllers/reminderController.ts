@@ -1,10 +1,11 @@
-import moment from "moment";
+import mongoose, { Types } from "mongoose";
 import { constants, NOTIFICATION_TYPE, roles } from "../constants";
 import Reminder from "../models/reminder";
 import Transaction from "../models/Transaction";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import Notification from "../models/Notification";
+import moment from "moment";
 
 export const addNewReminder=async(req:any,res:any)=>{
     try {
@@ -64,6 +65,92 @@ export const addNewReminder=async(req:any,res:any)=>{
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+export const addBulkReminders = async (req: any, res: any) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+        const { transactions } = req.body;
+        console.log(transactions,"tre");
+        
+        let reminderMedium = "Notification"
+        let reminderDate=moment()
+
+        if (!Array.isArray(transactions) || transactions.length === 0) {
+            await session.abortTransaction();
+            session.endSession();
+            return buildErrorResponse(res, constants.errors.transactionsArrayRequired, 404);
+        }
+
+        for (const transactionId of transactions) {
+
+            if (!transactionId) {
+                await session.abortTransaction();
+                session.endSession();
+                return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+            }
+
+            const existingTransactionReminders = await Reminder.find({ transactionId: transactionId }).session(session);
+
+            if (existingTransactionReminders?.length > 0) {
+                const lastReminder = existingTransactionReminders[existingTransactionReminders.length - 1];
+                const createdAtTime = moment(lastReminder.createdAt);
+
+                const hoursDifference = reminderDate.diff(createdAtTime, 'hours');
+
+                if (hoursDifference < 24) {
+                    await session.abortTransaction();
+                    session.endSession();
+                    return buildErrorResponse(res, constants.errors.reminderAlreadyExists, 400);
+                }
+            }
+
+            const findTransaction = await Transaction.findById(transactionId).session(session);
+            console.log(findTransaction,"tran");
+            
+            if (!findTransaction) {
+                await session.abortTransaction();
+                session.endSession();
+                return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+            }
+
+            const reminderData = {
+                customerId: findTransaction?.customerId,
+                venderId: findTransaction?.venderId,
+                reminderDate: reminderDate,
+                reminderMedium: reminderMedium,
+                transactionId: transactionId
+            };
+
+            const reminder = new Reminder(reminderData);
+            await reminder.save({ session });
+
+            const notificationBody = {
+                title: "Reminder",
+                description: `You have received a new reminder for your next payment`,
+                notificationType: NOTIFICATION_TYPE.REMINDER,
+                userId: findTransaction?.customerId
+            };
+
+            const notification = new Notification(notificationBody);
+            await notification.save({ session });
+        }
+
+        await session.commitTransaction();
+        session.endSession();
+        return buildResponse(res, constants.success.bulkRemindersAddedSuccess, 200);
+
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        console.log(error, "error");
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+};
+
+  
+
 
 export const listRemindersByVenderId=async(req:any,res:any)=>{
     try {

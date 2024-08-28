@@ -228,13 +228,34 @@ export const dashboardSearch=async(req:any,res:any) => {
         let results:any=[];
 
         if(role?.role == roles.Customer){
-            const regexPattern = new RegExp(searchQuery, 'i'); 
-            results = await Shop.find({
+            const regexPattern = new RegExp(searchQuery, 'i');
+
+            const shopsByName = await Shop.find({
                 name: { $regex: regexPattern },
-                ownerName: { $regex: regexPattern },    
                 canBeSearchable: true,
-                status:true
+                status: true
             }).populate("user");
+
+            console.log(shopsByName,"shop",searchQuery);
+            
+
+            const usersByPhone = await User.find({ phoneNumber: { $regex: regexPattern } }).select('_id');
+
+            console.log(usersByPhone,"phone")
+
+            const userIds = usersByPhone.map(user => user._id);
+
+            const shopsByUserPhone = await Shop.find({
+                user: { $in: userIds },
+                canBeSearchable: true,
+                status: true
+            }).populate("user");
+            results = [...shopsByName, ...shopsByUserPhone];
+            results = results.filter((shop:any, index:any, self:any) =>
+                index === self.findIndex((s:any) => (
+                    s._id.toString() === shop._id.toString()
+                ))
+            );
         }else{
             const regexPattern = new RegExp(searchQuery, 'i'); 
             const users = await User.find({ name: { $regex: regexPattern},role: searchCustomer?._id }).select('_id');

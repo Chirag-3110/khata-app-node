@@ -27,6 +27,7 @@ const constants = {
       enquiryAdded:"Enquiry added successfully",
       enquiryReopen:"Enquiry reopened successfully",
       enquiryClosed:"Enquiry closed successfully",
+      bulkRemindersAddedSuccess:"Bulk reminders are added successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -69,7 +70,8 @@ const constants = {
       deviceIdRequired:"Device ID is required",
       invalidRequest:"Invalid request",
       enquiryIdNotValid:"Enquiry id not valid",
-      enquiryNotFound:"Enquiry not found"
+      enquiryNotFound:"Enquiry not found",
+      transactionsArrayRequired:"Requires atleast one transaction"
     },
 };
 

@@ -25,7 +25,7 @@ interface User extends Document {
     qrCode: string;
     upiId: string;
     isProfileDone:boolean;
-    phoneNumber:number;
+    phoneNumber:string;
 }
 
 
@@ -109,8 +109,7 @@ const userSchema = new Schema<User>({
       default: false,
     },
     phoneNumber:{
-        type:Number,
-        maxlength:10
+        type:String
     },
 });
 
