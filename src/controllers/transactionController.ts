@@ -1,10 +1,10 @@
 import mongoose, { Types } from "mongoose";
-import { DUE_DATE_STATUS, NOTIFICATION_TYPE, TRANSACTION_MODULES, TRANSACTION_STATUS, TRANSACTION_TYPE, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
+import { DUE_DATE_STATUS, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, TRANSACTION_MODULES, TRANSACTION_STATUS, TRANSACTION_TYPE, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
 import User from "../models/user";
 import {buildErrorResponse,buildObjectResponse,buildResponse,} from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
 import Wallet from "../models/Wallet";
-import { generateOTP, generateRandomTransactionRef } from "../utils";
+import { generateOTP, generateRandomTransactionRef, sendNotification } from "../utils";
 import Notification from "../models/Notification";
 import WalletTransaction from "../models/walletTransaction";
 const moment = require("moment");
@@ -20,6 +20,15 @@ export const createNewTransaction = async (req: any, res: any) => {
 
     if (!dueDate)
       return buildErrorResponse(res, constants.errors.invalidDueDate, 404);
+
+    const findUser=await User.findById(userId);
+    const findVender=await User.findById(venderId);
+    
+    if(!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+    if(!findVender)
+      return buildErrorResponse(res, constants.errors.userNotVender, 404);
 
     const otp = await generateOTP();
 
@@ -56,6 +65,14 @@ export const createNewTransaction = async (req: any, res: any) => {
       }
       const notification=new Notification(notificationBody);
       await notification.save();
+
+      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction.message.replace('{{userName}}', findVender?.name).replace('{{spaceName}}', findUser?.name)
+      let title = FIREBASE_NOTIFICATION_MESSAGES.transaction.type;
+
+      const tokens: string[] = [];
+      findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+      await sendNotification("Transaction Created",message,tokens,{type:title,transactionId:response?._id})
+
     }
 
     return buildObjectResponse(res, {transactonId:response?._id});
