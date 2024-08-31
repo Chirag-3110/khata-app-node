@@ -66,7 +66,7 @@ export const createNewTransaction = async (req: any, res: any) => {
       const notification=new Notification(notificationBody);
       await notification.save();
 
-      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction.message.replace('{{userName}}', findVender?.name).replace('{{spaceName}}', findUser?.name)
+      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction.message.replace('{{userName}}', findVender?.name).replace('{{otp}}', otp)
       let title = FIREBASE_NOTIFICATION_MESSAGES.transaction.type;
 
       const tokens: string[] = [];
@@ -98,6 +98,12 @@ export const verifyTransaction = async (req: any, res: any) => {
 
     console.log(findTransaction?.otp,"find",otp)
 
+    const findUser=await User.findById(findTransaction.venderId)
+console.log(findUser,'ss');
+
+    if (!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
     if(findTransaction?.otp !== otp)
       return buildErrorResponse(res, constants.errors.invalidOtp, 404);
 
@@ -125,9 +131,16 @@ export const verifyTransaction = async (req: any, res: any) => {
       },
     ];
     
-    // add fcm notification also
-
     await Notification.insertMany(notificationBodies);
+
+    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_verify.message;
+    let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_verify.type;
+
+    const tokens: string[] = [];
+    findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+    if(tokens?.length>0){
+      await sendNotification("Transaction Verified",message,tokens,{type:title})
+    }
 
     return buildResponse(res, constants.success.transactionSuccesfullStarted ,200);
   } catch (error) {
@@ -140,7 +153,6 @@ export const payAmountToVender = async (req: any, res: any) => {
   try {
     const { transactionId, amount } = req.body;
     const { userId } = req.user;
-console.log(transactionId, amount,'ssnsjonosoj');
 
     if (!transactionId)
       return buildErrorResponse(res,constants.errors.invalidTransactionId,404);
@@ -151,8 +163,16 @@ console.log(transactionId, amount,'ssnsjonosoj');
       return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
 
     if (findTransaction.status === TRANSACTION_STATUS.COMPLETE)
-      return buildErrorResponse(
-        res,constants.errors.transactionIsCompleted,404);
+      return buildErrorResponse(res,constants.errors.transactionIsCompleted,404);
+
+    const findVender=await User.findById(findTransaction?.venderId)
+    const findUser = await User.findById(findTransaction?.customerId);
+
+    if (!findVender)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+    if (!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
     const numberValue = parseFloat(findTransaction.amount.toString());
 
@@ -227,25 +247,6 @@ console.log(transactionId, amount,'ssnsjonosoj');
       }
       const walletTransaction=new WalletTransaction(walletData);
       await walletTransaction.save();
-      const notificationBodies = [
-        {
-          title: "Payment Done",
-          description: `${amount} is paid to transaction with id ${transactionId}`,
-          notificationType: NOTIFICATION_TYPE.TRANSACTION,
-          userId: findTransaction?.customerId,
-        },
-        {
-          title: "Amount Recieved",
-          description: `${amount} is recieved with transaction id ${transactionId}`,
-          notificationType: NOTIFICATION_TYPE.TRANSACTION,
-          userId: findTransaction?.venderId,
-        },
-      ];
-      
-      // add fcm notification also
-  
-      await Notification.insertMany(notificationBodies);
-      // return buildResponse(res, constants.success.transactionDone, 200);
     } else {
       console.log("date1 is after date2");
       if (amount == numberValue) {
@@ -304,21 +305,29 @@ console.log(transactionId, amount,'ssnsjonosoj');
     const notificationBodies = [
       {
         title: "Payment Done",
-        description: `${amount} is paid to transaction with id ${transactionId}`,
+        description: `${amount} is paid to transaction with id ${findTransaction?.transactionRef}`,
         notificationType: NOTIFICATION_TYPE.TRANSACTION,
         userId: findTransaction?.customerId,
       },
       {
         title: "Amount Recieved",
-        description: `${amount} is recieved with transaction id ${transactionId}`,
+        description: `${amount} is recieved with transaction id ${findTransaction?.transactionRef}`,
         notificationType: NOTIFICATION_TYPE.TRANSACTION,
         userId: findTransaction?.venderId,
       },
     ];
     
-    // add fcm notification also
-
     await Notification.insertMany(notificationBodies);
+
+    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_amount_pay.message.replace('{{amount}}', amount).replace('{{userName}}', findUser.name);
+    let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_amount_pay.type;
+
+    const tokens: string[] = [];
+    findVender?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+    if(tokens?.length>0){
+      await sendNotification("Transaction Amount Payment recieved",message,tokens,{type:title,transactionId:transactionId})
+    }
+    
     return buildResponse(res, constants.success.transactionDone, 200);
 
   } catch (error) {
@@ -342,6 +351,15 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
     if (findTransaction?.dueDateUpdatedCount == 1)
       return buildErrorResponse(res,constants.errors.transactionDueDateUpdate,406);
 
+    const findVender=await User.findById(findTransaction?.venderId)
+    const findUser = await User.findById(findTransaction?.customerId);
+
+    if (!findVender)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+    if (!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
     const dueDateUpdatedCount = (findTransaction.dueDateUpdatedCount? findTransaction.dueDateUpdatedCount.valueOf(): 0) + 1;
 
     await Transaction.findByIdAndUpdate(
@@ -354,8 +372,6 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
       { new: true }
     );
 
-    const findUser = await User.findById(findTransaction?.customerId);
-
     const notificationBody={
       title:"Due date update request",
       description:`${findUser?.name} has raised a request for due date update`,
@@ -364,6 +380,15 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
     }
     const notification=new Notification(notificationBody);
     await notification.save();
+
+    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_request.message.replace('{{userName}}', findUser?.name);
+    let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_request.type;
+
+    const tokens: string[] = [];
+    findVender?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+    if(tokens?.length>0){
+      await sendNotification("Due date update request",message,tokens,{type:title})
+    }
 
     return buildResponse(res, constants.success.dueDateRequested, 200);
   } catch (error) {
@@ -384,6 +409,11 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
     if (!findTransaction)
       return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
 
+    const findUser = await User.findById(findTransaction?.customerId);
+
+    if (!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
     if(status == DUE_DATE_STATUS.ACCEPT){
       await Transaction.findByIdAndUpdate(
         transactionId,
@@ -399,6 +429,15 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
       }
       const notification=new Notification(notificationBody);
       await notification.save();
+
+      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_request_response.message.replace('{{request}}', "accepted");
+      let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_request_response.type;
+
+      const tokens: string[] = [];
+      findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+      if(tokens?.length>0){
+        await sendNotification("Due date update request",message,tokens,{type:title})
+      }
   
       return buildResponse(res, constants.success.transactionDueDateUpdate, 200);
 
@@ -417,6 +456,15 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
       }
       const notification=new Notification(notificationBody);
       await notification.save();
+
+      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_request_response.message.replace('{{request}}', "rejected");
+      let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_request_response.type;
+
+      const tokens: string[] = [];
+      findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+      if(tokens?.length>0){
+        await sendNotification("Due date update request",message,tokens,{type:title})
+      }
 
       return buildResponse(res, constants.success.transactionDueDateReject, 200);
     }
@@ -445,6 +493,15 @@ export const updateTransactionStatus = async (req: any, res: any) => {
 
     if (!findTransaction)
       return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+
+    const findVender=await User.findById(findTransaction?.venderId)
+    const findUser = await User.findById(findTransaction?.customerId);
+
+    if (!findVender)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+    if (!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -477,6 +534,15 @@ export const updateTransactionStatus = async (req: any, res: any) => {
           },
           { session }
         );
+      }
+
+      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_status_update.message.replace('{{venderName}}', findVender?.name);
+      let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_status_update.type;
+
+      const tokens: string[] = [];
+      findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+      if(tokens?.length>0){
+        await sendNotification("Transaction status updates",message,tokens,{type:title})
       }
 
       await session.commitTransaction();

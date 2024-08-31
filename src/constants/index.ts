@@ -131,9 +131,28 @@ const ENQUIRY_STATUS={
 const FIREBASE_NOTIFICATION_MESSAGES={ 
   transaction:{
     type:"TRANSACTION_CREATED",
-    message:"New transaction is created by {{userName}}"
+    message:"New transaction is created by {{userName}} with {{otp}}"
   },
-
+  transaction_verify:{
+    type:"TRANSACTION_VERIFIED",
+    message:"The transaction is successfully verified."
+  },
+  transaction_request:{
+    type:"TRANSACTION_REQUEST",
+    message:"Due date request has been recieved from {{userName}}."
+  },
+  transaction_request_response:{
+    type:"TRANSACTION_REQUEST_ACCEPT_REJECT",
+    message:"Due date request has been {{request}}."
+  },
+  transaction_status_update:{
+    type:"TRANSACTION_STATUS_UPDATED",
+    message:"Transaction status is changed by {{venderName}}."
+  },
+  transaction_amount_pay:{
+    type:"TRANSACTION_PAYMENT",
+    message:"{{amount}} has been recieved from {{userName}}"
+  }
 }
 
 export { FIREBASE_NOTIFICATION_MESSAGES,ENQUIRY_STATUS,constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }
