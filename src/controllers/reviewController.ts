@@ -1,9 +1,10 @@
-import { constants, NOTIFICATION_TYPE, roles } from "../constants";
+import { constants, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, roles } from "../constants";
 import Customer from "../models/customer";
 import Notification from "../models/Notification";
 import Review from "../models/Review";
 import Role from "../models/Role";
 import User from "../models/user";
+import { sendNotification } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import { userValidationSchema } from "../validations/userValidation";
 
@@ -30,9 +31,17 @@ export const addNewReview=async(req:any,res:any)=>{
 
         const shopUser=await User.findById(shopId);
 
+        if (!shopUser)
+            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
         if(checkForReview?.length>0){
             return buildErrorResponse(res,constants.errors.reviewAlreadyExists,406);
         }
+
+        const findUser = await User.findById(customerId);
+
+        if (!findUser)
+            return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
         const review=new Review(req.body);
 
@@ -46,6 +55,15 @@ export const addNewReview=async(req:any,res:any)=>{
         }
         const notification=new Notification(notificationBody);
         await notification.save();
+
+        let message=FIREBASE_NOTIFICATION_MESSAGES.review.message.replace('{{shopUser}}', shopUser?.name);
+        let title = FIREBASE_NOTIFICATION_MESSAGES.review.type;
+
+        const tokens: string[] = [];
+        findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+        if(tokens?.length>0){
+            await sendNotification("New Review Recieved",message,tokens,{type:title})
+        }
         
         return buildResponse(res,constants.success.reviewAddedSuccessfully,200);
     } catch (error) {

@@ -1,11 +1,12 @@
 import mongoose, { Types } from "mongoose";
-import { constants, NOTIFICATION_TYPE, roles } from "../constants";
+import { constants, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, roles } from "../constants";
 import Reminder from "../models/reminder";
 import Transaction from "../models/Transaction";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import Notification from "../models/Notification";
 import moment from "moment";
+import { sendNotification } from "../utils";
 
 export const addNewReminder=async(req:any,res:any)=>{
     try {
@@ -38,6 +39,15 @@ export const addNewReminder=async(req:any,res:any)=>{
         if (!findTransaction)
             return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
 
+        const findVender=await User.findById(findTransaction?.venderId)
+        const findUser = await User.findById(findTransaction?.customerId);
+
+        if (!findVender)
+            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+        if (!findUser)
+            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
         const reminderData = {
             customerId: findTransaction?.customerId,
             venderId: findTransaction?.venderId,
@@ -57,6 +67,15 @@ export const addNewReminder=async(req:any,res:any)=>{
         }
         const notification=new Notification(notificationBody);
         await notification.save();
+
+        let message=FIREBASE_NOTIFICATION_MESSAGES.reminder.message.replace('{{shopName}}', findVender?.name)
+        let title = FIREBASE_NOTIFICATION_MESSAGES.reminder.type;
+
+        const tokens: string[] = [];
+        findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+        if(tokens?.length>0){
+            await sendNotification("Reminder Alert",message,tokens,{type:title,transactionId:transactionId})
+        }
 
         return buildResponse(res, constants.success.reminderAddedSuccess, 200);
 

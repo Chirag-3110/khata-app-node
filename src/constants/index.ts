@@ -71,7 +71,8 @@ const constants = {
       invalidRequest:"Invalid request",
       enquiryIdNotValid:"Enquiry id not valid",
       enquiryNotFound:"Enquiry not found",
-      transactionsArrayRequired:"Requires atleast one transaction"
+      transactionsArrayRequired:"Requires atleast one transaction",
+      noCategory:"Category not exists"
     },
 };
 
@@ -152,6 +153,18 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   transaction_amount_pay:{
     type:"TRANSACTION_PAYMENT",
     message:"{{amount}} has been recieved from {{userName}}"
+  },
+  review:{
+    type:"REVIEW",
+    message:"{{shopUser}} has added their review"
+  },
+  reminder:{
+    type:"REMIDER",
+    message:"You have recieved a new reminder for your next payment from {{shopName}}"
+  },
+  enquiry_added:{
+    type:"ENQUIRY",
+    message:"{{customerName}} has raised an enquiry related to {{categoryName}}"
   }
 }
 

@@ -1,5 +1,5 @@
 import mongoose,{ Types } from "mongoose";
-import { constants, ENQUIRY_STATUS, NOTIFICATION_TYPE, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
+import { constants, ENQUIRY_STATUS, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
 import Role from "../models/Role";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
@@ -7,6 +7,7 @@ import { enquiryValidationSchema } from "../validations/enquiryValidation";
 import * as yup from 'yup';
 import { Category, Enquiry } from "../models/Enquiry";
 import Notification from "../models/Notification";
+import { sendNotification } from "../utils";
 
 export const createNewEnquiry=async(req:any,res:any) => {
     const {userId} = req.user;
@@ -23,10 +24,18 @@ export const createNewEnquiry=async(req:any,res:any) => {
           return buildErrorResponse(res, 'Invalid Vender ID', 400);
         }
 
-        const findUser = await User.findById(venderId);
-    
-        if (!findUser)
-            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+        const findVender = await User.findById(venderId);
+        const findCustomer = await User.findById(userId);
+        const categoryName = await Category.findById(category);
+
+        if (!findCustomer)
+          return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+        if (!findVender)
+          return buildErrorResponse(res, constants.errors.userNotFound, 404);
+        
+        if (!categoryName)
+          return buildErrorResponse(res, constants.errors.noCategory, 404);
 
         const enquiry = new Enquiry({
             category: category,
@@ -37,20 +46,23 @@ export const createNewEnquiry=async(req:any,res:any) => {
 
         await enquiry.save();
 
-        const find = await User.findById(userId);
-
-        const categoryName = await Category.findById(category);
-console.log(categoryName,'sss',category);
-
         const notificationBody={
             title:"New Enquiry Raised",
-            description:`${find?.name} has raised an enquiry related to ${categoryName?.name}`,
+            description:`${findCustomer?.name} has raised an enquiry related to ${categoryName?.name}`,
             notificationType:NOTIFICATION_TYPE.ENQUIRY,
             userId:venderId
         }
         const notification=new Notification(notificationBody);
         await notification.save();
 
+        let message=FIREBASE_NOTIFICATION_MESSAGES.enquiry_added.message.replace('{{customerName}}', findVender?.name).replace('{{categoryName}}', categoryName?.name)
+        let title = FIREBASE_NOTIFICATION_MESSAGES.enquiry_added.type;
+
+        const tokens: string[] = [];
+        findVender?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+        if(tokens?.length>0){
+            await sendNotification("New Enquiry Raised",message,tokens,{type:title})
+        }
 
         return buildResponse(res, constants.success.enquiryAdded ,200);
 
