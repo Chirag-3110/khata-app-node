@@ -166,6 +166,10 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   enquiry_added:{
     type:"ENQUIRY",
     message:"{{customerName}} has raised an enquiry related to {{categoryName}}"
+  },
+  user_onboard:{
+    type:"USER_ONBOARD",
+    message:"We noticed that you registered for Payru but forgot to complete your profile. Please complete your profile."
   }
 }
 

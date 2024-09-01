@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+
 import mongoConnect from './database/mongo';
 import userRoute from './routes/userRoute';
 import roleRoute from './routes/roleRoute';
@@ -14,6 +15,8 @@ import reminderRoute from './routes/reminderRoute';
 import dashboardRoute from './routes/dashboardRoute.';
 import enquiryRoute from './routes/enquiryRoute';
 import adminUserRoute from './routes/admin/usersRoute';
+import { notificationReminderCron } from './controllers/notificationController';
+import { shopOnOffCron } from './controllers/userController';
 
 const app = express();
 const server = http.createServer(app)
@@ -47,5 +50,6 @@ app.use(reminderRoute);
 app.use(enquiryRoute);
 app.use(adminUserRoute);
 
-
+notificationReminderCron.stop();
+shopOnOffCron.stop();
 

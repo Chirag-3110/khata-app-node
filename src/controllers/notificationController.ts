@@ -1,8 +1,11 @@
 
 import {Types} from "mongoose";
-import { NOTIFICATION_STATUS, constants } from "../constants";
+import { FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_STATUS, constants } from "../constants";
 import Notification from "../models/Notification";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
+import cron from 'node-cron';
+import User from "../models/user";
+import { sendNotification } from "../utils";
 
 export const triggerNotification=async(req:any,res:any)=>{
     try {
@@ -141,3 +144,26 @@ export const markNotificationSeenUnseen = async (req: any, res: any) => {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+export const notificationReminderCron = cron.schedule('0 */2 * * *', async () => {
+// export const notificationReminderCron = cron.schedule('*/10 * * * * *', async () => {
+    try {
+        const users=await User.find({isProfileDone:false});
+
+        const tokens: string[] = [];
+        users.map((item)=>{
+            item?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+        })
+
+        let message=FIREBASE_NOTIFICATION_MESSAGES.user_onboard.message
+        let title = FIREBASE_NOTIFICATION_MESSAGES.user_onboard.type;
+
+        if(tokens?.length>0){
+            await sendNotification("Payru profile pending?",message,tokens,{type:title})
+        }
+
+        console.log(tokens,"uisers")
+    } catch (error) {
+        console.log(error)
+    }
+});

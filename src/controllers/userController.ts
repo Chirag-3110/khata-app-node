@@ -8,6 +8,7 @@ import User from "../models/user";
 import { generateJWT } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import { shopUpdateSchema, userValidationSchema } from "../validations/userValidation";
+import cron from 'node-cron';
 
 export const loginUser=async(req:any,res:any)=>{
     try {
@@ -355,3 +356,7 @@ export const logoutUser = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
+
+export const shopOnOffCron = cron.schedule('*/10 * * * * *', () => {
+    console.log('Running a task every 10 secondsss');
+});
