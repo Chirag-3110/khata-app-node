@@ -30,7 +30,7 @@ interface Shop extends Document {
     shopProfilePic:string,
     shopImages:string[],
     ratings:Number,
-    customDueDate:Date
+    customDueDate:string
 }
 
 const coordinatesSchema = new Schema<Coordinates>({
@@ -130,7 +130,7 @@ const shopSchema = new Schema<Shop>({
         default:0
     },
     customDueDate:{
-        type:Date,
+        type:String,
     }
 });
 

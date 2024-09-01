@@ -72,7 +72,8 @@ const constants = {
       enquiryIdNotValid:"Enquiry id not valid",
       enquiryNotFound:"Enquiry not found",
       transactionsArrayRequired:"Requires atleast one transaction",
-      noCategory:"Category not exists"
+      noCategory:"Category not exists",
+      cannotAddSelf:"Cannot add self"
     },
 };
 

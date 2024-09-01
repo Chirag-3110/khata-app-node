@@ -5,52 +5,54 @@ import Customer from "../models/customer";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 
-export const createNewCustomer=async(req:any,res:any)=>{
-    const { phoneNumber,role } = req.body;
+export const createNewCustomer = async (req: any, res: any) => {
+    const { phoneNumber, role } = req.body;
     try {
-        if(!phoneNumber)
+        if (!phoneNumber)
             return buildErrorResponse(res, constants.errors.invalidPhone, 404);
-        
-        if(!role)
+    
+        if (!role)
             return buildErrorResponse(res, constants.errors.roleRequired, 404);
-        
-        if(!role)
-            return buildErrorResponse(res, constants.errors.roleRequired, 404);
-        
-        const checkUserExists=await User.findOne({phoneNumber:phoneNumber});
 
-        if(!checkUserExists)
+        const checkUserExists = await User.findOne({ phoneNumber: phoneNumber }) as User
+
+        if (!checkUserExists)
             return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
-        const roles = await Role.findOne({role:role});
-
-        if(!roles)
-            return buildErrorResponse(res, constants.errors.roleNotFound, 404);
-
-        const isCustomerExists=await Customer.findOne({
-            venderId:req?.user?.userId,
-            customerId:checkUserExists?._id
-        });
-
-        if(isCustomerExists)
-            return buildErrorResponse(res, constants.errors.customerAlreadyAdded, 404);
-
-        const customerData={
-            role:roles?._id,
-            venderId:req?.user?.userId,
-            customerId:checkUserExists?._id
+        console.log(checkUserExists,'ss');
+        
+        if (checkUserExists?._id && req?.user?.userId == String(checkUserExists?._id)) {
+            return buildErrorResponse(res, constants.errors.cannotAddSelf, 400); 
         }
 
-        const user=new Customer(customerData);
+        const roles = await Role.findOne({ role: role });
+        if (!roles)
+            return buildErrorResponse(res, constants.errors.roleNotFound, 404);
 
+        const isCustomerExists = await Customer.findOne({
+            venderId: req?.user?.userId,
+            customerId: checkUserExists?._id
+        });
+
+        if (isCustomerExists)
+            return buildErrorResponse(res, constants.errors.customerAlreadyAdded, 404);
+
+        const customerData = {
+            role: roles?._id,
+            venderId: req?.user?.userId,
+            customerId: checkUserExists?._id
+        }
+
+        const user = new Customer(customerData);
         await user.save();
         
-        return buildResponse(res,constants.success.customerAdded,200);
+        return buildResponse(res, constants.success.customerAdded, 200);
     } catch (error) {
         console.log(error, 'error');
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
 
 export const deleteCustomer=async(req:any,res:any)=>{
     const { customerId } = req.query;
