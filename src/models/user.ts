@@ -26,6 +26,7 @@ interface User extends Document {
     upiId: string;
     isProfileDone:boolean;
     phoneNumber:string;
+    redeemCode:Schema.Types.ObjectId
 }
 
 
@@ -110,6 +111,10 @@ const userSchema = new Schema<User>({
     },
     phoneNumber:{
         type:String
+    },
+    redeemCode: {
+        type: Schema.Types.ObjectId,
+        ref: 'redemcode', 
     },
 });
 

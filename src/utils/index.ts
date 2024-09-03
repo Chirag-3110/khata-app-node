@@ -34,6 +34,18 @@ export const generateOTP = async () => {
   return otp;
 };
 
+export function generateReferralCode() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let referralCode = '';
+  
+  for (let i = 0; i < 6; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    referralCode += characters[randomIndex];
+  }
+  
+  return referralCode;
+}
+
 export const generateRandomTransactionRef=()=>{
   const year = moment().format('YYYY');
   const date = moment().format('DDMMYY');

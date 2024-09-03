@@ -73,7 +73,8 @@ const constants = {
       enquiryNotFound:"Enquiry not found",
       transactionsArrayRequired:"Requires atleast one transaction",
       noCategory:"Category not exists",
-      cannotAddSelf:"Cannot add self"
+      cannotAddSelf:"Cannot add self",
+      redeemCodeError:"Redeem code is invalid"
     },
 };
 
@@ -121,7 +122,8 @@ const WALLET_TRANSACTION_TYPE={
 }
 
 const TRANSACTION_MODULES={
-  TRANSACTION:"TRANSACTION"
+  TRANSACTION:"TRANSACTION",
+  REDEEM:"REDEEM"
 }
 
 const ENQUIRY_STATUS={
