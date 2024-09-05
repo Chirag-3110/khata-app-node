@@ -1,13 +1,17 @@
-import { constants, roles } from "../constants";
+import { TRANSACTION_MODULES, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
 import * as yup from 'yup';
 
 import Role from "../models/Role";
 import Shop from "../models/Shop";
 import Wallet from "../models/Wallet";
 import User from "../models/user";
-import { generateJWT } from "../utils";
+import { generateJWT, generateReferralCode } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import { shopUpdateSchema, userValidationSchema } from "../validations/userValidation";
+import cron from 'node-cron';
+import RedemCode from "../models/RedemCode";
+import WalletTransaction from "../models/walletTransaction";
+import moment from "moment";
 
 export const loginUser=async(req:any,res:any)=>{
     try {
@@ -53,17 +57,54 @@ export const createUser=async(req:any,res:any)=>{
 }
 
 export const completeRegistration=async(req:any,res:any)=>{
-    const { userData,shop,role } = req.body;
+    const { userData,shop,role,redeemCode } = req.body;
     const {email,name,address,dob,gender,qrCode,upiId,phoneNumber}=userData
     try {
         let roleData=await Role.findOne({role});
         if(!roleData)
             return buildErrorResponse(res, constants.errors.roleNotFound, 401);
-        
+
         let isUserExist=await User.findOne({email:email.toLowerCase()})
         
         if(!isUserExist)
             return buildErrorResponse(res, constants.errors.userNotFound, 401);
+
+        if(redeemCode){
+            const findRedeemCode = await RedemCode.findOne({ redermCode: redeemCode });
+            console.log(redeemCode,'coide');
+            
+            if (!findRedeemCode) {
+                return buildErrorResponse(res, constants.errors.redeemCodeError, 404);
+            }
+
+            let findRedemWallet = await Wallet.findOne({ userId: findRedeemCode.userId });
+            console.log(findRedemWallet,'wallet');
+            
+
+            if (findRedemWallet) {
+                const currentCredit = (findRedemWallet?.credit as number) ?? 0;
+                await Wallet.findByIdAndUpdate(
+                    findRedemWallet?._id,
+                    { credit: currentCredit + 50 },
+                    { new: true }
+                );
+                const walletData={
+                    walletAddress: findRedemWallet?._id,
+                    amount: currentCredit + 50,
+                    transactionType:WALLET_TRANSACTION_TYPE.DEPOSIT,
+                    module:TRANSACTION_MODULES.REDEEM
+                }
+                const walletTransaction=new WalletTransaction(walletData);
+                await walletTransaction.save();
+            }
+
+            await RedemCode.findByIdAndUpdate(
+                findRedeemCode?._id,
+                { $push: { referedCodeUsers: isUserExist?._id }, },
+                { new: true }
+            );
+            
+        }
 
         let wallet=new Wallet({userId:isUserExist?._id});
 
@@ -75,6 +116,9 @@ export const completeRegistration=async(req:any,res:any)=>{
             const shopDoc=await newShop.save();
             shopId=shopDoc?._id;
         }
+        const referCodeValue=generateReferralCode();
+        const redemCodeRef=new RedemCode({userId:isUserExist?._id,redermCode:`PR${referCodeValue}`})
+        const generatedRedeemCodeId=await redemCodeRef.save();
 
         let updatedUserData={
             walletId:wallerId?._id,
@@ -90,7 +134,8 @@ export const completeRegistration=async(req:any,res:any)=>{
             qrCode:qrCode,
             upiId:upiId,
             isProfileDone:true,
-            phoneNumber
+            phoneNumber,
+            redeemCode:generatedRedeemCodeId?._id
         }
         await User.findByIdAndUpdate(isUserExist?._id,updatedUserData)
         
@@ -121,13 +166,27 @@ export const getUserProfile=async(req:any,res:any) => {
     try {
         let userData = await User.findOne({ documentId })
             .populate('role')
-            .populate('walletId');
+            .populate('walletId')
+            .populate({
+                path: 'redeemCode',
+                populate: {
+                    path: 'referedCodeUsers',
+                    model: 'user',
+                }
+            });
 
         if (userData?.shopId) {
             userData = await User.findOne({ documentId })
                 .populate('role')
                 .populate('walletId')
-                .populate('shopId');
+                .populate('shopId')
+                .populate({
+                    path: 'redeemCode',
+                    populate: {
+                        path: 'referedCodeUsers',
+                        model: 'user',
+                    }
+                });
         }
 
         // console.log(userData, "user");
@@ -355,3 +414,33 @@ export const logoutUser = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
+
+export const shopOnOffCron = cron.schedule('0 */2 * * *', async () => {
+// export const shopOnOffCron = cron.schedule('*/30 * * * * *', async () => {
+    console.log('Running a task every 30 seconds');
+
+    try {
+        const currentTime = moment()
+        const shops = await Shop.find();
+        for (const shop of shops) {
+            const openTime = moment(shop.openTime).add(6, 'hours').add(30, 'minutes');
+            const closeDate = moment(shop.closeDate).add(6, 'hours').add(30, 'minutes');
+        
+            if (currentTime.isBetween(openTime, closeDate, null, '[)')) {
+                if (!shop.status) {
+                    shop.status = true;
+                    await shop.save();
+                    console.log(`Shop ${shop.name} is now open.`);
+                }
+            } else {
+                if (shop.status) {
+                    shop.status = false;
+                    await shop.save();
+                    console.log(`Shop ${shop.name} is now closed.`);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error updating shop status:', error);
+    }
+});

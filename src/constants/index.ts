@@ -73,7 +73,8 @@ const constants = {
       enquiryNotFound:"Enquiry not found",
       transactionsArrayRequired:"Requires atleast one transaction",
       noCategory:"Category not exists",
-      cannotAddSelf:"Cannot add self"
+      cannotAddSelf:"Cannot add self",
+      redeemCodeError:"Redeem code is invalid"
     },
 };
 
@@ -121,7 +122,8 @@ const WALLET_TRANSACTION_TYPE={
 }
 
 const TRANSACTION_MODULES={
-  TRANSACTION:"TRANSACTION"
+  TRANSACTION:"TRANSACTION",
+  REDEEM:"REDEEM"
 }
 
 const ENQUIRY_STATUS={
@@ -166,6 +168,10 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   enquiry_added:{
     type:"ENQUIRY",
     message:"{{customerName}} has raised an enquiry related to {{categoryName}}"
+  },
+  user_onboard:{
+    type:"USER_ONBOARD",
+    message:"We noticed that you registered for Payru but forgot to complete your profile. Please complete your profile."
   }
 }
 
