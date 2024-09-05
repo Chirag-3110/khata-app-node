@@ -166,13 +166,27 @@ export const getUserProfile=async(req:any,res:any) => {
     try {
         let userData = await User.findOne({ documentId })
             .populate('role')
-            .populate('walletId');
+            .populate('walletId')
+            .populate({
+                path: 'redeemCode',
+                populate: {
+                    path: 'referedCodeUsers',
+                    model: 'user',
+                }
+            });
 
         if (userData?.shopId) {
             userData = await User.findOne({ documentId })
                 .populate('role')
                 .populate('walletId')
-                .populate('shopId');
+                .populate('shopId')
+                .populate({
+                    path: 'redeemCode',
+                    populate: {
+                        path: 'referedCodeUsers',
+                        model: 'user',
+                    }
+                });
         }
 
         // console.log(userData, "user");
