@@ -14,7 +14,7 @@ COPY . .
 
 # Ensure the Firebase JSON file is in the correct location
 # Adjust the path as necessary
-COPY src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json /app/src/
+COPY ./src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json /app/src/
 
 
 RUN ls -al /app/src/
