@@ -7,13 +7,13 @@ import admin from 'firebase-admin';
 
 try {
   const serviceAccount = JSON.parse(fs.readFileSync('./src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json', 'utf8'));
+  console.log(serviceAccount,"ASc");
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
 } catch (error) {
   console.error('Error reading or parsing JSON file:', error);
-  process.exit(1);
 }
 
 export function generateJWT(user: any, documentId: any) {
