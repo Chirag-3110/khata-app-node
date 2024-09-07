@@ -33,7 +33,8 @@ jobs:
 
       - name: Create Firebase JSON file
         run: |
-          echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" | jq '.' > src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json
+          printf "%s" "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json
+
 
       - name: Build Docker image with secret
         run: |
