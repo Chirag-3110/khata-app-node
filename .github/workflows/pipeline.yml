@@ -12,7 +12,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Cache Node.js modules
         uses: actions/cache@v4
@@ -31,14 +32,15 @@ jobs:
         run: npm install
 
       - name: Create Firebase JSON file
-        run: echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json
+        run: |
+          echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" | jq '.' > src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json
 
       - name: Build Docker image with secret
         run: |
           DOCKER_BUILDKIT=1 docker build \
           --secret id=firebase_admin_sdk_json,src=src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json \
           -t testing .
-        
+
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
 
@@ -73,12 +75,12 @@ jobs:
           mkdir -p extracted-image
           tar -xzf ~/testing.tar.gz -C extracted-image
 
-      - name: Check contents of extracted-image
+      - name: Check contents of extracted image directory
         run: ls -l extracted-image/
 
-      - name: Set permissions for extracted-image
+      - name: Set permissions for extracted image
         run: chmod -R 755 extracted-image/
-        
+
       - name: Copy Docker image to EC2
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -105,7 +107,7 @@ jobs:
             docker rm testing || true
             docker run -d --name testing -p 3000:3000 testing
 
-      - name: Debug Docker container status 
+      - name: Debug Docker container status
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.EC2_HOST }}
