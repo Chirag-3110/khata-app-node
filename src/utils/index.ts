@@ -1,27 +1,30 @@
+import fs from 'fs';
 import moment from "moment";
-
 const JWT_SECRET = 'khatak_app'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
-var admin = require("firebase-admin");
+import admin from 'firebase-admin';
 
-var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json');
+try {
+  const serviceAccount = JSON.parse(fs.readFileSync('./src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json', 'utf8'));
 
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+} catch (error) {
+  console.error('Error reading or parsing JSON file:', error);
+  process.exit(1);
+}
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
-
-export function generateJWT(user: any,documentId: any) {
-    const secretKey = JWT_SECRET || '1234';
-    return jwt.sign(
-      {
-        userId: user,
-        documentId: documentId
-      },
-      secretKey
-    );
+export function generateJWT(user: any, documentId: any) {
+  const secretKey = JWT_SECRET || '1234';
+  return jwt.sign(
+    {
+      userId: user,
+      documentId: documentId
+    },
+    secretKey
+  );
 }
 
 export const generateOTP = async () => {
@@ -46,7 +49,7 @@ export function generateReferralCode() {
   return referralCode;
 }
 
-export const generateRandomTransactionRef=()=>{
+export const generateRandomTransactionRef = () => {
   const year = moment().format('YYYY');
   const date = moment().format('DDMMYY');
   const randomDigits = Math.floor(100000 + Math.random() * 900000);

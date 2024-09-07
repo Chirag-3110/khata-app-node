@@ -121,7 +121,13 @@ export const listReviewsByCustomerId=async(req:any,res:any)=>{
             return buildErrorResponse(res, constants.errors.customerNotExists, 404);
 
         const venders = await Review.find({ customerId: userId })
-        .populate("shopId")
+        .populate({
+            path: "shopId",
+            select: "email status activeStatus address name phoneNumber shopId",
+            populate: {
+                path: "shopId"
+            }
+        })
         // .skip(skip)
         // .limit(limit);
 
