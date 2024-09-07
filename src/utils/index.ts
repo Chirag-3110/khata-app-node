@@ -6,7 +6,7 @@ const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
 
 try {
-  const serviceAccount = JSON.parse(fs.readFileSync('./src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json', 'utf8'));
+  const serviceAccount = JSON.parse(fs.readFileSync('../payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json', 'utf8'));
   console.log(serviceAccount,"ASc");
 
   admin.initializeApp({
