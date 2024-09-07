@@ -357,7 +357,7 @@ export const editShopDetails = async (req: any, res: any) => {
         console.error("Error updating shop details:", error);
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
-  };
+};
   
 
 export const registerDevice = async (req: any, res: any) => {
@@ -382,6 +382,8 @@ export const registerDevice = async (req: any, res: any) => {
   
       return buildObjectResponse(res, { message: constants.success.tokenUpdated });
     } catch (error) {
+        console.log(error,"error");
+        
       return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };

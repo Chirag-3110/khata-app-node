@@ -30,9 +30,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Docker image
-        run: docker build -t testing .
+      - name: Create Firebase JSON file
+        run: echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json
 
+      - name: Build Docker image with secret
+        run: |
+          DOCKER_BUILDKIT=1 docker build \
+          --secret id=firebase_admin_sdk_json,src=src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json \
+          -t testing .
+        
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
 
