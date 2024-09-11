@@ -37,6 +37,7 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         .sort({ transactionDate: -1 })
         .limit(3);
 
+        // here get the vedner and customer number only
         const connectedCustomers=await Customer.countDocuments({venderId:userId});
 
         const connectedVenders=await Customer.countDocuments({customerId:userId});
@@ -227,7 +228,7 @@ export const dashboardSearch=async(req:any,res:any) => {
 
         let results:any=[];
 
-        if(role?.role == roles.Customer){
+        // if(role?.role == roles.Customer){
             const regexPattern = new RegExp(searchQuery, 'i');
 
             const shopsByName = await Shop.find({
@@ -256,18 +257,18 @@ export const dashboardSearch=async(req:any,res:any) => {
                     s._id.toString() === shop._id.toString()
                 ))
             );
-        }else{
-            const regexPattern = new RegExp(searchQuery, 'i'); 
-            const users = await User.find({ name: { $regex: regexPattern},role: searchCustomer?._id }).select('_id');
+        // }else{
+        //     const regexPattern = new RegExp(searchQuery, 'i'); 
+        //     const users = await User.find({ name: { $regex: regexPattern},role: searchCustomer?._id }).select('_id');
 
-            const userIds = users.map(user => user._id);
-            results = await Customer.find({
-                customerId: { $in: userIds },
-                venderId: userId
-            })
-            .populate("customerId")
-            .populate("venderId");   
-        }
+        //     const userIds = users.map(user => user._id);
+        //     results = await Customer.find({
+        //         customerId: { $in: userIds },
+        //         venderId: userId
+        //     })
+        //     .populate("customerId")
+        //     .populate("venderId");   
+        // }
 
         return buildObjectResponse(res, {data:results});
 
