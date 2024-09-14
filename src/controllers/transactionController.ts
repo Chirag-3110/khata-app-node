@@ -972,3 +972,45 @@ export const listCompleteTransactionUsingVenderId = async (req: any, res: any) =
   }
 };
 
+export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+
+    if (!userId)
+      return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const transactions = await Transaction.find({
+      venderId: userId,
+    })
+    .populate("customerId")
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
+    // .skip(skip)
+    // .limit(limit);
+
+    // const totaltransactions = await Transaction.countDocuments({
+    //   venderId: userId,
+    //   // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
+    //   transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
+    //   transactionType:TRANSACTION_TYPE.PARENT
+    // });
+    // const totalPages = Math.ceil(totaltransactions / limit);
+
+    return buildObjectResponse(res, {
+      transactions,
+      // totalPages,
+      // currentPage: page,
+      // totalItems: totaltransactions,
+    });
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
