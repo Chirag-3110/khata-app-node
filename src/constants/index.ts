@@ -27,7 +27,10 @@ const constants = {
       enquiryAdded:"Enquiry added successfully",
       enquiryReopen:"Enquiry reopened successfully",
       enquiryClosed:"Enquiry closed successfully",
-      bulkRemindersAddedSuccess:"Bulk reminders are added successfully"
+      bulkRemindersAddedSuccess:"Bulk reminders are added successfully",
+      fraudNotExeedsLimit:"Customer fraud limit not exceed, so customer is not blocked at this moment",
+      fraudUserBlock:"Customer blocked successfully.",
+      customersReactivated:"Customer is reactivated"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -76,7 +79,13 @@ const constants = {
       noCategory:"Category not exists",
       cannotAddSelf:"Cannot add self",
       redeemCodeError:"Redeem code is invalid",
-      venderRole:"Vender role is required"
+      venderRole:"Vender role is required",
+      customerBlocked:"Customer is blocked because of declaration of fraud by several venders",
+      fraudsterInvlidId:"Invalid fraudster Id",
+      fraudAddUser:"Invalid fraud add by user id",
+      fraudAlreadyExistsForTransaction:"Fraud is already given by you for this transaction",
+      invalidFraudId:"Invalid fraud Id",
+      fraudNotFound:"Fraud not found"
     },
 };
 

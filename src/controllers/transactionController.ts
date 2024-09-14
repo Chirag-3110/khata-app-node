@@ -9,6 +9,7 @@ import Notification from "../models/Notification";
 import WalletTransaction from "../models/walletTransaction";
 import Role from "../models/Role";
 import Customer from "../models/customer";
+import Frauds from "../models/Fraud";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -37,6 +38,11 @@ export const createNewTransaction = async (req: any, res: any) => {
 console.log(isCustomerExits,"Cuteomrexists");
 
     if(!isCustomerExits){
+      const findFraud=await Frauds.findOne({fraudsterId:userId});
+      if(findFraud && (findFraud?.fraudsCount?.valueOf() > 3)){
+        return buildErrorResponse(res, constants.errors.customerBlocked, 404);
+      }
+      
       const findNewUser=await User.findById(req?.user?.userId);
       const customerData = {
         role: findNewUser?.role,
@@ -47,6 +53,10 @@ console.log(customerData,"ss");
 
       const user = new Customer(customerData);
       await user.save();
+    }else{
+      if(!isCustomerExits?.activeStatus){
+        return buildErrorResponse(res, constants.errors.customerBlocked, 401);
+      }
     }
 
     const otp = await generateOTP();
@@ -216,12 +226,16 @@ export const payAmountToVender = async (req: any, res: any) => {
 
     const result = await Wallet.findById(checkUserExists?.walletId);
     const currentCredit = (result?.credit as number) ?? 0;
+    const currentDate = new Date();
 
     if (date2Only.isSameOrBefore(date1Only)) {
       if (amount == numberValue) {
         await Transaction.findByIdAndUpdate(
           transactionId,
-          { status: TRANSACTION_STATUS.CUSTOMER_PAID },
+          { 
+            status: TRANSACTION_STATUS.CUSTOMER_PAID,
+            $push: { amountPaidDates: currentDate },
+          },
           { new: true }
         );
         console.log("Complete transaction directly");
@@ -246,7 +260,7 @@ export const payAmountToVender = async (req: any, res: any) => {
                 transactionId,
                 {
                   status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
-                  $push: { childTransaction: childTransaction._id },
+                  $push: { childTransaction: childTransaction._id, amountPaidDates: currentDate },
                 },
                 { new: true }
             );
@@ -271,7 +285,10 @@ export const payAmountToVender = async (req: any, res: any) => {
       if (amount == numberValue) {
         await Transaction.findByIdAndUpdate(
           transactionId,
-          { status: TRANSACTION_STATUS.CUSTOMER_PAID },
+          { 
+            status: TRANSACTION_STATUS.CUSTOMER_PAID,
+            $push: { amountPaidDates: currentDate }, 
+          },
           { new: true }
         );
         console.log("Complete transaction directly, but deduct credit");
@@ -300,7 +317,7 @@ export const payAmountToVender = async (req: any, res: any) => {
             transactionId,
             {
               status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
-              $push: { childTransaction: childTransaction._id },
+              $push: { childTransaction: childTransaction._id, amountPaidDates: currentDate },
             },
             { new: true }
           );

@@ -17,6 +17,7 @@ import enquiryRoute from './routes/enquiryRoute';
 import adminUserRoute from './routes/admin/usersRoute';
 import { notificationReminderCron } from './controllers/notificationController';
 import { shopOnOffCron } from './controllers/userController';
+import fraudRoute from './routes/fraudRoute';
 
 const app = express();
 const server = http.createServer(app)
@@ -49,6 +50,7 @@ app.use(dashboardRoute);
 app.use(reminderRoute);
 app.use(enquiryRoute);
 app.use(adminUserRoute);
+app.use(fraudRoute);
 
 notificationReminderCron.stop();
 shopOnOffCron.stop();
