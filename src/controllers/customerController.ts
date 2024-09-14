@@ -4,6 +4,7 @@ import Role from "../models/Role";
 import Customer from "../models/customer";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
+import Shop from "../models/Shop";
 
 export const createNewCustomer = async (req: any, res: any) => {
     const { phoneNumber, role } = req.body;
@@ -181,3 +182,41 @@ export const getRandomShopsNearBy=async(req:any,res:any)=>{
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+export const getRandomShopsWithinRange = async (req: any, res:any) => {
+    try {
+        const { longitude, latitude } = req.body.coordinates;
+        const { userId } = req.user;
+
+        const venderRoleId = await Role.findOne({ role: roles.Vender });
+
+        if (!venderRoleId)
+            return buildErrorResponse(res, constants.errors.roleRequired, 404);
+
+        const customerIdsAndVenderIds = await Customer.find({ customerId: userId });
+        const venderIds = customerIdsAndVenderIds.map(item => item.venderId);
+
+        const nearbyShops = await Shop.find({
+            coordinates: {
+                $near: {
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [longitude, latitude],
+                    },
+                    $maxDistance: 5000,
+                },
+            },
+            user: { $nin: venderIds },
+        }).populate('user');
+
+        const unconnectedVendersWithin5Km = nearbyShops.map(shop => shop.user);
+
+        return buildObjectResponse(res, {
+            unconnectedVenders: unconnectedVendersWithin5Km,
+        });
+
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+};

@@ -2,8 +2,8 @@ import { Schema, model, Document } from 'mongoose';
 import { string } from 'yup';
 
 interface Coordinates {
-    latitude: number;
-    longitude: number;
+    type: string; 
+    coordinates: [number, number]; 
 }
 
 interface Shop extends Document {
@@ -32,17 +32,6 @@ interface Shop extends Document {
     ratings:Number,
     customDueDate:string
 }
-
-const coordinatesSchema = new Schema<Coordinates>({
-    latitude: {
-        type: Number,
-        required: true,
-    },
-    longitude: {
-        type: Number,
-        required: true,
-    },
-});
 
 const shopSchema = new Schema<Shop>({
     name: {
@@ -87,8 +76,15 @@ const shopSchema = new Schema<Shop>({
         ref: 'user',
     },
     coordinates: {
-        type: coordinatesSchema,
-        required: true,
+        type: {
+            type: String, 
+            enum: ['Point'],
+            default: 'Point'
+        },
+        coordinates: {
+            type: [Number],
+            required: true,
+        },
     },
     createdAt: {
         type: Date,
@@ -133,6 +129,8 @@ const shopSchema = new Schema<Shop>({
         type:String,
     }
 });
+
+shopSchema.index({ coordinates: '2dsphere' });
 
 const Shop = model<Shop>('shop', shopSchema);
 

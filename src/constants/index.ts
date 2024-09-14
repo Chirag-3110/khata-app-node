@@ -31,6 +31,7 @@ const constants = {
     },
     errors: {
       roleNotFound:"Role not found",
+      pinCodeRequired:"Security pin code is required",
       userAlreadyExists: 'User already exists',
       invalidUserId: 'User id is invalid',
       userNotFound: 'User not found',
@@ -74,7 +75,8 @@ const constants = {
       transactionsArrayRequired:"Requires atleast one transaction",
       noCategory:"Category not exists",
       cannotAddSelf:"Cannot add self",
-      redeemCodeError:"Redeem code is invalid"
+      redeemCodeError:"Redeem code is invalid",
+      venderRole:"Vender role is required"
     },
 };
 

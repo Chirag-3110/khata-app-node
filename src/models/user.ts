@@ -26,7 +26,8 @@ interface User extends Document {
     upiId: string;
     isProfileDone:boolean;
     phoneNumber:string;
-    redeemCode:Schema.Types.ObjectId
+    redeemCode:Schema.Types.ObjectId,
+    pinCode: string
 }
 
 
@@ -116,6 +117,9 @@ const userSchema = new Schema<User>({
         type: Schema.Types.ObjectId,
         ref: 'redemcode', 
     },
+    pinCode:{
+        type:String,
+    }
 });
 
 const User = model<User>('user', userSchema);

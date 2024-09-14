@@ -4,15 +4,15 @@ const JWT_SECRET = 'khatak_app'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
-// var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json');
+var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json');
 
-// try {
-//   admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount)
-//   });
-// } catch (error) {
-//   console.error('Error reading or parsing JSON file:', error);
-// }
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+} catch (error) {
+  console.error('Error reading or parsing JSON file:', error);
+}
 
 export function generateJWT(user: any, documentId: any) {
   const secretKey = JWT_SECRET || '1234';
@@ -74,11 +74,11 @@ export const sendNotification = async (title: string, body: string, tokens: stri
 
   console.log(message, "message");
 
-  // admin.messaging().sendMulticast(message)
-  //   .then((response: any) => {
-  //     console.log('Successfully sent message:', response);
-  //   })
-  //   .catch((error: any) => {
-  //     console.log('Error sending message:', error);
-  //   });
+  admin.messaging().sendMulticast(message)
+    .then((response: any) => {
+      console.log('Successfully sent message:', response);
+    })
+    .catch((error: any) => {
+      console.log('Error sending message:', error);
+    });
 }

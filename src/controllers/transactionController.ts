@@ -7,10 +7,13 @@ import Wallet from "../models/Wallet";
 import { generateOTP, generateRandomTransactionRef, sendNotification } from "../utils";
 import Notification from "../models/Notification";
 import WalletTransaction from "../models/walletTransaction";
+import Role from "../models/Role";
+import Customer from "../models/customer";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
   const { userId, amount, dueDate, venderId, description, createdBy } = req.body;
+
   try {
     if (!userId)
       return buildErrorResponse(res, constants.errors.invalidUserId, 404);
@@ -29,6 +32,22 @@ export const createNewTransaction = async (req: any, res: any) => {
 
     if(!findVender)
       return buildErrorResponse(res, constants.errors.userNotVender, 404);
+
+    const isCustomerExits=await Customer.findOne({customerId:userId,venderId})
+console.log(isCustomerExits,"Cuteomrexists");
+
+    if(!isCustomerExits){
+      const findNewUser=await User.findById(req?.user?.userId);
+      const customerData = {
+        role: findNewUser?.role,
+        venderId: venderId,
+        customerId: userId
+      }
+console.log(customerData,"ss");
+
+      const user = new Customer(customerData);
+      await user.save();
+    }
 
     const otp = await generateOTP();
 
@@ -979,36 +998,48 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
     if (!userId)
       return buildErrorResponse(res, constants.errors.invalidUserId, 404);
 
+    const findVender=await User.findById(userId);
+    
+    if(!findVender)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+    const findRole=await Role.findById(findVender?.role);
+
+    if(findRole?.role == roles.Customer){
+      return buildErrorResponse(res, constants.errors.venderRole, 401);
+    }
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
 
     const skip = (page - 1) * limit;
 
+    const today = new Date();
+    const currentDay = today.getDate().toString().padStart(2, '0');    
+    const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0'); 
+    const currentYear = today.getFullYear().toString(); 
+
     const transactions = await Transaction.find({
       venderId: userId,
+      transactionType: TRANSACTION_TYPE.PARENT,
+      $expr: {
+        $and: [
+          { $eq: [{ $dayOfMonth: "$dueDate" }, currentDay] },
+          { $eq: [{ $month: "$dueDate" }, currentMonth] }, 
+          { $eq: [{ $year: "$dueDate" }, currentYear] }    
+        ]
+      }
     })
     .populate("customerId")
     .populate({
       path: "childTransaction"
     })
     .sort({ transactionDate: -1 });
-    // .skip(skip)
-    // .limit(limit);
-
-    // const totaltransactions = await Transaction.countDocuments({
-    //   venderId: userId,
-    //   // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
-    //   transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
-    //   transactionType:TRANSACTION_TYPE.PARENT
-    // });
-    // const totalPages = Math.ceil(totaltransactions / limit);
 
     return buildObjectResponse(res, {
       transactions,
-      // totalPages,
-      // currentPage: page,
-      // totalItems: totaltransactions,
     });
+
   } catch (error) {
     console.log(error, "error");
     return buildErrorResponse(res, constants.errors.internalServerError, 500);

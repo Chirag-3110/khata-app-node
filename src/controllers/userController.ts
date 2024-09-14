@@ -57,9 +57,13 @@ export const createUser=async(req:any,res:any)=>{
 }
 
 export const completeRegistration=async(req:any,res:any)=>{
-    const { userData,shop,role,redeemCode } = req.body;
+    const { userData,shop,role,redeemCode,pinCode } = req.body;
     const {email,name,address,dob,gender,qrCode,upiId,phoneNumber}=userData
     try {
+        if(!pinCode){
+            return buildErrorResponse(res, constants.errors.pinCodeRequired, 401);
+        }
+
         let roleData=await Role.findOne({role});
         if(!roleData)
             return buildErrorResponse(res, constants.errors.roleNotFound, 401);
@@ -112,7 +116,9 @@ export const completeRegistration=async(req:any,res:any)=>{
 
         let shopId=null;
         if(role === roles.Vender){
-            const newShop=new Shop({...shop,user:isUserExist?._id});
+            const {coordinates} = shop;
+            const { latitude, longitude } = coordinates;
+            const newShop=new Shop({...shop,user:isUserExist?._id, coordinates: {type: 'Point',coordinates: [longitude, latitude]}});
             const shopDoc=await newShop.save();
             shopId=shopDoc?._id;
         }
@@ -135,7 +141,8 @@ export const completeRegistration=async(req:any,res:any)=>{
             upiId:upiId,
             isProfileDone:true,
             phoneNumber,
-            redeemCode:generatedRedeemCodeId?._id
+            redeemCode:generatedRedeemCodeId?._id,
+            pinCode:pinCode
         }
         await User.findByIdAndUpdate(isUserExist?._id,updatedUserData)
         
