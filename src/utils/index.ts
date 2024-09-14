@@ -73,12 +73,13 @@ export const sendNotification = async (title: string, body: string, tokens: stri
   };
 
   console.log(message, "message");
-
-  admin.messaging().sendMulticast(message)
-    .then((response: any) => {
-      console.log('Successfully sent message:', response);
-    })
-    .catch((error: any) => {
-      console.log('Error sending message:', error);
-    });
+  if(tokens.length>0){
+    admin.messaging().sendMulticast(message)
+      .then((response: any) => {
+        console.log('Successfully sent message:', response);
+      })
+      .catch((error: any) => {
+        console.log('Error sending message:', error);
+      });
+  }
 }
