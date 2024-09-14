@@ -1,8 +1,10 @@
-import { constants, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, roles } from "../constants";
+import { Types } from "mongoose";
+import { constants, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, roles, TRANSACTION_STATUS } from "../constants";
 import Customer from "../models/customer";
 import Notification from "../models/Notification";
 import Review from "../models/Review";
 import Role from "../models/Role";
+import Transaction from "../models/Transaction";
 import User from "../models/user";
 import { sendNotification } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
@@ -120,6 +122,7 @@ export const listReviewsByCustomerId=async(req:any,res:any)=>{
         if(!findUser)
             return buildErrorResponse(res, constants.errors.customerNotExists, 404);
 
+        //here get transaction number also
         const venders = await Review.find({ customerId: userId })
         .populate({
             path: "shopId",
@@ -131,14 +134,29 @@ export const listReviewsByCustomerId=async(req:any,res:any)=>{
         // .skip(skip)
         // .limit(limit);
 
+        let totalReviews:any=[];
+
+        for (const review of venders) {
+            const shopId : any = review.shopId ;
+            const transactionCountPending = shopId? await Transaction.countDocuments({ venderId: shopId._id,transactionStatus: TRANSACTION_STATUS.PENDING }): 0;
+            const transactionCount = shopId? await Transaction.countDocuments({ venderId: shopId._id }): 0;
+           const reviewWithTransactionCounts = {
+                ...review.toObject(), 
+                shopTotalPendingTransactions: transactionCountPending,
+                shopTransactionCount: transactionCount
+            };
+            totalReviews.push(reviewWithTransactionCounts);
+        }
+        
+
         const totalCustomers = await Review.countDocuments({ customerId: userId });
         const totalPages = Math.ceil(totalCustomers / limit);
 
         return buildObjectResponse(res, {
-            venders,
-            totalPages,
-            currentPage: page,
-            totalItems: totalCustomers
+            venders:totalReviews,
+            // totalPages,
+            // currentPage: page,
+            // totalItems: totalCustomers
         });
 
     } catch (error) {

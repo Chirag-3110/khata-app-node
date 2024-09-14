@@ -78,6 +78,7 @@ export const deleteCustomer=async(req:any,res:any)=>{
 
 export const getCustomersOfVender=async(req:any,res:any)=>{
     try {
+        //add check for venders
         const {userId}=req.user;
         const {role}=req.query;
 
