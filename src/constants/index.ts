@@ -28,8 +28,8 @@ const constants = {
       enquiryReopen:"Enquiry reopened successfully",
       enquiryClosed:"Enquiry closed successfully",
       bulkRemindersAddedSuccess:"Bulk reminders are added successfully",
-      fraudNotExeedsLimit:"Customer fraud limit not exceed, so customer is not blocked at this moment",
-      fraudUserBlock:"Customer blocked successfully.",
+      fraudNotExeedsLimit:"Customer fraud limit not exceeds, so customer is not blocked at this moment",
+      fraudUserBlock:"Customer is blocked successfully.",
       customersReactivated:"Customer is reactivated"
     },
     errors: {
@@ -98,7 +98,8 @@ const NOTIFICATION_TYPE={
   REMINDER:"REMINDER",
   TRANSACTION:"TRANSACTION",
   REVIEW:"REVIEW",
-  ENQUIRY:"ENQUIRY"
+  ENQUIRY:"ENQUIRY",
+  FRAUD:"FRAUD"
 }
 
 const NOTIFICATION_STATUS={
@@ -183,7 +184,19 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   user_onboard:{
     type:"USER_ONBOARD",
     message:"We noticed that you registered for Payru but forgot to complete your profile. Please complete your profile."
-  }
+  },
+  fraud_add:{
+    type:"FRAUD_CREATED",
+    message:"{{userName}} is marked you as a fraud."
+  },
+  fraud_blocked_customer:{
+    type:"FRAUD_BLOCKED_CUSTOMER",
+    message:"{{userName}} is marked you as a fraud and you are blocked for all transactions."
+  },
+  fraud_blocked_venders:{
+    type:"FRAUD_BLOCKED_VENDER",
+    message:"{{userName}} is blocked for all transactions. please take actions against the same."
+  },
 }
 
 export { FIREBASE_NOTIFICATION_MESSAGES,ENQUIRY_STATUS,constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }

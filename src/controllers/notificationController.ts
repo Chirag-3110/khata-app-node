@@ -145,7 +145,7 @@ export const markNotificationSeenUnseen = async (req: any, res: any) => {
     }
 }
 
-export const notificationReminderCron = cron.schedule('0 */2 * * *', async () => {
+export const notificationReminderCron = cron.schedule('0 11 * * *', async () => {
 // export const notificationReminderCron = cron.schedule('*/10 * * * * *', async () => {
     try {
         const users=await User.find({isProfileDone:false});

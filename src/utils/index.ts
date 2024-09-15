@@ -6,12 +6,15 @@ const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
 var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json');
 
-try {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-} catch (error) {
-  console.error('Error reading or parsing JSON file:', error);
+export const initializeFirebase=async()=>{
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("Firebase initialised")
+  } catch (error) {
+    console.error('Error reading or parsing JSON file:', error);
+  }
 }
 
 export function generateJWT(user: any, documentId: any) {
