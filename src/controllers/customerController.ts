@@ -54,7 +54,6 @@ export const createNewCustomer = async (req: any, res: any) => {
     }
 }
 
-
 export const deleteCustomer=async(req:any,res:any)=>{
     const { customerId } = req.query;
     try {

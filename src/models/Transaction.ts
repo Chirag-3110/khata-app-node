@@ -17,6 +17,7 @@ interface Transaction extends Document {
   otp:string,
   description:string,
   createdBy:string,
+  amountPaidDates:Date[]
 }
 
 const transactionSchema = new Schema<Transaction>({
@@ -78,7 +79,11 @@ const transactionSchema = new Schema<Transaction>({
   },
   createdBy:{
     type: String,
-  }
+  },
+  amountPaidDates: {
+    type: [Date],
+    default: []
+  },
 });
 
 const Transaction = model<Transaction>('transaction', transactionSchema);

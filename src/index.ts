@@ -17,6 +17,8 @@ import enquiryRoute from './routes/enquiryRoute';
 import adminUserRoute from './routes/admin/usersRoute';
 import { notificationReminderCron } from './controllers/notificationController';
 import { shopOnOffCron } from './controllers/userController';
+import fraudRoute from './routes/fraudRoute';
+import { initializeFirebase } from './utils';
 
 const app = express();
 const server = http.createServer(app)
@@ -30,6 +32,7 @@ app.use(express.urlencoded({
 
 server.listen(3000, () => {
     console.log('Server started at port 3000');
+    initializeFirebase()
     mongoConnect();
 });
 
@@ -49,6 +52,7 @@ app.use(dashboardRoute);
 app.use(reminderRoute);
 app.use(enquiryRoute);
 app.use(adminUserRoute);
+app.use(fraudRoute);
 
 notificationReminderCron.stop();
 shopOnOffCron.stop();

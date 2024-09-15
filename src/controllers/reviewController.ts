@@ -138,8 +138,8 @@ export const listReviewsByCustomerId=async(req:any,res:any)=>{
 
         for (const review of venders) {
             const shopId : any = review.shopId ;
-            const transactionCountPending = shopId? await Transaction.countDocuments({ venderId: shopId._id,transactionStatus: TRANSACTION_STATUS.PENDING }): 0;
-            const transactionCount = shopId? await Transaction.countDocuments({ venderId: shopId._id }): 0;
+            const transactionCountPending = shopId? await Transaction.countDocuments({ customerId:userId,venderId: shopId._id,transactionStatus: TRANSACTION_STATUS.PENDING }): 0;
+            const transactionCount = shopId? await Transaction.countDocuments({ customerId:userId,venderId: shopId._id }): 0;
            const reviewWithTransactionCounts = {
                 ...review.toObject(), 
                 shopTotalPendingTransactions: transactionCountPending,
