@@ -1039,6 +1039,7 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
     const transactions = await Transaction.find({
       venderId: userId,
       transactionType: TRANSACTION_TYPE.PARENT,
+      transactionStatus:TRANSACTION_STATUS.PENDING,
       $expr: {
         $and: [
           { $eq: [{ $dayOfMonth: "$dueDate" }, currentDay] },
@@ -1053,8 +1054,67 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
     })
     .sort({ transactionDate: -1 });
 
+    // const totalPendingAmount = transactions.reduce((total, transaction) => {
+    //   let parentAmount = transaction.amount ? parseFloat(transaction.amount.toString()) : 0;
+    //   if (transaction.childTransaction && transaction.childTransaction.length > 0) {
+    //     transaction.childTransaction.forEach((child: any) => {
+    //       if (child.transactionStatus === TRANSACTION_STATUS.COMPLETE) {
+    //         const childAmount = child.amount ? parseFloat(child.amount.toString()) : 0;
+    //         parentAmount -= childAmount; 
+    //       }
+    //     });
+    //   }
+
+    //   return total + parentAmount;
+    // }, 0);
+
     return buildObjectResponse(res, {
-      transactions,
+      transactions
+    });
+
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const listCustomerPartTransactionsByVender = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+    const {customerId}=req.params;
+
+    if (!customerId)
+      return buildErrorResponse(res, constants.errors.invalidUserId, 404);
+
+    const findCustomer=await User.findById(customerId);
+    
+    if(!findCustomer)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+    const findRole=await Role.findById(findCustomer?.role);
+
+    if(findRole?.role == roles.Vender){
+      return buildErrorResponse(res, constants.errors.customerRole, 401);
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const transactions = await Transaction.find({
+      venderId: userId,
+      customerId:customerId,
+      transactionType: TRANSACTION_TYPE.PARENT,
+      transactionStatus:TRANSACTION_STATUS.COMPLETE
+    })
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
+
+    return buildObjectResponse(res, {
+      transactions
     });
 
   } catch (error) {

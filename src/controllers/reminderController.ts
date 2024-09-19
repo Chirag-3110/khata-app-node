@@ -102,6 +102,8 @@ export const addBulkReminders = async (req: any, res: any) => {
             return buildErrorResponse(res, constants.errors.transactionsArrayRequired, 404);
         }
 
+        const notifiedUsers = new Set();
+
         for (const transactionId of transactions) {
 
             if (!transactionId) {
@@ -145,15 +147,27 @@ export const addBulkReminders = async (req: any, res: any) => {
             const reminder = new Reminder(reminderData);
             await reminder.save({ session });
 
-            const notificationBody = {
-                title: "Reminder",
-                description: `You have received a new reminder for your next payment`,
-                notificationType: NOTIFICATION_TYPE.REMINDER,
-                userId: findTransaction?.customerId
-            };
+            if (!notifiedUsers.has(findTransaction.customerId.toString())) {
+                const notificationBody = {
+                    title: "Reminder",
+                    description: `You have received a new reminder for your next payment`,
+                    notificationType: NOTIFICATION_TYPE.REMINDER,
+                    userId: findTransaction.customerId
+                };
 
-            const notification = new Notification(notificationBody);
-            await notification.save({ session });
+                console.log({
+                    title: "Reminder",
+                    description: `You have received a new reminder for your next payment`,
+                    notificationType: NOTIFICATION_TYPE.REMINDER,
+                    userId: findTransaction.customerId
+                },"Notificaio trigger");
+                
+
+                const notification = new Notification(notificationBody);
+                await notification.save({ session });
+
+                notifiedUsers.add(findTransaction.customerId.toString());
+            }
         }
 
         await session.commitTransaction();

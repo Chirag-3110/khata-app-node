@@ -1,5 +1,5 @@
 import mongoose,{ Types } from "mongoose";
-import { constants, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, } from "../constants";
+import { constants, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, TRANSACTION_STATUS, TRANSACTION_TYPE, } from "../constants";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import * as yup from 'yup';
 import { fraudValidationSchema } from "../validations/fraudValidation";
@@ -8,212 +8,359 @@ import Customer from "../models/customer";
 import User from "../models/user";
 import Notification from "../models/Notification";
 import { sendNotification } from "../utils";
+import Transaction from "../models/Transaction";
+import moment from "moment";
+
+// export const addFraudEntry = async (req: any, res: any) => {
+//   const session = await mongoose.startSession(); 
+//   session.startTransaction(); 
+
+//   try {
+//     await fraudValidationSchema.validate(req.body, { abortEarly: false });
+
+//     const { fraudsterId, fraudAddedByUserId, transaction } = req.body;
+
+//     if (!mongoose.isValidObjectId(transaction)) {
+//       await session.abortTransaction();
+//       return buildErrorResponse(res, constants.errors.invalidTransactionId, 400);
+//     }
+
+//     if (!mongoose.isValidObjectId(fraudAddedByUserId)) {
+//       await session.abortTransaction(); 
+//       return buildErrorResponse(res, constants.errors.fraudAddUser, 400);
+//     }
+
+//     if (!mongoose.isValidObjectId(fraudsterId)) {
+//       await session.abortTransaction(); 
+//       return buildErrorResponse(res, constants.errors.fraudsterInvlidId, 400);
+//     }
+
+//     const findNewUser = await User.findById(fraudsterId).session(session);
+//     const findFraudAddedVedner = await User.findById(fraudAddedByUserId).session(session);
+
+//     if (!findFraudAddedVedner) {
+//       await session.abortTransaction(); 
+//       return buildErrorResponse(res, constants.errors.userNotFound, 400);
+//     }
+
+    // const tokens: string[] = [];
+    // findNewUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+
+//     const isFraudsterExists = await Frauds.findOne({ fraudsterId }).session(session);
+//     console.log(isFraudsterExists, "exists");
+
+//     if (!isFraudsterExists) {
+//       const fraudData = {
+//         fraudsterId: fraudsterId,
+//         fraudAddedByUserId: [fraudAddedByUserId],
+//         transactionIds: [transaction],
+//       };
+//       console.log(fraudData, "create fraud data");
+
+//       const fraud = new Frauds(fraudData);
+//       await fraud.save({ session });
+
+//       const notificationBody = {
+//         title: "Fraud Declared",
+//         description: `${findFraudAddedVedner?.name} is marked you as a fraud`,
+//         notificationType: NOTIFICATION_TYPE.FRAUD,
+//         userId: fraudsterId,
+//       };
+//       const notification = new Notification(notificationBody);
+//       await notification.save({ session });
+
+//       let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.message.replace('{{userName}}',findFraudAddedVedner?.name);
+//       let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.type;
+//       await sendNotification("Fraud Declared", message, tokens, { type: title });
+
+//       await session.commitTransaction(); 
+//       return buildResponse(res, constants.success.fraudNotExeedsLimit, 200);
+//     } else {
+//       if (isFraudsterExists?.fraudsCount?.valueOf() < 3) {
+//         let updateData: any = {};
+
+//         const existingUser = isFraudsterExists.fraudAddedByUserId.includes(fraudAddedByUserId);
+//         const existingTransaction = isFraudsterExists.transactionIds.includes(transaction);
+
+//         if (existingUser) {
+//           if (existingTransaction) {
+//             await session.abortTransaction(); 
+//             return buildErrorResponse(res,constants.errors.fraudAlreadyExistsForTransaction,400);
+//           } else {
+//             updateData.$addToSet = { transactionIds: transaction };
+//             updateData.$inc = { fraudsCount: 1 };
+//           }
+//         } else {
+//           updateData.$addToSet = {
+//             fraudAddedByUserId: fraudAddedByUserId,
+//             transactionIds: transaction,
+//           };
+//           updateData.$inc = { fraudsCount: 1 };
+//         }
+
+//         await Frauds.findByIdAndUpdate(isFraudsterExists._id, updateData, {session});
+
+//         const notificationBody = {
+//           title: "Fraud Declared",
+//           description: `${findFraudAddedVedner?.name} is marked you as a fraud`,
+//           notificationType: NOTIFICATION_TYPE.FRAUD,
+//           userId: fraudsterId,
+//         };
+//         const notification = new Notification(notificationBody);
+//         await notification.save({ session });
+
+//         let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.message.replace(
+//           '{{userName}}',
+//           findFraudAddedVedner?.name
+//         );
+//         let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.type;
+//         await sendNotification("Fraud Declared", message, tokens, { type: title });
+
+//         await session.commitTransaction(); 
+//         return buildResponse(res, constants.success.fraudNotExeedsLimit, 200);
+//       } else {
+//         let updateData: any = {};
+
+//         const existingUser = isFraudsterExists.fraudAddedByUserId.includes(fraudAddedByUserId);
+//         const existingTransaction = isFraudsterExists.transactionIds.includes(transaction);
+
+//         if (existingUser) {
+//           if (existingTransaction) {
+//             await session.abortTransaction(); 
+//             return buildErrorResponse(res,constants.errors.fraudAlreadyExistsForTransaction,400);
+//           } else {
+//             updateData.$addToSet = { transactionIds: transaction };
+//             updateData.$inc = { fraudsCount: 1 };
+//           }
+//         } else {
+//           updateData.$addToSet = {
+//             fraudAddedByUserId: fraudAddedByUserId,
+//             transactionIds: transaction,
+//           };
+//           updateData.$inc = { fraudsCount: 1 };
+//         }
+
+//         const fraudDeclareDate = isFraudsterExists.fraudDeclareDate || [];
+//         const newFraudDeclareDate = new Date();
+//         updateData.$set = {
+//           fraudDeclareDate: [...fraudDeclareDate, newFraudDeclareDate],
+//         };
+
+//         await Frauds.findByIdAndUpdate(isFraudsterExists._id, updateData, {session,});
+
+//         await Customer.updateMany({ customerId: fraudsterId },{ $set: { activeStatus: false } },{ session });
+
+//         const notificationBody = {
+//           title: "Account is blocked for further transactions.",
+//           description: `${findFraudAddedVedner?.name} has blocked you for further transactions.`,
+//           notificationType: NOTIFICATION_TYPE.FRAUD,
+//           userId: fraudsterId,
+//         };
+//         const notification = new Notification(notificationBody);
+//         await notification.save({ session });
+
+        // let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.message.replace('{{userName}}',findFraudAddedVedner?.name);
+        // let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.type;
+        // await sendNotification("Account Blocked",message,tokens,{ type: title });
+
+        // const customerVendors = await Customer.find({ customerId: fraudsterId }).session(session);
+
+        // if (customerVendors.length > 0) {
+        //   const vendorNotifications = [];
+        //   const vendorTokens: string[] = [];
+
+        //   for (const customer of customerVendors) {
+        //     const vendorId = customer.venderId;
+        //     const vendor = await User.findById(vendorId).session(session);
+        //     if (!vendor) {
+        //       console.log(`Vendor with ID ${vendorId} not found.`);
+        //       continue;
+        //     }
+
+        //     const notificationBody = {
+        //       title: "Customer Blocked",
+        //       description: `${findNewUser?.name} is blocked for all transactions, please take actions accordingly.`,
+        //       notificationType: NOTIFICATION_TYPE.FRAUD,
+        //       userId: vendorId,
+        //     };
+        //     vendorNotifications.push(new Notification(notificationBody));
+
+        //     if (vendor.deviceToken?.length > 0) {
+        //       vendor.deviceToken.forEach((device: any) =>vendorTokens.push(device?.fcmToken));
+        //     }
+        //   }
+
+        //   if (vendorNotifications.length > 0) {
+        //     await Notification.insertMany(vendorNotifications, { session });
+        //   }
+
+        //   if (vendorTokens.length > 0) {
+        //     const vendorMessage = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_venders.message.replace('{{userName}}',findFraudAddedVedner?.name);
+        //     const vendorTitle = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_venders.type;
+        //     await sendNotification("Customer Blocked",vendorMessage,vendorTokens,{ type: vendorTitle });
+        //   }
+        // }
+
+//         await session.commitTransaction(); 
+//         return buildResponse(res, constants.success.fraudUserBlock, 200);
+//       }
+//     }
+//   } catch (error) {
+//     await session.abortTransaction();
+//     if (error instanceof yup.ValidationError) {
+//       return buildErrorResponse(res, error.errors.join(", "), 400);
+//     }
+//     console.error("Error adding fraud entry:", error);
+//     return buildErrorResponse(res, constants.errors.internalServerError, 500);
+//   } finally {
+//     session.endSession(); 
+//   }
+// };
 
 export const addFraudEntry = async (req: any, res: any) => {
-  const session = await mongoose.startSession(); 
-  session.startTransaction(); 
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
     await fraudValidationSchema.validate(req.body, { abortEarly: false });
 
-    const { fraudsterId, fraudAddedByUserId, transaction } = req.body;
-
-    if (!mongoose.isValidObjectId(transaction)) {
-      await session.abortTransaction();
-      return buildErrorResponse(res, constants.errors.invalidTransactionId, 400);
-    }
+    const { fraudsterId, fraudAddedByUserId } = req.body;
 
     if (!mongoose.isValidObjectId(fraudAddedByUserId)) {
-      await session.abortTransaction(); 
+      await session.abortTransaction();
       return buildErrorResponse(res, constants.errors.fraudAddUser, 400);
     }
 
     if (!mongoose.isValidObjectId(fraudsterId)) {
-      await session.abortTransaction(); 
+      await session.abortTransaction();
       return buildErrorResponse(res, constants.errors.fraudsterInvlidId, 400);
     }
 
-    const findNewUser = await User.findById(fraudsterId).session(session);
     const findFraudAddedVedner = await User.findById(fraudAddedByUserId).session(session);
+    const findFraudster = await User.findById(fraudsterId).session(session);
+console.log(findFraudster,'Fraudster');
 
-    if (!findFraudAddedVedner) {
-      await session.abortTransaction(); 
+    const tokens: string[] = [];
+    findFraudster?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+
+    if (!findFraudAddedVedner || !findFraudster) {
+      await session.abortTransaction();
       return buildErrorResponse(res, constants.errors.userNotFound, 400);
     }
 
-    const tokens: string[] = [];
-    findNewUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+    const pastTransation=await Transaction.findOne({
+      customerId:fraudsterId,
+      venderId:fraudAddedByUserId,
+      transactionStatus:TRANSACTION_STATUS.PENDING,
+      transactionType:TRANSACTION_TYPE.PARENT,
+      dueDate: { $lt: new Date() }
+    })
+    .limit(1)
+    .sort({ dueDate: 1 });
 
-    const isFraudsterExists = await Frauds.findOne({ fraudsterId }).session(session);
-    console.log(isFraudsterExists, "exists");
+    if(!pastTransation){
+      return buildErrorResponse(res, constants.errors.cantMarkFraud, 400);
+    }
+    const currentDate = moment();
+    const dueDate = moment(pastTransation.dueDate);
+console.log(currentDate,dueDate,'s');
 
-    if (!isFraudsterExists) {
-      const fraudData = {
+    const daysDifference = currentDate.diff(dueDate, 'days');
+console.log(daysDifference,'diff');
+console.log(pastTransation,"Transaction");
+
+
+    if (daysDifference <= 45) {
+      await session.abortTransaction();
+      return buildErrorResponse(res, constants.errors.cantMarkFraud, 400);
+    }
+
+
+    const existingFraudEntry = await Frauds.findOne({ fraudsterId }).session(session);
+
+    if (existingFraudEntry) {
+      existingFraudEntry.isBlocked = true; 
+      if (!existingFraudEntry.fraudAddedByUserId.includes(fraudAddedByUserId)) {
+        existingFraudEntry.fraudAddedByUserId.push(fraudAddedByUserId);
+      }
+      existingFraudEntry.fraudDeclareDate.push(new Date()); 
+      existingFraudEntry.updatedAt = new Date();
+
+      await existingFraudEntry.save({ session });
+
+    } else {
+      const newFraudEntry = new Frauds({
         fraudsterId: fraudsterId,
         fraudAddedByUserId: [fraudAddedByUserId],
-        transactionIds: [transaction],
-      };
-      console.log(fraudData, "create fraud data");
+        fraudDeclareDate: [new Date()],
+      });
 
-      const fraud = new Frauds(fraudData);
-      await fraud.save({ session });
+      await newFraudEntry.save({ session });
+    }
 
-      const notificationBody = {
-        title: "Fraud Declared",
-        description: `${findFraudAddedVedner?.name} is marked you as a fraud`,
-        notificationType: NOTIFICATION_TYPE.FRAUD,
-        userId: fraudsterId,
-      };
-      const notification = new Notification(notificationBody);
-      await notification.save({ session });
+    await Customer.updateMany({ customerId: fraudsterId },{ $set: { activeStatus: false } },{ session });
+    await User.findByIdAndUpdate( fraudsterId ,{ $set: { activeStatus: false,status:false } },{ session });
 
-      let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.message.replace('{{userName}}',findFraudAddedVedner?.name);
-      let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.type;
-      await sendNotification("Fraud Declared", message, tokens, { type: title });
+    let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.message.replace('{{userName}}',findFraudAddedVedner?.name);
+    let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.type;
+    await sendNotification("Account Blocked",message,tokens,{ type: title });
 
-      await session.commitTransaction(); 
-      return buildResponse(res, constants.success.fraudNotExeedsLimit, 200);
-    } else {
-      if (isFraudsterExists?.fraudsCount?.valueOf() < 3) {
-        let updateData: any = {};
+    const customerVendors = await Customer.find({ customerId: fraudsterId }).session(session);
 
-        const existingUser = isFraudsterExists.fraudAddedByUserId.includes(fraudAddedByUserId);
-        const existingTransaction = isFraudsterExists.transactionIds.includes(transaction);
+    if (customerVendors.length > 0) {
+      const vendorNotifications = [];
+      const vendorTokens: string[] = [];
 
-        if (existingUser) {
-          if (existingTransaction) {
-            await session.abortTransaction(); 
-            return buildErrorResponse(res,constants.errors.fraudAlreadyExistsForTransaction,400);
-          } else {
-            updateData.$addToSet = { transactionIds: transaction };
-            updateData.$inc = { fraudsCount: 1 };
-          }
-        } else {
-          updateData.$addToSet = {
-            fraudAddedByUserId: fraudAddedByUserId,
-            transactionIds: transaction,
-          };
-          updateData.$inc = { fraudsCount: 1 };
+      for (const customer of customerVendors) {
+        const vendorId = customer.venderId;
+        const vendor = await User.findById(vendorId).session(session);
+        if (!vendor) {
+          console.log(`Vendor with ID ${vendorId} not found.`);
+          continue;
         }
-
-        await Frauds.findByIdAndUpdate(isFraudsterExists._id, updateData, {session});
 
         const notificationBody = {
-          title: "Fraud Declared",
-          description: `${findFraudAddedVedner?.name} is marked you as a fraud`,
+          title: "Customer Blocked",
+          description: `${findFraudster?.name} is blocked for all transactions, please take actions accordingly.`,
           notificationType: NOTIFICATION_TYPE.FRAUD,
-          userId: fraudsterId,
+          userId: vendorId,
         };
-        const notification = new Notification(notificationBody);
-        await notification.save({ session });
+        vendorNotifications.push(new Notification(notificationBody));
 
-        let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.message.replace(
-          '{{userName}}',
-          findFraudAddedVedner?.name
-        );
-        let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_add.type;
-        await sendNotification("Fraud Declared", message, tokens, { type: title });
-
-        await session.commitTransaction(); 
-        return buildResponse(res, constants.success.fraudNotExeedsLimit, 200);
-      } else {
-        let updateData: any = {};
-
-        const existingUser = isFraudsterExists.fraudAddedByUserId.includes(fraudAddedByUserId);
-        const existingTransaction = isFraudsterExists.transactionIds.includes(transaction);
-
-        if (existingUser) {
-          if (existingTransaction) {
-            await session.abortTransaction(); 
-            return buildErrorResponse(res,constants.errors.fraudAlreadyExistsForTransaction,400);
-          } else {
-            updateData.$addToSet = { transactionIds: transaction };
-            updateData.$inc = { fraudsCount: 1 };
-          }
-        } else {
-          updateData.$addToSet = {
-            fraudAddedByUserId: fraudAddedByUserId,
-            transactionIds: transaction,
-          };
-          updateData.$inc = { fraudsCount: 1 };
+        if (vendor.deviceToken?.length > 0) {
+          vendor.deviceToken.forEach((device: any) =>vendorTokens.push(device?.fcmToken));
         }
+      }
 
-        const fraudDeclareDate = isFraudsterExists.fraudDeclareDate || [];
-        const newFraudDeclareDate = new Date();
-        updateData.$set = {
-          fraudDeclareDate: [...fraudDeclareDate, newFraudDeclareDate],
-        };
+      if (vendorNotifications.length > 0) {
+        await Notification.insertMany(vendorNotifications, { session });
+      }
 
-        await Frauds.findByIdAndUpdate(isFraudsterExists._id, updateData, {session,});
-
-        await Customer.updateMany({ customerId: fraudsterId },{ $set: { activeStatus: false } },{ session });
-
-        const notificationBody = {
-          title: "Account is blocked for further transactions.",
-          description: `${findFraudAddedVedner?.name} has blocked you for further transactions.`,
-          notificationType: NOTIFICATION_TYPE.FRAUD,
-          userId: fraudsterId,
-        };
-        const notification = new Notification(notificationBody);
-        await notification.save({ session });
-
-        let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.message.replace('{{userName}}',findFraudAddedVedner?.name);
-        let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.type;
-        await sendNotification("Account Blocked",message,tokens,{ type: title });
-
-        const customerVendors = await Customer.find({ customerId: fraudsterId }).session(session);
-
-        if (customerVendors.length > 0) {
-          const vendorNotifications = [];
-          const vendorTokens: string[] = [];
-
-          for (const customer of customerVendors) {
-            const vendorId = customer.venderId;
-            const vendor = await User.findById(vendorId).session(session);
-            if (!vendor) {
-              console.log(`Vendor with ID ${vendorId} not found.`);
-              continue;
-            }
-
-            const notificationBody = {
-              title: "Customer Blocked",
-              description: `${findNewUser?.name} is blocked for all transactions, please take actions accordingly.`,
-              notificationType: NOTIFICATION_TYPE.FRAUD,
-              userId: vendorId,
-            };
-            vendorNotifications.push(new Notification(notificationBody));
-
-            if (vendor.deviceToken?.length > 0) {
-              vendor.deviceToken.forEach((device: any) =>vendorTokens.push(device?.fcmToken));
-            }
-          }
-
-          if (vendorNotifications.length > 0) {
-            await Notification.insertMany(vendorNotifications, { session });
-          }
-
-          if (vendorTokens.length > 0) {
-            const vendorMessage = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_venders.message.replace('{{userName}}',findFraudAddedVedner?.name);
-            const vendorTitle = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_venders.type;
-            await sendNotification("Customer Blocked",vendorMessage,vendorTokens,{ type: vendorTitle });
-          }
-        }
-
-        await session.commitTransaction(); 
-        return buildResponse(res, constants.success.fraudUserBlock, 200);
+      if (vendorTokens.length > 0) {
+        const vendorMessage = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_venders.message.replace('{{userName}}',findFraudster?.name);
+        const vendorTitle = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_venders.type;
+        await sendNotification("Customer Blocked",vendorMessage,vendorTokens,{ type: vendorTitle });
       }
     }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return buildResponse(res, constants.success.fraudUserBlock, 200);
+
   } catch (error) {
     await session.abortTransaction();
+    session.endSession();
+
     if (error instanceof yup.ValidationError) {
       return buildErrorResponse(res, error.errors.join(", "), 400);
     }
+
     console.error("Error adding fraud entry:", error);
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
-  } finally {
-    session.endSession(); 
   }
 };
+
 
 export const reactivateCustomers = async (req: any, res: any) => {
   try {
@@ -238,15 +385,20 @@ export const reactivateCustomers = async (req: any, res: any) => {
       query.venderId = venderId;
     }
 
-    const updatedCustomers = await Customer.updateMany(
+    await Customer.updateMany(
       query,
       { $set: { activeStatus: true } }
     );
 
+    await User.findByIdAndUpdate( findFraud?.fraudsterId ,{ $set: { activeStatus: true,status:true } });
+
     await Frauds.findByIdAndUpdate(
         fraudId,
         {
-            fraudsCount: 0
+          fraudsCount: 0,
+          isBlocked:false,
+          fraudAddedByUserId: [],
+          fraudDeclareDate:[]
         },
         { new: true }
     );

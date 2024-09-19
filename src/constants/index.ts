@@ -27,7 +27,7 @@ const constants = {
       enquiryAdded:"Enquiry added successfully",
       enquiryReopen:"Enquiry reopened successfully",
       enquiryClosed:"Enquiry closed successfully",
-      bulkRemindersAddedSuccess:"Bulk reminders are added successfully",
+      bulkRemindersAddedSuccess:"We have notified to all the users related to selected transaction",
       fraudNotExeedsLimit:"Customer fraud limit not exceeds, so customer is not blocked at this moment",
       fraudUserBlock:"Customer is blocked successfully.",
       customersReactivated:"Customer is reactivated"
@@ -70,7 +70,7 @@ const constants = {
       unableToChange:"Unable to change status of transaction",
       emptyOtp:"Empty otp",
       invalidOtp:"Invalid OTP",
-      reminderAlreadyExists:"Today's transaction reminder is already added",
+      reminderAlreadyExists:"You have already notified for selected transaction to customer",
       deviceIdRequired:"Device ID is required",
       invalidRequest:"Invalid request",
       enquiryIdNotValid:"Enquiry id not valid",
@@ -80,12 +80,15 @@ const constants = {
       cannotAddSelf:"Cannot add self",
       redeemCodeError:"Redeem code is invalid",
       venderRole:"Vender role is required",
+      customerRole:"Customer role is required",
       customerBlocked:"Customer is blocked because of declaration of fraud by several venders",
       fraudsterInvlidId:"Invalid fraudster Id",
       fraudAddUser:"Invalid fraud add by user id",
       fraudAlreadyExistsForTransaction:"Fraud is already given by you for this transaction",
       invalidFraudId:"Invalid fraud Id",
-      fraudNotFound:"Fraud not found"
+      fraudNotFound:"Fraud not found",
+      userDeactivated:"User is deacticated",
+      cantMarkFraud:"You can't make this customer as a fraud customer"
     },
 };
 

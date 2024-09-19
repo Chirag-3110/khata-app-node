@@ -13,21 +13,29 @@ import RedemCode from "../models/RedemCode";
 import WalletTransaction from "../models/walletTransaction";
 import moment from "moment";
 
-export const loginUser=async(req:any,res:any)=>{
+export const loginUser = async (req: any, res: any) => {
     try {
-        const {documentId}=req.body;
-        if(!documentId)
+        const { documentId } = req.body;
+        
+        if (!documentId) 
             return buildErrorResponse(res, constants.errors.docIdNotgExists, 404);
 
-        let userData=await User.findOne({documentId});
-        
-        let token=await generateJWT(userData?._id,documentId);
+        let userData = await User.findOne({ documentId });
 
-        return buildObjectResponse(res,{tokenData:token});
+        if (!userData)
+            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+        
+        if (userData.activeStatus === false) 
+            return buildErrorResponse(res, constants.errors.userDeactivated, 403);
+
+        let token = await generateJWT(userData._id, documentId);
+        return buildObjectResponse(res, { tokenData: token });
+
     } catch (error) {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
-}
+};
+
 
 export const createUser=async(req:any,res:any)=>{
     const { email,documentId } = req.body;

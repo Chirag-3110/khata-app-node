@@ -8,7 +8,8 @@ interface Frauds extends Document {
     fraudAddedByUserId: Schema.Types.ObjectId[],
     fraudsCount: Number,
     transactionIds: Schema.Types.ObjectId[]; 
-    fraudDeclareDate: Date[]
+    fraudDeclareDate: Date[],
+    isBlocked:boolean
 }
 
 const FraudsSchema = new Schema<Frauds>({
@@ -41,6 +42,10 @@ const FraudsSchema = new Schema<Frauds>({
     fraudDeclareDate: {
         type: [Date],
         default: []
+    },
+    isBlocked: {
+        type: Boolean,
+        default: true
     },
 });
 

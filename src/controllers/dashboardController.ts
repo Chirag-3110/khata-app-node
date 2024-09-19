@@ -20,7 +20,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             amountDetails:{
                 pendingAmount:0,
                 collectedAmount:0,
-                paidAmount:0
+                paidAmount:0,
+                todayDueAmount:0
             }
         }
         if (!userId)
@@ -96,6 +97,43 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             }
         })
 
+        const today = new Date();
+        const currentDay = today.getDate().toString().padStart(2, '0');    
+        const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0'); 
+        const currentYear = today.getFullYear().toString(); 
+
+        const transactions = await Transaction.find({
+            venderId: userId,
+            transactionType: TRANSACTION_TYPE.PARENT,
+            transactionStatus:TRANSACTION_STATUS.PENDING,
+            $expr: {
+                $and: [
+                { $eq: [{ $dayOfMonth: "$dueDate" }, currentDay] },
+                { $eq: [{ $month: "$dueDate" }, currentMonth] }, 
+                { $eq: [{ $year: "$dueDate" }, currentYear] }    
+                ]
+            }
+        })
+        .populate("customerId")
+        .populate({
+            path: "childTransaction"
+        })
+        .sort({ transactionDate: -1 });
+
+        const totalPendingAmount = transactions.reduce((total, transaction) => {
+            let parentAmount = transaction.amount ? parseFloat(transaction.amount.toString()) : 0;
+            if (transaction.childTransaction && transaction.childTransaction.length > 0) {
+                transaction.childTransaction.forEach((child: any) => {
+                if (child.transactionStatus === TRANSACTION_STATUS.COMPLETE) {
+                    const childAmount = child.amount ? parseFloat(child.amount.toString()) : 0;
+                    parentAmount -= childAmount; 
+                }
+                });
+            }
+
+            return total + parentAmount;
+        }, 0);
+
         venderDashboardData={
             ...venderDashboardData,
             recentTransactions:recentTransactions,
@@ -104,7 +142,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             amountDetails:{
                 pendingAmount:pendingAmount,
                 collectedAmount:completedAmount,
-                paidAmount:paidAmount
+                paidAmount:paidAmount,
+                todayDueAmount:totalPendingAmount
             }
         }
 
@@ -220,11 +259,11 @@ export const dashboardSearch=async(req:any,res:any) => {
         if (!userId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
 
-        const findUser=await User.findById(userId);
+        // const findUser=await User.findById(userId);
         
-        const role=await Role.findById(findUser?.role)
+        // const role=await Role.findById(findUser?.role)
 
-        const searchCustomer=await Role.findOne({role:roles.Customer});
+        // const searchCustomer=await Role.findOne({role:roles.Customer});
 
         let results:any=[];
 
@@ -232,7 +271,10 @@ export const dashboardSearch=async(req:any,res:any) => {
             const regexPattern = new RegExp(searchQuery, 'i');
 
             const shopsByName = await Shop.find({
-                name: { $regex: regexPattern },
+                $or: [
+                    { name: { $regex: regexPattern } },
+                    { category: { $regex: regexPattern } }
+                ],
                 canBeSearchable: true,
                 status: true
             }).populate("user");
