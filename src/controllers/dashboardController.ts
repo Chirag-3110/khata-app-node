@@ -11,7 +11,7 @@ import Wallet from "../models/Wallet";
 import Shop from "../models/Shop";
 
 export const getVenderDashboardData=async(req:any,res:any) => {
-    const {userId}=req.user;
+    const {userId}=req.user;    
     try {
         let venderDashboardData=<Object>{
             recentTransactions:[],
@@ -38,10 +38,38 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         .sort({ transactionDate: -1 })
         .limit(3);
 
-        // here get the vedner and customer number only
-        const connectedCustomers=await Customer.countDocuments({venderId:userId});
+        const connectedCustomers = await Customer.find({
+            $or: [{ venderId: userId }, { customerId: userId }]
+        });
 
-        const connectedVenders=await Customer.countDocuments({customerId:userId});
+        const connectedUserIds = connectedCustomers.reduce((userIds:any, customer:any) => {
+            if (customer.venderId.toString() !== userId.toString() && !userIds.includes(customer.venderId.toString())) {
+                userIds.push(customer.venderId.toString());
+            }
+            if (customer.customerId.toString() !== userId.toString() && !userIds.includes(customer.customerId.toString())) {
+                userIds.push(customer.customerId.toString());
+            }
+            return userIds;
+        }, []);
+
+        const connectedUsers = await User.find(
+            { _id: { $in: connectedUserIds } },  
+            { role: 1 }  
+        ).populate('role', 'role');
+
+        let venderCount = 0;
+        let customerCount = 0;
+
+        connectedUsers.forEach((user:any) => {
+            if (user.role.role === roles.Vender) {
+              venderCount++;
+            } else if (user.role.role === roles.Customer) {
+              customerCount++;
+            }
+        });
+
+        console.log(venderCount,'USer',customerCount)
+        
 
         const transactionAsVenderCompleted = await Transaction.find({
             venderId: userId,
@@ -137,8 +165,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         venderDashboardData={
             ...venderDashboardData,
             recentTransactions:recentTransactions,
-            connectedCustomers:connectedCustomers,
-            connectedVenders:connectedVenders,
+            connectedCustomers:customerCount,
+            connectedVenders:venderCount,
             amountDetails:{
                 pendingAmount:pendingAmount,
                 collectedAmount:completedAmount,

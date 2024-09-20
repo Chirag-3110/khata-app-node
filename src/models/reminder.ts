@@ -29,7 +29,6 @@ const reminderSchema = new Schema<Reminder>({
   transactionId: {
     type: Schema.Types.ObjectId,
     ref: 'transaction',
-    required: true,
   },
   reminderDate: {
     type: Date,

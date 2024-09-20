@@ -88,34 +88,38 @@ export const addNewReminder=async(req:any,res:any)=>{
 export const addBulkReminders = async (req: any, res: any) => {
     const session = await mongoose.startSession();
     session.startTransaction();
+    const {userId}=req.user;    
     
     try {
-        const { transactions } = req.body;
-        console.log(transactions,"tre");
+        const { userIds } = req.body;
+
         
         let reminderMedium = "Notification"
         let reminderDate=moment()
 
-        if (!Array.isArray(transactions) || transactions.length === 0) {
+        if (!Array.isArray(userIds) || userIds.length === 0) {
             await session.abortTransaction();
             session.endSession();
-            return buildErrorResponse(res, constants.errors.transactionsArrayRequired, 404);
+            return buildErrorResponse(res, constants.errors.invalidUserId, 404);
         }
 
         const notifiedUsers = new Set();
 
-        for (const transactionId of transactions) {
+        for (const user of userIds) {
 
-            if (!transactionId) {
+            if (!user) {
                 await session.abortTransaction();
                 session.endSession();
-                return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+                return buildErrorResponse(res, constants.errors.userNotFound, 404);
             }
 
-            const existingTransactionReminders = await Reminder.find({ transactionId: transactionId }).session(session);
+            const existingUserReminders = await Reminder.find({ 
+                customerId: user, 
+                venderId: userId 
+            }).session(session);
 
-            if (existingTransactionReminders?.length > 0) {
-                const lastReminder = existingTransactionReminders[existingTransactionReminders.length - 1];
+            if (existingUserReminders?.length > 0) {
+                const lastReminder = existingUserReminders[existingUserReminders.length - 1];
                 const createdAtTime = moment(lastReminder.createdAt);
 
                 const hoursDifference = reminderDate.diff(createdAtTime, 'hours');
@@ -127,46 +131,43 @@ export const addBulkReminders = async (req: any, res: any) => {
                 }
             }
 
-            const findTransaction = await Transaction.findById(transactionId).session(session);
-            console.log(findTransaction,"tran");
-            
-            if (!findTransaction) {
+            const findUser = await User.findById(user).session(session);
+            if (!findUser) {
                 await session.abortTransaction();
                 session.endSession();
-                return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+                return buildErrorResponse(res, constants.errors.userNotFound, 404);
             }
 
             const reminderData = {
-                customerId: findTransaction?.customerId,
-                venderId: findTransaction?.venderId,
+                customerId: user,
+                venderId: userId,
                 reminderDate: reminderDate,
                 reminderMedium: reminderMedium,
-                transactionId: transactionId
             };
 
             const reminder = new Reminder(reminderData);
             await reminder.save({ session });
 
-            if (!notifiedUsers.has(findTransaction.customerId.toString())) {
+            if (!notifiedUsers.has(user.toString())) {
                 const notificationBody = {
                     title: "Reminder",
                     description: `You have received a new reminder for your next payment`,
                     notificationType: NOTIFICATION_TYPE.REMINDER,
-                    userId: findTransaction.customerId
+                    userId: user
                 };
 
                 console.log({
                     title: "Reminder",
                     description: `You have received a new reminder for your next payment`,
                     notificationType: NOTIFICATION_TYPE.REMINDER,
-                    userId: findTransaction.customerId
+                    userId: user
                 },"Notificaio trigger");
                 
 
                 const notification = new Notification(notificationBody);
                 await notification.save({ session });
 
-                notifiedUsers.add(findTransaction.customerId.toString());
+                notifiedUsers.add(user.toString());
             }
         }
 
@@ -181,9 +182,6 @@ export const addBulkReminders = async (req: any, res: any) => {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
-
-  
-
 
 export const listRemindersByVenderId=async(req:any,res:any)=>{
     try {
