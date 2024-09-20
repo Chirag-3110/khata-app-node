@@ -1,7 +1,7 @@
 import express from 'express';
 import { checkUserVerify, completeRegistration, createUser, getUserProfile, loginUser } from '../controllers/userController';
 import { getWalletData } from '../controllers/walletController';
-import { acceptRejectDueDateRequest, createNewTransaction, getTransactionDetailById, listCompletedTransactionOfVender, listCompleteTransactionsOfCustomers, listCompleteTransactionUsingVenderId, listCustomerPartTransactionsByVender, listTodayDueDateTransactionsOfVender, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateTransactionStatus, verifyTransaction,  } from '../controllers/transactionController';
+import { acceptRejectDueDateRequest, createNewTransaction, getTransactionDetailById, listCompletedTransactionOfVender, listCompleteTransactionsOfCustomers, listCompleteTransactionUsingVenderId, listCustomerPartTransactionsByVender, listTodayDueDateTransactionsOfVender, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateMultipleTransactionStatuses, updateTransactionStatus, verifyTransaction,  } from '../controllers/transactionController';
 const transactionRoute = express.Router();
 const verifyToken = require('../middleware/auth'); 
 
@@ -20,6 +20,7 @@ transactionRoute.post(`/api/transaction/pay-amount`,verifyToken,payAmountToVende
 transactionRoute.put(`/api/transaction/update-due-date-customer`,verifyToken,updateDueDateByCustomer);
 transactionRoute.put(`/api/transaction/accept-reject-update-due-date-customer`,verifyToken,acceptRejectDueDateRequest);
 transactionRoute.put(`/api/transaction/update-transaction-status/:transactionId`,verifyToken,updateTransactionStatus);
+transactionRoute.put(`/api/transaction/update-multiple-transaction-status`,verifyToken,updateMultipleTransactionStatuses);
 transactionRoute.get(`/api/transaction/get-transaction-by-id/:transactionId`,verifyToken,getTransactionDetailById)
 
 export default transactionRoute;

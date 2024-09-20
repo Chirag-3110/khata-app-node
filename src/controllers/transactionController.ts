@@ -39,7 +39,7 @@ console.log(isCustomerExits,"Cuteomrexists");
 
     if(!isCustomerExits){
       const findFraud=await Frauds.findOne({fraudsterId:userId});
-      if(findFraud && (findFraud?.fraudsCount?.valueOf() > 3)){
+      if(findFraud && (findFraud?.isBlocked)){
         return buildErrorResponse(res, constants.errors.customerBlocked, 404);
       }
       
@@ -605,6 +605,90 @@ export const updateTransactionStatus = async (req: any, res: any) => {
   }
 };
 
+export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
+  try {
+    const { transactionIds } = req.body;
+    if (!transactionIds || !Array.isArray(transactionIds) || transactionIds.length === 0) {
+      return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      for (const transactionId of transactionIds) {
+        const findTransaction = await Transaction.findById(transactionId).session(session);
+
+        if (!findTransaction) {
+          await session.abortTransaction();
+          return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+        }
+
+        const findVender = await User.findById(findTransaction?.venderId).session(session);
+        const findUser = await User.findById(findTransaction?.customerId).session(session);
+
+        if (!findVender || !findUser) {
+          await session.abortTransaction();
+          return buildErrorResponse(res, constants.errors.userNotFound, 404);
+        }
+
+        if (findTransaction.childTransaction.length === 0) {
+          await Transaction.findByIdAndUpdate(
+            transactionId,
+            {
+              status: TRANSACTION_STATUS.COMPLETE,
+              transactionStatus: TRANSACTION_STATUS.COMPLETE,
+            },
+            { new: true, session }
+          );
+        } else {
+          await Transaction.findByIdAndUpdate(
+            transactionId,
+            {
+              status: TRANSACTION_STATUS.COMPLETE,
+              transactionStatus: TRANSACTION_STATUS.COMPLETE,
+            },
+            { new: true, session }
+          );
+
+          await Transaction.updateMany(
+            { _id: { $in: findTransaction.childTransaction } },
+            {
+              transactionStatus: TRANSACTION_STATUS.COMPLETE,
+              status: TRANSACTION_STATUS.COMPLETE,
+            },
+            { session }
+          );
+        }
+
+        // let message = FIREBASE_NOTIFICATION_MESSAGES.transaction_status_update.message.replace('{{venderName}}', findVender?.name);
+        // let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_status_update.type;
+
+        // const tokens: string[] = [];
+        // findUser?.deviceToken?.forEach((device: any) => tokens.push(device?.fcmToken));
+
+        // if (tokens.length > 0) {
+        //   await sendNotification("Transaction status updates", message, tokens, { type: title });
+        // }
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return buildResponse(res, constants.success.transactionStatusUpdated, 200);
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error("Error updating multiple transaction statuses:", error);
+      return buildErrorResponse(res, constants.errors.errorUpdateTransaction, 500);
+    }
+  } catch (error) {
+    console.log("Error in request:", error);
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+
 export const getTransactionDetailById = async (req: any, res: any) => {
   try {
     const { transactionId } = req.params;
@@ -1108,6 +1192,8 @@ export const listCustomerPartTransactionsByVender = async (req: any, res: any) =
       transactionType: TRANSACTION_TYPE.PARENT,
       transactionStatus:TRANSACTION_STATUS.COMPLETE
     })
+    .populate("customerId")
+    .populate("venderId")
     .populate({
       path: "childTransaction"
     })

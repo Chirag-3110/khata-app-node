@@ -299,7 +299,7 @@ console.log(pastTransation,"Transaction");
     }
 
     await Customer.updateMany({ customerId: fraudsterId },{ $set: { activeStatus: false } },{ session });
-    await User.findByIdAndUpdate( fraudsterId ,{ $set: { activeStatus: false,status:false } },{ session });
+    await User.findByIdAndUpdate( fraudsterId ,{ $set: { status:false } },{ session });
 
     let message = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.message.replace('{{userName}}',findFraudAddedVedner?.name);
     let title = FIREBASE_NOTIFICATION_MESSAGES.fraud_blocked_customer.type;
