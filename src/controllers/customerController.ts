@@ -224,35 +224,46 @@ export const getRandomShopsWithinRange = async (req: any, res:any) => {
 export const getCustomerAndTransactionsByVenderId=async(req:any,res:any)=>{
     try {
         const {userId}=req.user;
-        const {customerId}=req.params;
-        const customer:any={
-            details:{},
-            transactions:[]
+        
+        const customerDataList = await Customer.find({ venderId: userId }).select('customerId');
+        const customerIds = customerDataList.map((customer) => customer.customerId);
+
+        const customers = [];
+
+        for (const customerId of customerIds) {
+            const transactions = await Transaction.find({
+                customerId: customerId,
+                venderId: userId,
+                transactionStatus: TRANSACTION_STATUS.PENDING,
+                transactionType: TRANSACTION_TYPE.PARENT,    
+            })
+            .populate({
+                path: "childTransaction"
+            })
+            .sort({ transactionDate: -1 });
+
+            if (transactions.length === 0) {
+                continue;
+            }
+
+            const customer:any = {
+                details: {},
+                transactions: []
+            };
+
+            const customerData = await User.findById(customerId);
+            if (!customerData) {
+                continue;
+            }
+
+            customer.details = customerData;
+            customer.transactions = transactions;
+
+            customers.push(customer);
         }
 
-        const page = parseInt(req.query.page as string) || 1; 
-        const limit = parseInt(req.query.limit as string) || 10;
-
-        const skip = (page - 1) * limit;
-
-        const customerData = await User.findById(customerId)
-        customer.details = customerData
-
-        const transactions = await Transaction.find({ 
-            customerId: customerId,  
-            venderId: userId,
-            transactionStatus: { $eq: TRANSACTION_STATUS.PENDING } ,
-            transactionType:TRANSACTION_TYPE.PARENT,
-        })
-        .populate({
-            path: "childTransaction"
-        })
-        .sort({ transactionDate: -1 });
-        
-        customer.transactions = transactions
-        
         return buildObjectResponse(res, {
-            customer:customer
+            customers: customers
         });
 
     } catch (error) {
