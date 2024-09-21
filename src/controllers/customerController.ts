@@ -1,10 +1,11 @@
 import { Types } from "mongoose";
-import { constants, roles } from "../constants";
+import { constants, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
 import Role from "../models/Role";
 import Customer from "../models/customer";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import Shop from "../models/Shop";
+import Transaction from "../models/Transaction";
 
 export const createNewCustomer = async (req: any, res: any) => {
     const { phoneNumber, role } = req.body;
@@ -219,3 +220,87 @@ export const getRandomShopsWithinRange = async (req: any, res:any) => {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
+
+export const getCustomerAndTransactionsByVenderId=async(req:any,res:any)=>{
+    try {
+        const {userId}=req.user;
+        const {customerId}=req.params;
+        const customer:any={
+            details:{},
+            transactions:[]
+        }
+
+        const page = parseInt(req.query.page as string) || 1; 
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const customerData = await User.findById(customerId)
+        customer.details = customerData
+
+        const transactions = await Transaction.find({ 
+            customerId: customerId,  
+            venderId: userId,
+            transactionStatus: { $eq: TRANSACTION_STATUS.PENDING } ,
+            transactionType:TRANSACTION_TYPE.PARENT,
+        })
+        .populate({
+            path: "childTransaction"
+        })
+        .sort({ transactionDate: -1 });
+        
+        customer.transactions = transactions
+        
+        return buildObjectResponse(res, {
+            customer:customer
+        });
+
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+// working on it
+export const getUserDetailsComplete=async(req:any,res:any)=>{
+    try {
+        const {userId}=req.query;
+        const customer:any={
+            details:{},
+            TotalTransactions:0,
+            creditScore:"",
+            totalReview:0,
+            totalPaidTransactionsBeforeDue:0,
+            totalPaidTransactionsAfterDue:0,
+            totalUnpaidTransactions:0,
+            isFraudMarked:false
+        }
+        
+        const customerData = await User.findById(userId)
+        customer.details = customerData
+
+        const roles = await Role.findById(customerData?.role);
+        console.log(roles?.role,"sss");
+
+        // const transactions = await Transaction.find({ 
+        //     customerId: customerId,  
+        //     venderId: userId,
+        //     transactionStatus: { $eq: TRANSACTION_STATUS.PENDING } ,
+        //     transactionType:TRANSACTION_TYPE.PARENT,
+        // })
+        // .populate({
+        //     path: "childTransaction"
+        // })
+        // .sort({ transactionDate: -1 });
+        
+        // customer.transactions = transactions
+        
+        return buildObjectResponse(res, {
+            customer:customer
+        });
+
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}

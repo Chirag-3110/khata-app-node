@@ -64,102 +64,128 @@ export const createUser=async(req:any,res:any)=>{
     }
 }
 
-export const completeRegistration=async(req:any,res:any)=>{
-    const { userData,shop,role,redeemCode,pinCode } = req.body;
-    const {email,name,address,dob,gender,qrCode,upiId,phoneNumber}=userData
+export const completeRegistration = async (req: any, res: any) => {
+    const { userData, shop, role, redeemCode, pinCode } = req.body;
+    const { email, name, address, dob, gender, qrCode, upiId, phoneNumber } = userData;
+
+    const session = await User.startSession();
+    session.startTransaction();
+
     try {
-        if(!pinCode){
+        if (!pinCode) {
+            await session.abortTransaction();
+            session.endSession();
             return buildErrorResponse(res, constants.errors.pinCodeRequired, 401);
         }
 
-        let roleData=await Role.findOne({role});
-        if(!roleData)
+        let roleData = await Role.findOne({ role }).session(session);
+        if (!roleData) {
+            await session.abortTransaction();
+            session.endSession();
             return buildErrorResponse(res, constants.errors.roleNotFound, 401);
+        }
 
-        let isUserExist=await User.findOne({email:email.toLowerCase()})
-        
-        if(!isUserExist)
+        let isUserExist = await User.findOne({ email: email.toLowerCase() }).session(session);
+        if (!isUserExist) {
+            await session.abortTransaction();
+            session.endSession();
             return buildErrorResponse(res, constants.errors.userNotFound, 401);
+        }
 
-        if(redeemCode){
-            const findRedeemCode = await RedemCode.findOne({ redermCode: redeemCode });
-            console.log(redeemCode,'coide');
-            
+        if (redeemCode) {
+            const findRedeemCode = await RedemCode.findOne({ redermCode: redeemCode }).session(session);
             if (!findRedeemCode) {
+                await session.abortTransaction();
+                session.endSession();
                 return buildErrorResponse(res, constants.errors.redeemCodeError, 404);
             }
 
-            let findRedemWallet = await Wallet.findOne({ userId: findRedeemCode.userId });
-            console.log(findRedemWallet,'wallet');
-            
-
+            let findRedemWallet = await Wallet.findOne({ userId: findRedeemCode.userId }).session(session);
             if (findRedemWallet) {
                 const currentCredit = (findRedemWallet?.credit as number) ?? 0;
                 await Wallet.findByIdAndUpdate(
                     findRedemWallet?._id,
                     { credit: currentCredit + 50 },
-                    { new: true }
+                    { new: true, session }
                 );
-                const walletData={
+
+                const walletData = {
                     walletAddress: findRedemWallet?._id,
                     amount: currentCredit + 50,
-                    transactionType:WALLET_TRANSACTION_TYPE.DEPOSIT,
-                    module:TRANSACTION_MODULES.REDEEM
-                }
-                const walletTransaction=new WalletTransaction(walletData);
-                await walletTransaction.save();
+                    transactionType: WALLET_TRANSACTION_TYPE.DEPOSIT,
+                    module: TRANSACTION_MODULES.REDEEM
+                };
+                const walletTransaction = new WalletTransaction(walletData);
+                await walletTransaction.save({ session });
             }
 
             await RedemCode.findByIdAndUpdate(
                 findRedeemCode?._id,
-                { $push: { referedCodeUsers: isUserExist?._id }, },
-                { new: true }
+                { $push: { referedCodeUsers: isUserExist?._id } },
+                { new: true, session }
             );
-            
         }
 
-        let wallet=new Wallet({userId:isUserExist?._id});
+        let shopId = null;
+        if (role === roles.Vender) {
+            if (!shop?.coordinates?.latitude || !shop?.coordinates?.longitude) {
+                await session.abortTransaction();
+                session.endSession();
+                return buildErrorResponse(res, constants.errors.coordinatesRequired, 400);
+            }
 
-        let wallerId=await wallet.save();
-
-        let shopId=null;
-        if(role === roles.Vender){
-            const {coordinates} = shop;
-            const { latitude, longitude } = coordinates;
-            const newShop=new Shop({...shop,user:isUserExist?._id, coordinates: {type: 'Point',coordinates: [longitude, latitude]}});
-            const shopDoc=await newShop.save();
-            shopId=shopDoc?._id;
+            const { latitude, longitude } = shop.coordinates;
+            const newShop = new Shop({
+                ...shop,
+                user: isUserExist?._id,
+                coordinates: { type: 'Point', coordinates: [longitude, latitude] }
+            });
+            const shopDoc = await newShop.save({ session });
+            shopId = shopDoc?._id;
         }
-        const referCodeValue=generateReferralCode();
-        const redemCodeRef=new RedemCode({userId:isUserExist?._id,redermCode:`PR${referCodeValue}`})
-        const generatedRedeemCodeId=await redemCodeRef.save();
 
-        let updatedUserData={
-            walletId:wallerId?._id,
-            name:name,
-            status:true,
-            role:roleData?._id,
-            shopId:shopId,
-            activeStatus:true,
-            isEmailVerified:true,
-            address:address,
-            dob:dob,
-            gender:gender,
-            qrCode:qrCode,
-            upiId:upiId,
-            isProfileDone:true,
+        const referCodeValue = generateReferralCode();
+        const redemCodeRef = new RedemCode({
+            userId: isUserExist?._id,
+            redermCode: `PR${referCodeValue}`
+        });
+        const generatedRedeemCodeId = await redemCodeRef.save({ session });
+
+        let wallet = new Wallet({ userId: isUserExist?._id });
+        let walletId = await wallet.save({ session });
+
+        let updatedUserData = {
+            walletId: walletId?._id,
+            name: name,
+            status: true,
+            role: roleData?._id,
+            shopId: shopId,
+            activeStatus: true,
+            isEmailVerified: true,
+            address: address,
+            dob: dob,
+            gender: gender,
+            qrCode: qrCode,
+            upiId: upiId,
+            isProfileDone: true,
             phoneNumber,
-            redeemCode:generatedRedeemCodeId?._id,
-            pinCode:pinCode
-        }
-        await User.findByIdAndUpdate(isUserExist?._id,updatedUserData)
-        
-        return buildResponse(res,constants.success.profileUpdated,200);
+            redeemCode: generatedRedeemCodeId?._id,
+            pinCode: pinCode
+        };
+        await User.findByIdAndUpdate(isUserExist?._id, updatedUserData, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return buildResponse(res, constants.success.profileUpdated, 200);
     } catch (error) {
         console.log(error, 'error');
+        await session.abortTransaction();
+        session.endSession();
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
-}
+};
+
 
 export const checkUserVerify=async (req:any,res:any) => {
     const { documentId } = req.query;

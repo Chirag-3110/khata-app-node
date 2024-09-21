@@ -88,7 +88,8 @@ const constants = {
       invalidFraudId:"Invalid fraud Id",
       fraudNotFound:"Fraud not found",
       userDeactivated:"User is deacticated",
-      cantMarkFraud:"You can't make this customer as a fraud customer"
+      cantMarkFraud:"You can't make this customer as a fraud customer",
+      coordinatesRequired:"Shop location coordinated required" 
     },
 };
 
