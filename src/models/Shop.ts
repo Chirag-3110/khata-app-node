@@ -30,7 +30,9 @@ interface Shop extends Document {
     shopProfilePic:string,
     shopImages:string[],
     ratings:Number,
-    customDueDate:string
+    customDueDate:string,
+    city:string,
+    zipCode:string
 }
 
 const shopSchema = new Schema<Shop>({
@@ -126,6 +128,12 @@ const shopSchema = new Schema<Shop>({
         default:0
     },
     customDueDate:{
+        type:String,
+    },
+    city:{
+        type:String,
+    },
+    zipCode:{
         type:String,
     }
 });

@@ -1,11 +1,14 @@
 import { Types } from "mongoose";
-import { constants, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
+import { constants, CREDIT_SCORE, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
 import Role from "../models/Role";
 import Customer from "../models/customer";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import Shop from "../models/Shop";
 import Transaction from "../models/Transaction";
+import Frauds from "../models/Fraud";
+import Review from "../models/Review";
+import Wallet from "../models/Wallet";
 
 export const createNewCustomer = async (req: any, res: any) => {
     const { phoneNumber, role } = req.body;
@@ -157,6 +160,8 @@ export const getVenderOfCustomer=async(req:any,res:any)=>{
 export const getRandomShopsNearBy=async(req:any,res:any)=>{
     try {
         const {userId}=req.user;
+        console.log(userId,'ss');
+        
         const venderRoleId=await Role.findOne({role:roles.Vender});
 
         if(!venderRoleId)
@@ -164,13 +169,17 @@ export const getRandomShopsNearBy=async(req:any,res:any)=>{
 
         const customerIdsAndVenderIds = await Customer.find({customerId:userId});
 
-        const venderIds = customerIdsAndVenderIds.map(item => item.venderId);
+        const venderIds = customerIdsAndVenderIds.map(item => item.venderId);        
 
         const unconnectedVenders = await User.find({
             _id: { $nin: venderIds },
             activeStatus:true,
-            isProfileDone:true
+            isProfileDone:true,
+            role: venderRoleId
         }).populate("shopId");
+
+        console.log(unconnectedVenders,'sss');
+        
     
 
         return buildObjectResponse(res, {
@@ -272,39 +281,103 @@ export const getCustomerAndTransactionsByVenderId=async(req:any,res:any)=>{
     }
 }
 
-// working on it
 export const getUserDetailsComplete=async(req:any,res:any)=>{
     try {
         const {userId}=req.query;
+        
         const customer:any={
             details:{},
-            TotalTransactions:0,
+            totaltransactions:0,
             creditScore:"",
             totalReview:0,
             totalPaidTransactionsBeforeDue:0,
             totalPaidTransactionsAfterDue:0,
             totalUnpaidTransactions:0,
-            isFraudMarked:false
+            isFraudMarkedAlready:false,
+            ratingsInPercentage:{}
         }
         
+        //customer
         const customerData = await User.findById(userId)
         customer.details = customerData
 
-        const roles = await Role.findById(customerData?.role);
-        console.log(roles?.role,"sss");
+        //frauds
+        const fraud=await Frauds.findOne({fraudsterId:userId})
+        if(fraud){
+            customer.isFraudMarkedAlready = fraud?.isBlocked
+        }
 
-        // const transactions = await Transaction.find({ 
-        //     customerId: customerId,  
-        //     venderId: userId,
-        //     transactionStatus: { $eq: TRANSACTION_STATUS.PENDING } ,
-        //     transactionType:TRANSACTION_TYPE.PARENT,
-        // })
-        // .populate({
-        //     path: "childTransaction"
-        // })
-        // .sort({ transactionDate: -1 });
+        //role
+        const role = await Role.findById(customerData?.role);
+
+        const filter= {customerId:userId}
+        // const filter=role?.role == roles.Customer ? {customerId:userId} : {shopId:userId}
+
+        //reviews
+        const review = await Review.countDocuments(filter)
+        customer.totalReview = review
+
+        // rating percentage
+        const reviewsList=await Review.find(filter);
+        const ratingCounts: any = {1: 0,2: 0,3: 0,4: 0,5: 0};
+
+        reviewsList.forEach((review: any) => {
+            const rating = review.ratings;
+            if (rating >= 1 && rating <= 5) {
+                ratingCounts[rating]++;
+            }
+        });
+        const totalReviews = reviewsList.length;
+        const ratingPercentages: any = {1: 0,2: 0,3: 0,4: 0,5: 0};
+        Object.keys(ratingCounts).forEach((rating) => {
+            const count = ratingCounts[rating];
+            ratingPercentages[rating] = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+        });
         
-        // customer.transactions = transactions
+        customer.ratingsInPercentage = ratingPercentages;
+
+        //transaction total
+        const totaltransactions = await Transaction.countDocuments({
+            customerId: userId,
+            transactionType:TRANSACTION_TYPE.PARENT
+        });
+        customer.totaltransactions = totaltransactions
+
+        const totalUnpaidTransactions = await Transaction.countDocuments({
+            customerId: userId,
+            transactionStatus: { $eq: TRANSACTION_STATUS.PENDING } ,
+            transactionType:TRANSACTION_TYPE.PARENT
+        });
+        customer.totalUnpaidTransactions = totalUnpaidTransactions
+
+        //check credit score
+        const walledData = await Wallet.findOne({userId})
+        let creditScore=walledData?.credit;
+        customer.creditScore = creditScore;
+
+        // paid transactions before and after due date
+        const transactions = await Transaction.find({
+            customerId: userId,
+            transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE } ,
+            transactionType:TRANSACTION_TYPE.PARENT
+        });
+
+        let totalPaidTransactionsBeforeDue = 0;
+        let totalPaidTransactionsAfterDue = 0;
+
+        transactions.forEach((transaction:any) => {
+            const { dueDate, amountPaidDates } = transaction;
+            if (amountPaidDates.length > 0) {
+                const paidBeforeDue = amountPaidDates.some((paidDate:any) => new Date(paidDate) <= new Date(dueDate));
+                const paidAfterDue = amountPaidDates.some((paidDate:any) => new Date(paidDate) > new Date(dueDate));
+
+                if (paidBeforeDue) totalPaidTransactionsBeforeDue++;
+                if (paidAfterDue) totalPaidTransactionsAfterDue++;
+            }
+        });
+
+        customer.totalPaidTransactionsBeforeDue = totalPaidTransactionsBeforeDue;
+        customer.totalPaidTransactionsAfterDue = totalPaidTransactionsAfterDue;
         
         return buildObjectResponse(res, {
             customer:customer
