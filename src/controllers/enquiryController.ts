@@ -1,5 +1,5 @@
 import mongoose,{ Types } from "mongoose";
-import { constants, ENQUIRY_STATUS, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
+import { CATEGORY_TYPE, constants, ENQUIRY_STATUS, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, roles, TRANSACTION_STATUS, TRANSACTION_TYPE } from "../constants";
 import Role from "../models/Role";
 import User from "../models/user";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
@@ -125,7 +125,7 @@ export const listEnquiry = async (req: any, res: any) => {
 
 export const listCategoryForEnquiry = async (req: any, res: any) => {
     try {
-      const category = await Category.find()
+      const category = await Category.find({categoryType:CATEGORY_TYPE.ENQUIRY})
       return buildObjectResponse(res, {category});
     } catch (error) {
       console.log(error, "error");

@@ -1,4 +1,4 @@
-import { TRANSACTION_MODULES, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
+import { CATEGORY_TYPE, TRANSACTION_MODULES, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
 import * as yup from 'yup';
 
 import Role from "../models/Role";
@@ -12,6 +12,7 @@ import cron from 'node-cron';
 import RedemCode from "../models/RedemCode";
 import WalletTransaction from "../models/walletTransaction";
 import moment from "moment";
+import { Category } from "../models/Enquiry";
 
 export const loginUser = async (req: any, res: any) => {
     try {
@@ -487,3 +488,13 @@ export const shopOnOffCron = cron.schedule('0 */2 * * *', async () => {
         console.error('Error updating shop status:', error);
     }
 });
+
+export const listCategoryForUser = async (req: any, res: any) => {
+    try {
+      const category = await Category.find({categoryType:CATEGORY_TYPE.REGISTER})
+      return buildObjectResponse(res, {category});
+    } catch (error) {
+      console.log(error, "error");
+      return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}; 

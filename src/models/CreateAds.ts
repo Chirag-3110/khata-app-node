@@ -10,6 +10,7 @@ interface CreateAds extends Document {
     status: string;
     ad_StartDate: Date;
     ad_EndDate: Date;
+    type:string
 }
 
 const createAdsSchema = new Schema<CreateAds>({
@@ -44,6 +45,10 @@ const createAdsSchema = new Schema<CreateAds>({
     ad_EndDate: {
         type: Date,
         required: true,
+    },
+    type: {
+        type: String,
+        default:"Home"
     },
 });
 

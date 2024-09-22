@@ -13,6 +13,7 @@ export const createAd = async (req: Request, res: Response) => {
       status,
       ad_StartDate,
       ad_EndDate,
+      type
     } = req.body;
 
     // Create Ad
@@ -25,6 +26,7 @@ export const createAd = async (req: Request, res: Response) => {
       status,
       ad_StartDate,
       ad_EndDate,
+      type
     });
 
     const savedAd = await newAd.save();

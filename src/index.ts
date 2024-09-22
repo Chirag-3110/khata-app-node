@@ -19,6 +19,7 @@ import { notificationReminderCron } from './controllers/notificationController';
 import { shopOnOffCron } from './controllers/userController';
 import fraudRoute from './routes/fraudRoute';
 import { initializeFirebase } from './utils';
+import adminCategoryRoute from './routes/admin/categoryRoute';
 
 const app = express();
 const server = http.createServer(app)
@@ -53,6 +54,7 @@ app.use(reminderRoute);
 app.use(enquiryRoute);
 app.use(adminUserRoute);
 app.use(fraudRoute);
+app.use(adminCategoryRoute);
 
 notificationReminderCron.stop();
 shopOnOffCron.stop();

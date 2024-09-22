@@ -6,6 +6,7 @@ interface Category extends Document {
     description?: string;
     createdAt: Date;
     updatedAt: Date;
+    categoryType:string
 }
 
 const CategorySchema = new Schema<Category>({
@@ -24,6 +25,9 @@ const CategorySchema = new Schema<Category>({
     updatedAt: {
         type: Date,
         default: Date.now,
+    },
+    categoryType: {
+        type: String,
     }
 });
 

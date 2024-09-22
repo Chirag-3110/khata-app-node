@@ -30,7 +30,10 @@ const constants = {
       bulkRemindersAddedSuccess:"We have notified to all the users related to selected transaction",
       fraudNotExeedsLimit:"Customer fraud limit not exceeds, so customer is not blocked at this moment",
       fraudUserBlock:"Customer is blocked successfully.",
-      customersReactivated:"Customer is reactivated"
+      customersReactivated:"Customer is reactivated",
+      categoryAdded:"Category created successfully",
+      categoryUpdate:"Category updated successfully",
+      categoryDelete:"Category deleted successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -89,7 +92,9 @@ const constants = {
       fraudNotFound:"Fraud not found",
       userDeactivated:"User is deacticated",
       cantMarkFraud:"You can't make this customer as a fraud customer",
-      coordinatesRequired:"Shop location coordinated required" 
+      coordinatesRequired:"Shop location coordinated required" ,
+      categoryAlreadyExists:"Category already exists",
+      categoryNotFound:"Category not found"
     },
 };
 
@@ -146,6 +151,11 @@ const ENQUIRY_STATUS={
   OPEN:"Open",
   CLOSE:"Close",
   REOPEN:"Reopen"
+}
+
+const CATEGORY_TYPE={
+  ENQUIRY:"Enquiry",
+  REGISTER:"Register"
 }
 
 const CREDIT_SCORE={
@@ -211,4 +221,4 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   },
 }
 
-export { CREDIT_SCORE,FIREBASE_NOTIFICATION_MESSAGES,ENQUIRY_STATUS,constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }
+export { CATEGORY_TYPE,CREDIT_SCORE,FIREBASE_NOTIFICATION_MESSAGES,ENQUIRY_STATUS,constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }
