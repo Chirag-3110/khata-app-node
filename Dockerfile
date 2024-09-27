@@ -9,7 +9,7 @@ RUN npm install
 
 COPY . .
 
-COPY src/payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json /app/src/
+COPY src/payru-30bfe-firebase-adminsdk-euzms-02d2a657b9.json /app/src/
 
 RUN ls -al /app/src/
 
