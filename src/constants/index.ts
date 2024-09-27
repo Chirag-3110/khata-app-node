@@ -33,7 +33,8 @@ const constants = {
       customersReactivated:"Customer is reactivated",
       categoryAdded:"Category created successfully",
       categoryUpdate:"Category updated successfully",
-      categoryDelete:"Category deleted successfully"
+      categoryDelete:"Category deleted successfully",
+      testNotificaiton:"Test notification send"
     },
     errors: {
       roleNotFound:"Role not found",

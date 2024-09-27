@@ -145,6 +145,29 @@ export const markNotificationSeenUnseen = async (req: any, res: any) => {
     }
 }
 
+export const testFcmNotificaion=async (req: any, res: any) => {
+    try {
+        const { userId } = req.body;
+
+        const findUser = await User.findById(userId);
+
+        const tokens: string[] = [];
+        findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+        console.log(tokens,'Tokend');
+        
+        if(tokens?.length>0){
+            await sendNotification("New Testing Notification","Test FCM is working fine",tokens,{type:"TEST_NOTIFICATION"})
+        }
+
+        return buildErrorResponse(res, constants.success.testNotificaiton, 200);
+
+        
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
 export const notificationReminderCron = cron.schedule('0 11 * * *', async () => {
 // export const notificationReminderCron = cron.schedule('*/10 * * * * *', async () => {
     try {

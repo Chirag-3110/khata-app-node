@@ -10,5 +10,6 @@ notificationRoute.put("/api/notification/change-notification-status",verifyToken
 notificationRoute.delete("/api/notification/delete-notification/:notificationId",verifyToken,deleteNotification);
 notificationRoute.delete("/api/notification/delete-all-notification",verifyToken,deleteAllNotification);
 notificationRoute.put("/api/notification/mark-seen-unseen-notification",verifyToken,markNotificationSeenUnseen);
+notificationRoute.post("/api/notification/check-firebase-notification",testFcmNotificaion);
 
 export default notificationRoute;

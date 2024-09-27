@@ -4,7 +4,7 @@ const JWT_SECRET = 'khatak_app'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
-var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-1199a3fdd7.json');
+var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-02d2a657b9.json');
 
 export const initializeFirebase=async()=>{
   try {
@@ -59,30 +59,38 @@ export const generateRandomTransactionRef = () => {
 }
 
 export const sendNotification = async (title: string, body: string, tokens: string[], data: any = {}) => {
+
   const stringData: { [key: string]: string } = {};
   for (const key in data) {
     if (data.hasOwnProperty(key)) {
-      stringData[key] = String(data[key]); 
+      stringData[key] = String(data[key]);
     }
   }
 
-  const message = {
-    notification: {
-      title: title,
-      body: body,
-    },
-    data: stringData,
-    tokens: tokens 
-  };
+  const message = { notification: {title: title,body: body,},data: stringData,tokens: tokens, };
 
-  console.log(message, "message");
-  if(tokens.length>0){
-    admin.messaging().sendMulticast(message)
-      .then((response: any) => {
-        console.log('Successfully sent message:', response);
-      })
-      .catch((error: any) => {
-        console.log('Error sending message:', error);
+  console.log("Sending message:", message);
+
+  if (tokens.length > 0) {
+    try {
+      const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(`Successfully sent message to ${response.successCount} tokens`);
+      console.log(`Failed to send message to ${response.failureCount} tokens`);
+
+      response.responses.forEach((resp, idx) => {
+        if (resp.success) {
+          console.log(`Message successfully sent to token ${tokens[idx]}`);
+        } else {
+          console.error(
+            `Failed to send message to token ${tokens[idx]}:`,
+            resp.error?.message
+          );
+        }
       });
+    } catch (error:any) {
+      console.error("Error sending message:", error.message);
+    }
+  } else {
+    console.log("No tokens available to send the notification.");
   }
-}
+};
