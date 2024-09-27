@@ -1,5 +1,5 @@
 import express from 'express';
-import { changeNotificationStatus, deleteAllNotification, deleteNotification, getUnreadNotificaionOfUser, getUserNotification, markNotificationSeenUnseen, triggerNotification } from '../controllers/notificationController';
+import { changeNotificationStatus, deleteAllNotification, deleteNotification, getUnreadNotificaionOfUser, getUserNotification, markNotificationSeenUnseen,testFcmNotificaion, triggerNotification } from '../controllers/notificationController';
 const verifyToken = require('../middleware/auth')
 const notificationRoute = express.Router();
 
