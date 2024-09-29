@@ -1,4 +1,4 @@
-name: Payru CICD
+name: Testing CICD
 
 on:
   push:
@@ -30,9 +30,7 @@ jobs:
         run: npm install
 
       - name: Build Docker image
-        run: |
-          echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
-          docker build --build-arg FIREBASE_ADMIN_SDK_JSON="$(cat payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json)" -t testing .
+        run: docker build --build-arg FIREBASE_ADMIN_SDK_JSON="${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" -t testing .
 
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
