@@ -30,8 +30,9 @@ jobs:
         run: npm install
 
       - name: Build Docker image
-        run: docker buildx build --build-arg FIREBASE_ADMIN_SDK_JSON="${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" -t testing .
-        # Fix: Add `.` as the context argument to indicate the current directory
+        run: |
+          echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > firebase-admin-sdk.json
+          docker buildx build --build-arg FIREBASE_ADMIN_SDK_JSON="$(cat firebase-admin-sdk.json)" -t testing .
 
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
