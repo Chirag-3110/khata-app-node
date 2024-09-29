@@ -3,13 +3,17 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Build argument to accept the Firebase Admin SDK JSON from secrets
+ARG FIREBASE_ADMIN_SDK_JSON
+
 COPY package*.json ./
 
 RUN npm install
 
 COPY . .
 
-COPY src/payru-30bfe-firebase-adminsdk-euzms-02d2a657b9.json /app/src/
+# Create the Firebase Admin SDK JSON file during build with the correct name
+RUN echo "$FIREBASE_ADMIN_SDK_JSON" > /app/src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
 
 RUN ls -al /app/src/
 

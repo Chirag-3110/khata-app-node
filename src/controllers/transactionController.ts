@@ -60,6 +60,7 @@ console.log(customerData,"ss");
     }
 
     const otp = await generateOTP();
+    const transRef=generateRandomTransactionRef();
 
     let transactionData = {
       customerId: userId,
@@ -74,7 +75,7 @@ console.log(customerData,"ss");
       otp:"0000",
       // otp:otp,
       createdBy:createdBy?createdBy:roles.Vender,
-      transactionRef:generateRandomTransactionRef(),
+      transactionRef:transRef,
       transactionDate: moment().format()
     }
 
@@ -104,7 +105,7 @@ console.log(customerData,"ss");
 
     }
 
-    return buildObjectResponse(res, {transactonId:response?._id});
+    return buildObjectResponse(res, {transactonId:response?._id,transactionRef:transRef});
   } catch (error) {
     console.log(error, "error");
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
