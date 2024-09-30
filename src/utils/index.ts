@@ -4,17 +4,17 @@ const JWT_SECRET = 'khatak_app'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
-var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json');
+// var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json');
 
 export const initializeFirebase=async()=>{
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    console.log("Firebase initialised")
-  } catch (error) {
-    console.error('Error reading or parsing JSON file:', error);
-  }
+  // try {
+  //   admin.initializeApp({
+  //     credential: admin.credential.cert(serviceAccount)
+  //   });
+  //   console.log("Firebase initialised")
+  // } catch (error) {
+  //   console.error('Error reading or parsing JSON file:', error);
+  // }
 }
 
 export function generateJWT(user: any, documentId: any) {
@@ -72,24 +72,24 @@ export const sendNotification = async (title: string, body: string, tokens: stri
   console.log("Sending message:", message);
 
   if (tokens.length > 0) {
-    try {
-      const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(`Successfully sent message to ${response.successCount} tokens`);
-      console.log(`Failed to send message to ${response.failureCount} tokens`);
+    // try {
+    //   const response = await admin.messaging().sendEachForMulticast(message);
+    //   console.log(`Successfully sent message to ${response.successCount} tokens`);
+    //   console.log(`Failed to send message to ${response.failureCount} tokens`);
 
-      response.responses.forEach((resp, idx) => {
-        if (resp.success) {
-          console.log(`Message successfully sent to token ${tokens[idx]}`);
-        } else {
-          console.error(
-            `Failed to send message to token ${tokens[idx]}:`,
-            resp.error?.message
-          );
-        }
-      });
-    } catch (error:any) {
-      console.error("Error sending message:", error.message);
-    }
+    //   response.responses.forEach((resp, idx) => {
+    //     if (resp.success) {
+    //       console.log(`Message successfully sent to token ${tokens[idx]}`);
+    //     } else {
+    //       console.error(
+    //         `Failed to send message to token ${tokens[idx]}:`,
+    //         resp.error?.message
+    //       );
+    //     }
+    //   });
+    // } catch (error:any) {
+    //   console.error("Error sending message:", error.message);
+    // }
   } else {
     console.log("No tokens available to send the notification.");
   }
