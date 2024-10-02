@@ -18,7 +18,7 @@ COPY . .
 ARG FIREBASE_ADMIN_SDK_JSON
 
 # Properly handle the JSON content and ensure valid JSON is written to the file
-RUN echo "$FIREBASE_ADMIN_SDK_JSON" | jq -r . > /app/src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
+RUN echo "$FIREBASE_ADMIN_SDK_JSON" | jq '.' > /app/src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
 
 # Verify the JSON file creation (optional, for debugging)
 RUN cat /app/src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
