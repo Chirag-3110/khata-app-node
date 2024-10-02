@@ -1,30 +1,30 @@
-# syntax=docker/dockerfile:1.4
+# Use node:18-alpine as the base image
 FROM node:18-alpine
 
+# Install jq for JSON handling
+RUN apk add --no-cache jq
+
+# Set the working directory inside the container
 WORKDIR /app
 
-# Build argument to accept the Firebase Admin SDK JSON from secrets
-ARG FIREBASE_ADMIN_SDK_JSON
-
-# Copy package.json and package-lock.json, then install dependencies
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy the rest of the app's files into the container
+# Copy all application files
 COPY . .
 
-# Install jq to properly format JSON
-RUN apk add --no-cache jq
+# Set environment variable to handle Firebase Admin SDK JSON
+ARG FIREBASE_ADMIN_SDK_JSON
 
-# Create the JSON file from the FIREBASE_ADMIN_SDK_JSON argument, ensuring valid JSON
-RUN echo "$FIREBASE_ADMIN_SDK_JSON" | jq '.' > /app/src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
+# Properly handle the JSON content and ensure valid JSON is written to the file
+RUN echo "$FIREBASE_ADMIN_SDK_JSON" | jq -r . > /app/src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
 
-# Verify the JSON file creation and its content
-RUN ls -al /app/src/
+# Verify the JSON file creation (optional, for debugging)
 RUN cat /app/src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
 
-# Expose port 3000 for the application
+# Expose port 3000
 EXPOSE 3000
 
-# Start the application
+# Start the app
 CMD ["npm", "start"]
