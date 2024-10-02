@@ -29,10 +29,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Inject Firebase Admin SDK JSON into testFile
+        run: echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > ./src/testFile
+
       - name: Build Docker image
-        run: |
-          echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json
-          docker buildx build --build-arg FIREBASE_ADMIN_SDK_JSON="$(cat payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json)" -t testing .
+        run: docker buildx build --build-arg FIREBASE_ADMIN_SDK_JSON="$(cat ./src/testFile)" -t testing .
 
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
