@@ -4,7 +4,7 @@ const JWT_SECRET = 'khatak_app'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
-var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json');
+// var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json');
 
 export const initializeFirebase=async()=>{
   try {
