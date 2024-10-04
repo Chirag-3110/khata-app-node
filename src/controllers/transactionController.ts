@@ -1,5 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import { DUE_DATE_STATUS, FIREBASE_NOTIFICATION_MESSAGES, NOTIFICATION_TYPE, TRANSACTION_MODULES, TRANSACTION_STATUS, TRANSACTION_TYPE, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
+import { DUE_DATE_STATUS, FIREBASE_NOTIFICATION_MESSAGES, META_DATA, NOTIFICATION_TYPE, TRANSACTION_MODULES, TRANSACTION_STATUS, TRANSACTION_TYPE, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
 import User from "../models/user";
 import {buildErrorResponse,buildObjectResponse,buildResponse,} from "../utils/responseUtils";
 import Transaction from "../models/Transaction";
@@ -10,6 +10,7 @@ import WalletTransaction from "../models/walletTransaction";
 import Role from "../models/Role";
 import Customer from "../models/customer";
 import Frauds from "../models/Fraud";
+import { MetaData } from "../models/MetaData";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -35,7 +36,6 @@ export const createNewTransaction = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.userNotVender, 404);
 
     const isCustomerExits=await Customer.findOne({customerId:userId,venderId})
-console.log(isCustomerExits,"Cuteomrexists");
 
     if(!isCustomerExits){
       const findFraud=await Frauds.findOne({fraudsterId:userId});
@@ -49,7 +49,6 @@ console.log(isCustomerExits,"Cuteomrexists");
         venderId: venderId,
         customerId: userId
       }
-console.log(customerData,"ss");
 
       const user = new Customer(customerData);
       await user.save();
@@ -58,8 +57,9 @@ console.log(customerData,"ss");
         return buildErrorResponse(res, constants.errors.customerBlocked, 401);
       }
     }
+    const findOtp=await MetaData.findOne({title:META_DATA.TRANS_OTP});
 
-    const otp = await generateOTP();
+    const otp = findOtp?.description == "dev" ? "0000" :await generateOTP();
     const transRef=generateRandomTransactionRef();
 
     let transactionData = {
@@ -72,15 +72,14 @@ console.log(customerData,"ss");
       transactionType: TRANSACTION_TYPE.PARENT,
       dueDateStatus: DUE_DATE_STATUS.PENDING,
       description:description,
-      otp:"0000",
-      // otp:otp,
+      otp:otp,
       createdBy:createdBy?createdBy:roles.Vender,
       transactionRef:transRef,
       transactionDate: moment().format()
     }
 
     console.log(transactionData,'Data');
-    
+
 
     const transaction = new Transaction(transactionData);
 
