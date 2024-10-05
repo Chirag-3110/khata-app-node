@@ -9,6 +9,7 @@ import Transaction from "../models/Transaction";
 import Frauds from "../models/Fraud";
 import Review from "../models/Review";
 import Wallet from "../models/Wallet";
+import Otp from "../models/Otps";
 
 export const createNewCustomer = async (req: any, res: any) => {
     const { phoneNumber, role } = req.body;
@@ -23,8 +24,6 @@ export const createNewCustomer = async (req: any, res: any) => {
 
         if (!checkUserExists)
             return buildErrorResponse(res, constants.errors.userNotFound, 404);
-
-        console.log(checkUserExists,'ss');
         
         if (checkUserExists?._id && req?.user?.userId == String(checkUserExists?._id)) {
             return buildErrorResponse(res, constants.errors.cannotAddSelf, 400); 
@@ -49,7 +48,14 @@ export const createNewCustomer = async (req: any, res: any) => {
         }
 
         const user = new Customer(customerData);
-        await user.save();
+        let customerRes = await user.save();
+
+        const otpRes = new Otp({
+            customerId:customerRes?._id,
+            otp: "0000"
+        });
+
+        await otpRes.save();
         
         return buildResponse(res, constants.success.customerAdded, 200);
     } catch (error) {
@@ -388,3 +394,26 @@ export const getUserDetailsComplete=async(req:any,res:any)=>{
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
+
+// {
+//     "_id": {
+//       "$oid": "66f82d5f677337d22e8d64a8"
+//     },
+//     "role": {
+//       "$oid": "6686e1deaf3cbc7a4b6ddbdb"
+//     },
+//     "customerId": {
+//       "$oid": "66f2345780b7884ff2bfa1c7"
+//     },
+//     "venderId": {
+//       "$oid": "66ef90be1b41f7755ce65f0f"
+//     },
+//     "activeStatus": true,
+//     "createdAt": {
+//       "$date": "2024-09-28T16:22:55.167Z"
+//     },
+//     "updatedAt": {
+//       "$date": "2024-09-28T16:22:55.167Z"
+//     },
+//     "__v": 0
+//   }

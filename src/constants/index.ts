@@ -34,7 +34,8 @@ const constants = {
       categoryAdded:"Category created successfully",
       categoryUpdate:"Category updated successfully",
       categoryDelete:"Category deleted successfully",
-      testNotificaiton:"Test notification send"
+      testNotificaiton:"Test notification send",
+      otpSendSuccessfull:"Otp send successfully"
     },
     errors: {
       roleNotFound:"Role not found",
@@ -95,7 +96,8 @@ const constants = {
       cantMarkFraud:"You can't make this customer as a fraud customer",
       coordinatesRequired:"Shop location coordinated required" ,
       categoryAlreadyExists:"Category already exists",
-      categoryNotFound:"Category not found"
+      categoryNotFound:"Category not found",
+      unableToSendOtp:"Unable to send otp"
     },
 };
 

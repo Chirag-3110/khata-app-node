@@ -11,6 +11,8 @@ import Role from "../models/Role";
 import Customer from "../models/customer";
 import Frauds from "../models/Fraud";
 import { MetaData } from "../models/MetaData";
+import Otp from "../models/Otps";
+import Shop from "../models/Shop";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -34,8 +36,18 @@ export const createNewTransaction = async (req: any, res: any) => {
 
     if(!findVender)
       return buildErrorResponse(res, constants.errors.userNotVender, 404);
+    
+    let shopName=findVender?.name
+    if(findVender?.shopId){
+      const shopData=await Shop.findById(findVender?.shopId)
+      if(shopData)
+        shopName = shopData?.name;
+    }
 
     const isCustomerExits=await Customer.findOne({customerId:userId,venderId})
+
+    const findOtp=await MetaData.findOne({title:META_DATA.TRANS_OTP});
+    const otp = findOtp?.description == "dev" ? "0000" :await generateOTP();
 
     if(!isCustomerExits){
       const findFraud=await Frauds.findOne({fraudsterId:userId});
@@ -51,15 +63,79 @@ export const createNewTransaction = async (req: any, res: any) => {
       }
 
       const user = new Customer(customerData);
-      await user.save();
+      let custReds=await user.save();
+
+      const otpRes = new Otp({
+        customerId:custReds?._id,
+        otp: otp
+      });
+      await otpRes.save();
+
     }else{
       if(!isCustomerExits?.activeStatus){
         return buildErrorResponse(res, constants.errors.customerBlocked, 401);
+      }else{
+        const otpModal=await Otp.findOne({customerId:isCustomerExits?._id});
+        if(!otpModal){
+          return buildErrorResponse(res, constants.errors.unableToSendOtp, 404);
+        }
+        await Otp.findByIdAndUpdate(
+          otpModal?._id,
+          {
+            otp: otp
+          },
+          { new: true }
+        );
       }
     }
-    const findOtp=await MetaData.findOne({title:META_DATA.TRANS_OTP});
 
-    const otp = findOtp?.description == "dev" ? "0000" :await generateOTP();
+    // if(createdBy !== roles.Customer){
+      const notificationBody={
+        title:"Transaction initialization",
+        description:`${otp} is your transaction otp. please share this otp with the vender for transaction creation`,
+        notificationType:NOTIFICATION_TYPE.TRANSACTION,
+        userId:userId
+      }
+      const notification=new Notification(notificationBody);
+      await notification.save();
+    // }
+
+    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction.message.replace('{{userName}}', shopName).replace('{{otp}}', otp)
+    let title = FIREBASE_NOTIFICATION_MESSAGES.transaction.type;
+
+    const tokens: string[] = [];
+    findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+    await sendNotification("Transaction Initialised",message,tokens,{type:title})
+
+    return buildResponse(res, constants.success.otpSendSuccessfull,200);
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const verifyTransaction = async (req: any, res: any) => {
+  const { transactionData, otp } = req.body;
+  const {userId, amount, dueDate, venderId, description, createdBy} = transactionData
+  try {
+    if (!otp)
+      return buildErrorResponse(res, constants.errors.emptyOtp, 404);
+
+    const findUser=await User.findById(venderId)
+
+    if (!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+
+    const isCustomerExits=await Customer.findOne({customerId:userId,venderId})
+    if(!isCustomerExits){
+      return buildErrorResponse(res, constants.errors.customerNotExists, 404);
+    }
+
+    const otpModal=await Otp.findOne({customerId:isCustomerExits?._id});
+
+    if(otpModal?.otp !== otp)
+      return buildErrorResponse(res, constants.errors.invalidOtp, 404);
+
     const transRef=generateRandomTransactionRef();
 
     let transactionData = {
@@ -67,8 +143,8 @@ export const createNewTransaction = async (req: any, res: any) => {
       venderId: venderId,
       amount: amount,
       dueDate: dueDate,
-      status: createdBy == roles.Vender?TRANSACTION_STATUS.PRE_PENDING:TRANSACTION_STATUS.PENDING,
-      transactionStatus: createdBy == roles.Vender?TRANSACTION_STATUS.PRE_PENDING:TRANSACTION_STATUS.PENDING,
+      status: TRANSACTION_STATUS.PENDING,
+      transactionStatus: TRANSACTION_STATUS.PENDING,
       transactionType: TRANSACTION_TYPE.PARENT,
       dueDateStatus: DUE_DATE_STATUS.PENDING,
       description:description,
@@ -78,85 +154,22 @@ export const createNewTransaction = async (req: any, res: any) => {
       transactionDate: moment().format()
     }
 
-    console.log(transactionData,'Data');
-
-
     const transaction = new Transaction(transactionData);
 
     const response = await transaction.save();
 
-    if(createdBy !== roles.Customer){
-      const notificationBody={
-        title:"Transaction initialization",
-        description:`${otp} is your transaction otp. please share this otp with the vender for transaction completion`,
-        notificationType:NOTIFICATION_TYPE.TRANSACTION,
-        userId:userId
-      }
-      const notification=new Notification(notificationBody);
-      await notification.save();
-
-      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction.message.replace('{{userName}}', findVender?.name).replace('{{otp}}', otp)
-      let title = FIREBASE_NOTIFICATION_MESSAGES.transaction.type;
-
-      const tokens: string[] = [];
-      findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
-      await sendNotification("Transaction Created",message,tokens,{type:title,transactionId:response?._id})
-
-    }
-
-    return buildObjectResponse(res, {transactonId:response?._id,transactionRef:transRef});
-  } catch (error) {
-    console.log(error, "error");
-    return buildErrorResponse(res, constants.errors.internalServerError, 500);
-  }
-};
-
-export const verifyTransaction = async (req: any, res: any) => {
-  const { transactionId, otp } = req.body;
-  try {
-    if (!transactionId)
-      return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
-
-    if (!otp)
-      return buildErrorResponse(res, constants.errors.emptyOtp, 404);
-
-    const findTransaction = await Transaction.findById(transactionId);
-
-    if (!findTransaction)
-      return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
-
-    console.log(findTransaction?.otp,"find",otp)
-
-    const findUser=await User.findById(findTransaction.venderId)
-console.log(findUser,'ss');
-
-    if (!findUser)
-      return buildErrorResponse(res, constants.errors.userNotFound, 404);
-
-    if(findTransaction?.otp !== otp)
-      return buildErrorResponse(res, constants.errors.invalidOtp, 404);
-
-    await Transaction.findByIdAndUpdate(
-      transactionId,
-      {
-        status: TRANSACTION_STATUS.PENDING,
-        transactionStatus: TRANSACTION_STATUS.PENDING
-      },
-      { new: true }
-    );
-
     const notificationBodies = [
       {
         title: "Transaction completed",
-        description: `Your transaction is successfully completed with the vendor`,
+        description: `Your transaction is successfully created with the vendor`,
         notificationType: NOTIFICATION_TYPE.TRANSACTION,
-        userId: findTransaction?.customerId,
+        userId: userId,
       },
       {
         title: "Transaction completed",
-        description: `Your transaction is successfully completed`,
+        description: `Your transaction is successfully created`,
         notificationType: NOTIFICATION_TYPE.TRANSACTION,
-        userId: findTransaction?.venderId,
+        userId: venderId,
       },
     ];
     
@@ -168,10 +181,11 @@ console.log(findUser,'ss');
     const tokens: string[] = [];
     findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
     if(tokens?.length>0){
-      await sendNotification("Transaction Verified",message,tokens,{type:title})
+      await sendNotification("Transaction Verified",message,tokens,{type:title,transactionId:response?._id})
     }
 
-    return buildResponse(res, constants.success.transactionSuccesfullStarted ,200);
+    // return buildResponse(res, constants.success.transactionSuccesfullStarted ,200);
+    return buildObjectResponse(res, {transactonId:response?._id,transactionRef:transRef});
   } catch (error) {
     console.log(error, "error");
     return buildErrorResponse(res, constants.errors.internalServerError, 500);

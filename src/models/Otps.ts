@@ -1,18 +1,18 @@
 import { Schema, model, Document } from 'mongoose';
 
 interface Otp extends Document {
-    userId: Schema.Types.ObjectId;
-    otp: number;
+    customerId: Schema.Types.ObjectId;
+    otp: string;
 }
 
 const otpSchema = new Schema<Otp>({
-    userId: {
+    customerId: {
         type: Schema.Types.ObjectId,
-        ref: 'user',
+        ref: 'customer',
         required: true,
     },
     otp: {
-        type: Number,
+        type: String,
         required: true,
     },
 });
