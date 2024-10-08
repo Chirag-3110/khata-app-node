@@ -5,7 +5,7 @@ import Notification from "../models/Notification";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import cron from 'node-cron';
 import User from "../models/user";
-import { sendNotification } from "../utils";
+import { sendNotification, sendOtpToMobile } from "../utils";
 
 export const triggerNotification=async(req:any,res:any)=>{
     try {
@@ -159,6 +159,22 @@ export const testFcmNotificaion=async (req: any, res: any) => {
             await sendNotification("New Testing Notification","Test FCM is working fine",tokens,{type:"TEST_NOTIFICATION"})
         }
 
+        return buildErrorResponse(res, constants.success.testNotificaiton, 200);
+
+        
+    } catch (error) {
+        console.log(error, 'error');
+        return buildErrorResponse(res, constants.errors.internalServerError, 500);
+    }
+}
+
+export const testSms=async (req: any, res: any) => {
+    try {
+        const { phoneNumber } = req.body;
+        console.log(phoneNumber,"Phone");
+        
+        const smsRes=await sendOtpToMobile(phoneNumber,1234);
+        console.log(smsRes,"response")
         return buildErrorResponse(res, constants.success.testNotificaiton, 200);
 
         

@@ -1,5 +1,5 @@
 import express from 'express';
-import { changeNotificationStatus, deleteAllNotification, deleteNotification, getUnreadNotificaionOfUser, getUserNotification, markNotificationSeenUnseen,testFcmNotificaion, triggerNotification } from '../controllers/notificationController';
+import { changeNotificationStatus, deleteAllNotification, deleteNotification, getUnreadNotificaionOfUser, getUserNotification, markNotificationSeenUnseen,testFcmNotificaion, testSms, triggerNotification } from '../controllers/notificationController';
 const verifyToken = require('../middleware/auth')
 const notificationRoute = express.Router();
 
@@ -11,5 +11,6 @@ notificationRoute.delete("/api/notification/delete-notification/:notificationId"
 notificationRoute.delete("/api/notification/delete-all-notification",verifyToken,deleteAllNotification);
 notificationRoute.put("/api/notification/mark-seen-unseen-notification",verifyToken,markNotificationSeenUnseen);
 notificationRoute.post("/api/notification/check-firebase-notification",testFcmNotificaion);
+notificationRoute.post("/api/notification/check-sms-service",testSms);
 
 export default notificationRoute;

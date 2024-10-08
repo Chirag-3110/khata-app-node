@@ -14,11 +14,11 @@ interface User extends Document {
     shopId: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
-    documentId: string;
     deviceToken: DeviceInfoInterface[];
     activeStatus: boolean;
     walletId: Schema.Types.ObjectId;
     isEmailVerified: boolean;
+    isPhoneVerified: boolean;
     address: string;
     dob: string;
     gender: string;
@@ -38,7 +38,6 @@ const userSchema = new Schema<User>({
     email: {
         type: String,
         unique: true,
-        required:true
     },
     status: {
         type: Boolean,
@@ -60,10 +59,10 @@ const userSchema = new Schema<User>({
         type: Date,
         default: Date.now,
     },
-    documentId: {
-        type: String,
-        required:true
-    },
+    // documentId: {
+    //     type: String,
+    //     required:true
+    // },
     deviceToken: [
         new Schema(
             {
@@ -89,7 +88,11 @@ const userSchema = new Schema<User>({
     },
     isEmailVerified: {
         type: Boolean,
-        default:false
+        default:true
+    },
+    isPhoneVerified: {
+        type: Boolean,
+        default:true
     },
     address: {
         type: String,
@@ -111,7 +114,8 @@ const userSchema = new Schema<User>({
       default: false,
     },
     phoneNumber:{
-        type:String
+        type:String,
+        unique: true,
     },
     redeemCode: {
         type: Schema.Types.ObjectId,

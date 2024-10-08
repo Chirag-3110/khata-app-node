@@ -1,10 +1,10 @@
 import express from 'express';
-import { checkUserVerify, completeRegistration, createUser, editProfile, editShopDetails, getShopById, getUserProfile, listCategoryForUser, loginUser, logoutUser, registerDevice, updatedShopStatus, updateUserStatus,  } from '../controllers/userController';
+import { checkUserVerify, completeRegistration, editProfile, editShopDetails, getShopById, getUserProfile, listCategoryForUser, sendOtp, logoutUser, registerDevice, updatedShopStatus, updateUserStatus, verifyUserByOtp,  } from '../controllers/userController';
 const userRoute = express.Router();
 const verifyToken = require('../middleware/auth'); 
 
-userRoute.post("/api/user/login",loginUser);
-userRoute.post("/api/user/create-user",createUser);
+userRoute.post("/api/user/send-otp",sendOtp);
+userRoute.post("/api/user/verify-otp",verifyUserByOtp);
 userRoute.post("/api/user/complete-registration",completeRegistration);
 userRoute.get("/api/user/check-user-profile",checkUserVerify);
 userRoute.get(`/api/user/get-user-profile/:documentId`,getUserProfile);

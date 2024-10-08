@@ -97,7 +97,9 @@ const constants = {
       coordinatesRequired:"Shop location coordinated required" ,
       categoryAlreadyExists:"Category already exists",
       categoryNotFound:"Category not found",
-      unableToSendOtp:"Unable to send otp"
+      unableToSendOtp:"Unable to send otp",
+      sessionIdReq:"Session id is required",
+      otpMisMatch:"OTP Mismatch"
     },
 };
 
@@ -224,8 +226,10 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   },
 }
 
+const OTP_API_KEY="e492e176-7cb7-11ef-8b17-0200cd936042"
+
 const META_DATA={
   TRANS_OTP:"Transaction_Otp"
 }
 
-export { META_DATA,CATEGORY_TYPE,CREDIT_SCORE,FIREBASE_NOTIFICATION_MESSAGES,ENQUIRY_STATUS,constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }
+export {OTP_API_KEY,META_DATA,CATEGORY_TYPE,CREDIT_SCORE,FIREBASE_NOTIFICATION_MESSAGES,ENQUIRY_STATUS,constants,roles,NOTIFICATION_TYPE,NOTIFICATION_STATUS,TRANSACTION_STATUS,TRANSACTION_TYPE,DUE_DATE_STATUS,WALLET_TRANSACTION_TYPE,TRANSACTION_MODULES }

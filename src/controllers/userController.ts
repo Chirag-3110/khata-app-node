@@ -1,11 +1,11 @@
-import { CATEGORY_TYPE, TRANSACTION_MODULES, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
+import { CATEGORY_TYPE, META_DATA, TRANSACTION_MODULES, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
 import * as yup from 'yup';
 
 import Role from "../models/Role";
 import Shop from "../models/Shop";
 import Wallet from "../models/Wallet";
 import User from "../models/user";
-import { generateJWT, generateReferralCode } from "../utils";
+import { generateJWT, generateOTP, generateReferralCode, sendOtpToMobile, verifyOtpBySessionId } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import { shopUpdateSchema, userValidationSchema } from "../validations/userValidation";
 import cron from 'node-cron';
@@ -13,61 +13,63 @@ import RedemCode from "../models/RedemCode";
 import WalletTransaction from "../models/walletTransaction";
 import moment from "moment";
 import { Category } from "../models/Enquiry";
+import { MetaData } from "../models/MetaData";
 
-export const loginUser = async (req: any, res: any) => {
+export const sendOtp = async (req: any, res: any) => {
     try {
-        const { documentId } = req.body;
+        const { phoneNumber } = req.body;
         
-        if (!documentId) 
-            return buildErrorResponse(res, constants.errors.docIdNotgExists, 404);
+        if (!phoneNumber)
+            return buildErrorResponse(res, constants.errors.invalidPhone, 404);
 
-        let userData = await User.findOne({ documentId });
+        const findOtp=await MetaData.findOne({title:META_DATA.TRANS_OTP});
+        const otp = findOtp?.description == "dev" ? "0000" :await generateOTP();
 
-        if (!userData)
-            return buildErrorResponse(res, constants.errors.userNotFound, 404);
+        const smsRes=await sendOtpToMobile(phoneNumber,otp);
         
-        if (userData.activeStatus === false) 
-            return buildErrorResponse(res, constants.errors.userDeactivated, 403);
-
-        let token = await generateJWT(userData._id, documentId);
-        return buildObjectResponse(res, { tokenData: token });
+        return buildObjectResponse(res, { sessionId: smsRes?.Details,otp:otp });
 
     } catch (error) {
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };
 
-
-export const createUser=async(req:any,res:any)=>{
-    const { email,documentId } = req.body;
+export const verifyUserByOtp = async (req: any, res: any) => {
     try {
-        if(!email)
-            return buildErrorResponse(res, constants.errors.invalidEmail, 404);
-        if(!documentId)
-            return buildErrorResponse(res, constants.errors.docIdNotgExists, 404);
+        const { sessionId, otp, phoneNumber } = req.body;
+        
+        if (!otp)
+            return buildErrorResponse(res, constants.errors.emptyOtp, 404);
 
-        let userData=await User.findOne({email});
-        if(userData){
-            return buildErrorResponse(res, constants.errors.emailAlreadyExist, 404);
+        if (!sessionId)
+            return buildErrorResponse(res, constants.errors.sessionIdReq, 404);
+
+        if (!phoneNumber)
+            return buildErrorResponse(res, constants.errors.invalidPhone, 404);
+        
+        const verificationResponse=await verifyOtpBySessionId(sessionId,otp);
+        if(verificationResponse?.Status=="Error")
+            return buildErrorResponse(res, verificationResponse?.Details, 406);
+        
+        let userData = await User.findOne({ phoneNumber:phoneNumber });
+        if(!userData){
+            const user= new User({phoneNumber:phoneNumber?.trim()})
+            const response = await user.save();
+            let token = await generateJWT(response?._id, phoneNumber);
+            return buildObjectResponse(res, { isProfileDone: response?.isProfileDone, userId: response?._id, token:token });
+        }else{
+            let token = await generateJWT(userData?._id, phoneNumber);
+            return buildObjectResponse(res, { isProfileDone: userData?.isProfileDone, userId: userData?._id, token:token });
         }
 
-        await userValidationSchema.validate(req.body);
-        
-        const user= new User({email:email?.toLowerCase(),documentId})
-        const response = await user.save();
-        console.log(req.body);
-    
-        return buildObjectResponse(res, {userId:response?._id});
-
     } catch (error) {
-        console.log(error, 'error');
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
-}
+};
 
 export const completeRegistration = async (req: any, res: any) => {
-    const { userData, shop, role, redeemCode, pinCode } = req.body;
-    const { email, name, address, dob, gender, qrCode, upiId, phoneNumber } = userData;
+    const { userData, shop, role, redeemCode, pinCode, userId } = req.body;
+    const { email, name, address, dob, gender, qrCode, upiId } = userData;
 
     const session = await User.startSession();
     session.startTransaction();
@@ -86,7 +88,8 @@ export const completeRegistration = async (req: any, res: any) => {
             return buildErrorResponse(res, constants.errors.roleNotFound, 401);
         }
 
-        let isUserExist = await User.findOne({ email: email.toLowerCase() }).session(session);
+        let isUserExist = await User.findById(userId).session(session);
+        
         if (!isUserExist) {
             await session.abortTransaction();
             session.endSession();
@@ -169,7 +172,7 @@ export const completeRegistration = async (req: any, res: any) => {
             qrCode: qrCode,
             upiId: upiId,
             isProfileDone: true,
-            phoneNumber,
+            email,
             redeemCode: generatedRedeemCodeId?._id,
             pinCode: pinCode
         };

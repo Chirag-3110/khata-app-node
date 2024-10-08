@@ -4,6 +4,8 @@ const JWT_SECRET = 'khatak_app'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
+import axios from 'axios';
+import { OTP_API_KEY } from '../constants';
 // var serviceAccount = require('../payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json');
 
 export const initializeFirebase=async()=>{
@@ -96,5 +98,28 @@ export const sendNotification = async (title: string, body: string, tokens: stri
     }
   } else {
     console.log("No tokens available to send the notification.");
+  }
+};
+
+export const sendOtpToMobile = async (phoneNumber:any,otp:string|Number) => {
+  try {
+    const url = `https://2factor.in/API/V1/${OTP_API_KEY}/SMS/${phoneNumber}/${otp}`;
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    throw error;
+  }
+};
+
+export const verifyOtpBySessionId = async (sessionId:string, otp:string|Number) => {
+  try {
+    const url = `https://2factor.in/API/V1/${OTP_API_KEY}/SMS/VERIFY/${sessionId}/${otp}`;
+    const response = await axios.get(url);
+    // console.log('OTP Verified:', response.data);
+    return response.data;
+  } catch (error:any) {
+    // console.error('Error verifying OTP:', error?.response?.data);
+    return error?.response?.data;
   }
 };
