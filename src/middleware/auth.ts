@@ -1,6 +1,6 @@
 // import { Request, Response, NextFunction } from 'express';
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'khatak_app';
+const JWT_SECRET = 'khatak_app_jwt';
 
 
 function verifyToken(req:any, res:any, next:any) {

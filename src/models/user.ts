@@ -59,10 +59,6 @@ const userSchema = new Schema<User>({
         type: Date,
         default: Date.now,
     },
-    // documentId: {
-    //     type: String,
-    //     required:true
-    // },
     deviceToken: [
         new Schema(
             {

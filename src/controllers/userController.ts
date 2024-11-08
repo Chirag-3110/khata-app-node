@@ -52,6 +52,7 @@ export const verifyUserByOtp = async (req: any, res: any) => {
             return buildErrorResponse(res, verificationResponse?.Details, 406);
         
         let userData = await User.findOne({ phoneNumber:phoneNumber });
+
         if(!userData){
             const user= new User({phoneNumber:phoneNumber?.trim()})
             const response = await user.save();
@@ -207,9 +208,10 @@ export const checkUserVerify=async (req:any,res:any) => {
 }
 
 export const getUserProfile=async(req:any,res:any) => {
-    const {documentId}=req.params;
+    const {userId}=req.user;
+    
     try {
-        let userData = await User.findOne({ documentId })
+        let userData = await User.findById(userId)
             .populate('role')
             .populate('walletId')
             .populate({
@@ -221,7 +223,7 @@ export const getUserProfile=async(req:any,res:any) => {
             });
 
         if (userData?.shopId) {
-            userData = await User.findOne({ documentId })
+            userData = await User.findById(userId)
                 .populate('role')
                 .populate('walletId')
                 .populate('shopId')

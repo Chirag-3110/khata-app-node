@@ -1,6 +1,6 @@
 import fs from 'fs';
 import moment from "moment";
-const JWT_SECRET = 'khatak_app'
+const JWT_SECRET = 'khatak_app_jwt'
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
 import admin from 'firebase-admin';
@@ -23,12 +23,12 @@ export const initializeFirebase=async()=>{
   }
 }
 
-export function generateJWT(user: any, documentId: any) {
+export function generateJWT(user: any, phoneNumner: any) {
   const secretKey = JWT_SECRET || '1234';
   return jwt.sign(
     {
       userId: user,
-      documentId: documentId
+      // phoneNumber: phoneNumner
     },
     secretKey
   );

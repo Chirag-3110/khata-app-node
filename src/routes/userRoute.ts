@@ -7,7 +7,7 @@ userRoute.post("/api/user/send-otp",sendOtp);
 userRoute.post("/api/user/verify-otp",verifyUserByOtp);
 userRoute.post("/api/user/complete-registration",completeRegistration);
 userRoute.get("/api/user/check-user-profile",checkUserVerify);
-userRoute.get(`/api/user/get-user-profile/:documentId`,getUserProfile);
+userRoute.get(`/api/user/get-user-profile`,verifyToken,getUserProfile);
 userRoute.get(`/api/user/get-shop/:shopId`,verifyToken,getShopById);
 userRoute.put(`/api/user/update-shop-status`,verifyToken,updatedShopStatus);
 userRoute.put(`/api/user/update-user-status/:userId`,verifyToken,updateUserStatus);
