@@ -24,11 +24,11 @@ export const initializeFirebase=async()=>{
 }
 
 export function generateJWT(user: any, phoneNumner: any) {
-  const secretKey = JWT_SECRET || '1234';
+  const secretKey = JWT_SECRET ;
   return jwt.sign(
     {
       userId: user,
-      // phoneNumber: phoneNumner
+      phoneNumber: phoneNumner
     },
     secretKey
   );
