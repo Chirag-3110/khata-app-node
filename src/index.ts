@@ -58,4 +58,3 @@ app.use(adminCategoryRoute);
 
 notificationReminderCron.start();
 shopOnOffCron.start();
-

@@ -13,6 +13,7 @@ import Frauds from "../models/Fraud";
 import { MetaData } from "../models/MetaData";
 import Otp from "../models/Otps";
 import Shop from "../models/Shop";
+import { log } from "util";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -64,6 +65,7 @@ export const createNewTransaction = async (req: any, res: any) => {
 
       const user = new Customer(customerData);
       let custReds=await user.save();
+console.log(otp,'sksks');
 
       const otpRes = new Otp({
         customerId:custReds?._id,
@@ -1212,6 +1214,39 @@ export const listCustomerPartTransactionsByVender = async (req: any, res: any) =
       path: "childTransaction"
     })
     .sort({ transactionDate: -1 });
+
+    return buildObjectResponse(res, {
+      transactions
+    });
+
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const listPendingTransactionsUsingVender = async (req: any, res: any) => {
+  try {
+    const { userId } = req.user;
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const transactions = await Transaction.find({
+      venderId: userId,
+      transactionType: TRANSACTION_TYPE.PARENT,
+      transactionStatus:TRANSACTION_STATUS.PENDING,
+    })
+    .populate("customerId")
+    .populate({
+      path: "childTransaction"
+    })
+    .sort({ transactionDate: -1 });
+
+    console.log(transactions.length,'Lwlw');
+    
 
     return buildObjectResponse(res, {
       transactions

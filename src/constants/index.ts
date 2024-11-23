@@ -224,6 +224,10 @@ const FIREBASE_NOTIFICATION_MESSAGES={
     type:"FRAUD_BLOCKED_VENDER",
     message:"{{userName}} is blocked for all transactions. please take actions against the same."
   },
+  shopOpenClose:{
+    type:"SHOP_OPEN_CLOSE",
+    message:"Your shop {{shopName}} is now {{status}}."
+  },
 }
 
 const OTP_API_KEY="e492e176-7cb7-11ef-8b17-0200cd936042"

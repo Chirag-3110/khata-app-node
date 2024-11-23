@@ -1,11 +1,11 @@
-import { CATEGORY_TYPE, META_DATA, TRANSACTION_MODULES, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
+    import { CATEGORY_TYPE, FIREBASE_NOTIFICATION_MESSAGES, META_DATA, TRANSACTION_MODULES, WALLET_TRANSACTION_TYPE, constants, roles } from "../constants";
 import * as yup from 'yup';
 
 import Role from "../models/Role";
 import Shop from "../models/Shop";
 import Wallet from "../models/Wallet";
 import User from "../models/user";
-import { generateJWT, generateOTP, generateReferralCode, sendOtpToMobile, verifyOtpBySessionId } from "../utils";
+import { generateJWT, generateOTP, generateReferralCode, sendNotification, sendOtpToMobile, verifyOtpBySessionId } from "../utils";
 import { buildErrorResponse, buildObjectResponse, buildResponse } from "../utils/responseUtils";
 import { shopUpdateSchema, userValidationSchema } from "../validations/userValidation";
 import cron from 'node-cron';
@@ -14,6 +14,7 @@ import WalletTransaction from "../models/walletTransaction";
 import moment from "moment";
 import { Category } from "../models/Enquiry";
 import { MetaData } from "../models/MetaData";
+import { close } from "fs";
 
 export const sendOtp = async (req: any, res: any) => {
     try {
@@ -472,17 +473,33 @@ export const shopOnOffCron = cron.schedule('0 */2 * * *', async () => {
         const currentTime = moment()
         const shops = await Shop.find();
         for (const shop of shops) {
-            const openTime = moment(shop.openTime).add(6, 'hours').add(30, 'minutes');
-            const closeDate = moment(shop.closeDate).add(6, 'hours').add(30, 'minutes');
-        
-            if (currentTime.isBetween(openTime, closeDate, null, '[)')) {
+            const openTime = moment(shop.openTime).subtract(5, 'hours').subtract(30, 'minutes');
+            const closeDate = moment(shop.closeDate).subtract(5, 'hours').subtract(30, 'minutes');
+            const currentTimeTime = currentTime.format("HH:mm");
+            const openTimeTime = openTime.format("HH:mm");
+            const closeDateTime = closeDate.format("HH:mm");
+            const isOpen = currentTimeTime >= openTimeTime && currentTimeTime < closeDateTime;
+            let message;
+            let title = FIREBASE_NOTIFICATION_MESSAGES.shopOpenClose.type;
+
+            const shopOwner=await User.findById(shop.user)
+            const tokens: string[] = [];
+            shopOwner?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
+
+            if (isOpen) {
                 if (!shop.status) {
+                    // open the shop
                     shop.status = true;
+                    message=FIREBASE_NOTIFICATION_MESSAGES.shopOpenClose.message.replace('{{shopName}}', shop.name).replace('{{status}}', "opened")
+                    await sendNotification("Shop Reminder",message,tokens,{type:title})
                     await shop.save();
                     console.log(`Shop ${shop.name} is now open.`);
                 }
             } else {
                 if (shop.status) {
+                    // close the shop
+                    message=FIREBASE_NOTIFICATION_MESSAGES.shopOpenClose.message.replace('{{shopName}}', shop.name).replace('{{status}}', "closed")
+                    await sendNotification("Shop Reminder",message,tokens,{type:title})
                     shop.status = false;
                     await shop.save();
                     console.log(`Shop ${shop.name} is now closed.`);

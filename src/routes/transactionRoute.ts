@@ -1,6 +1,6 @@
 import express from 'express';
 import { getWalletData } from '../controllers/walletController';
-import { acceptRejectDueDateRequest, createNewTransaction, getTransactionDetailById, listCompletedTransactionOfVender, listCompleteTransactionsOfCustomers, listCompleteTransactionUsingVenderId, listCustomerPartTransactionsByVender, listTodayDueDateTransactionsOfVender, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateMultipleTransactionStatuses, updateTransactionStatus, verifyTransaction,  } from '../controllers/transactionController';
+import { acceptRejectDueDateRequest, createNewTransaction, getTransactionDetailById, listCompletedTransactionOfVender, listCompleteTransactionsOfCustomers, listCompleteTransactionUsingVenderId, listCustomerPartTransactionsByVender, listPendingTransactionsUsingVender, listTodayDueDateTransactionsOfVender, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateMultipleTransactionStatuses, updateTransactionStatus, verifyTransaction,  } from '../controllers/transactionController';
 const transactionRoute = express.Router();
 const verifyToken = require('../middleware/auth'); 
 
@@ -12,6 +12,7 @@ transactionRoute.get(`/api/transaction/get-completed-transaction-of-customer`,ve
 transactionRoute.get(`/api/transaction/get-completed-transaction-by-venderId/:venderId`,verifyToken,listCompleteTransactionUsingVenderId);
 transactionRoute.get(`/api/transaction/get-dueDate-transaction-of-vender`,verifyToken,listTodayDueDateTransactionsOfVender);
 transactionRoute.get(`/api/transaction/get-customer-past-transaction-by-vender/:customerId`,verifyToken,listCustomerPartTransactionsByVender);
+transactionRoute.get(`/api/transaction/get-pending-transaction-of-vender-user`,verifyToken,listPendingTransactionsUsingVender)
 
 transactionRoute.post(`/api/transaction/create-new-transaction`,verifyToken,createNewTransaction);
 transactionRoute.put(`/api/transaction/verify-transaction`,verifyToken,verifyTransaction);

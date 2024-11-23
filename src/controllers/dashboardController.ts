@@ -319,7 +319,7 @@ export const dashboardSearch=async(req:any,res:any) => {
             const shopsByUserPhone = await Shop.find({
                 user: { $in: userIds },
                 canBeSearchable: true,
-                status: true
+                // status: true
             }).populate("user");
             results = [...shopsByName, ...shopsByUserPhone];
             results = results.filter((shop:any, index:any, self:any) =>

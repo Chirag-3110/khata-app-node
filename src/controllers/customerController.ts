@@ -394,26 +394,3 @@ export const getUserDetailsComplete=async(req:any,res:any)=>{
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 }
-
-// {
-//     "_id": {
-//       "$oid": "66f82d5f677337d22e8d64a8"
-//     },
-//     "role": {
-//       "$oid": "6686e1deaf3cbc7a4b6ddbdb"
-//     },
-//     "customerId": {
-//       "$oid": "66f2345780b7884ff2bfa1c7"
-//     },
-//     "venderId": {
-//       "$oid": "66ef90be1b41f7755ce65f0f"
-//     },
-//     "activeStatus": true,
-//     "createdAt": {
-//       "$date": "2024-09-28T16:22:55.167Z"
-//     },
-//     "updatedAt": {
-//       "$date": "2024-09-28T16:22:55.167Z"
-//     },
-//     "__v": 0
-//   }
