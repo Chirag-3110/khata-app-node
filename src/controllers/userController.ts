@@ -38,6 +38,7 @@ export const sendOtp = async (req: any, res: any) => {
 export const verifyUserByOtp = async (req: any, res: any) => {
     try {
         const { sessionId, otp, phoneNumber } = req.body;
+        console.log(sessionId, otp, phoneNumber);
         
         if (!otp)
             return buildErrorResponse(res, constants.errors.emptyOtp, 404);
@@ -53,18 +54,20 @@ export const verifyUserByOtp = async (req: any, res: any) => {
             return buildErrorResponse(res, verificationResponse?.Details, 406);
         
         let userData = await User.findOne({ phoneNumber:phoneNumber });
-
-        if(!userData){
+        
+        if(userData){
+            let token = await generateJWT(userData?._id, phoneNumber);
+            return buildObjectResponse(res, { isProfileDone: userData?.isProfileDone, userId: userData?._id, token:token });
+        }else{
             const user= new User({phoneNumber:phoneNumber?.trim()})
             const response = await user.save();
             let token = await generateJWT(response?._id, phoneNumber);
             return buildObjectResponse(res, { isProfileDone: response?.isProfileDone, userId: response?._id, token:token });
-        }else{
-            let token = await generateJWT(userData?._id, phoneNumber);
-            return buildObjectResponse(res, { isProfileDone: userData?.isProfileDone, userId: userData?._id, token:token });
         }
 
     } catch (error) {
+        console.log(error,"Error");
+        
         return buildErrorResponse(res, constants.errors.internalServerError, 500);
     }
 };

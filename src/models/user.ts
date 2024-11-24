@@ -37,7 +37,6 @@ const userSchema = new Schema<User>({
     },
     email: {
         type: String,
-        unique: true,
     },
     status: {
         type: Boolean,

@@ -57,4 +57,4 @@ app.use(fraudRoute);
 app.use(adminCategoryRoute);
 
 notificationReminderCron.start();
-shopOnOffCron.start();
+shopOnOffCron.stop();

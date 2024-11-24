@@ -303,8 +303,8 @@ export const dashboardSearch=async(req:any,res:any) => {
                     { name: { $regex: regexPattern } },
                     { category: { $regex: regexPattern } }
                 ],
-                canBeSearchable: true,
-                status: true
+                // canBeSearchable: true,
+                // status: true
             }).populate("user");
 
             console.log(shopsByName,"shop",searchQuery);
@@ -318,7 +318,7 @@ export const dashboardSearch=async(req:any,res:any) => {
 
             const shopsByUserPhone = await Shop.find({
                 user: { $in: userIds },
-                canBeSearchable: true,
+                // canBeSearchable: true,
                 // status: true
             }).populate("user");
             results = [...shopsByName, ...shopsByUserPhone];
