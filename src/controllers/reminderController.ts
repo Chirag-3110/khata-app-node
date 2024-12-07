@@ -68,7 +68,7 @@ export const addNewReminder=async(req:any,res:any)=>{
         const notification=new Notification(notificationBody);
         await notification.save();
 
-        let message=FIREBASE_NOTIFICATION_MESSAGES.reminder.message.replace('{{shopName}}', findVender?.name)
+        let message=FIREBASE_NOTIFICATION_MESSAGES.reminder.message.replace('{{shopName}}', findVender?.name).replace('{{amount}}',findTransaction.amount.toString()).replace('{{date}}',moment(reminderDate).format("DD/MM/YYYY"))
         let title = FIREBASE_NOTIFICATION_MESSAGES.reminder.type;
 
         const tokens: string[] = [];

@@ -13,7 +13,7 @@ import { userValidationSchema } from "../validations/userValidation";
 export const addNewReview=async(req:any,res:any)=>{
     try {
         const {customerId,shopId,description,ratings}=req.body;
-
+        
         if(!customerId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
         
@@ -30,8 +30,9 @@ export const addNewReview=async(req:any,res:any)=>{
             customerId: customerId,
             shopId: shopId
         });
-
+        
         const shopUser=await User.findById(shopId);
+        console.log(checkForReview,"c",shopUser);
 
         if (!shopUser)
             return buildErrorResponse(res, constants.errors.userNotFound, 404);
@@ -41,13 +42,18 @@ export const addNewReview=async(req:any,res:any)=>{
         }
 
         const findUser = await User.findById(customerId);
-
+        console.log(findUser,"Finduser");
+        
         if (!findUser)
             return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
+        const checkForRole=await Role.findById(findUser?.role)
+
+        // if(checkForRole?.role === roles.Customer)
+
         const review=new Review(req.body);
 
-        await review.save();
+        // await review.save();
 
         const notificationBody={
             title:"New Review",
@@ -56,15 +62,23 @@ export const addNewReview=async(req:any,res:any)=>{
             userId:customerId
         }
         const notification=new Notification(notificationBody);
-        await notification.save();
+        // await notification.save();
 
         let message=FIREBASE_NOTIFICATION_MESSAGES.review.message.replace('{{shopUser}}', shopUser?.name);
+        let secondMessage=FIREBASE_NOTIFICATION_MESSAGES.review.secondMessage.replace('{{customerName}}', findUser?.name);
         let title = FIREBASE_NOTIFICATION_MESSAGES.review.type;
 
-        const tokens: string[] = [];
-        findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
-        if(tokens?.length>0){
-            await sendNotification("New Review Recieved",message,tokens,{type:title})
+        const venderTokens: string[] = [];
+        const customerTokens: string[] = [];
+        findUser?.deviceToken?.map((device: any) => customerTokens.push(device?.fcmToken));
+        shopUser?.deviceToken?.map((device: any) => venderTokens.push(device?.fcmToken));
+
+        if(customerTokens?.length>0){
+            await sendNotification("New Review Recieved",message,customerTokens,{type:title})
+        }
+
+        if(venderTokens?.length>0){
+            await sendNotification("New Review Recieved",secondMessage,venderTokens,{type:title})
         }
         
         return buildResponse(res,constants.success.reviewAddedSuccessfully,200);

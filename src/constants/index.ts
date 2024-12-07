@@ -178,11 +178,12 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   },
   transaction_verify:{
     type:"TRANSACTION_VERIFIED",
-    message:"The transaction is successfully verified."
+    message:"Merchant {{venderName}} Store recorded a ₹{{amount}} credit entry for your purchase/service. Click to view more details. ",
+    secondMessage:"{{customerName}} has created a credit entry of ₹{{amount}}. Tap here to review the details."
   },
   transaction_request:{
     type:"TRANSACTION_REQUEST",
-    message:"Due date request has been recieved from {{userName}}."
+    message:"You’ve received a due date extension request from {{userName}} for their pending payment of ₹{{amount}}. Tap here to review and respond."
   },
   transaction_request_response:{
     type:"TRANSACTION_REQUEST_ACCEPT_REJECT",
@@ -190,7 +191,7 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   },
   transaction_status_update:{
     type:"TRANSACTION_STATUS_UPDATED",
-    message:"Transaction status is changed by {{venderName}}."
+    message:"{{venderName}} has marked your ₹{{amount}} payment as paid. Thank you! Tap here to view the details."
   },
   transaction_amount_pay:{
     type:"TRANSACTION_PAYMENT",
@@ -198,15 +199,16 @@ const FIREBASE_NOTIFICATION_MESSAGES={
   },
   review:{
     type:"REVIEW",
-    message:"{{shopUser}} has added their review"
+    message:"{{shopUser}} has shared their feedback about you. Tap here to view their review",
+    secondMessage:"You’ve received a new review from {{customerName}}. Tap here to read their feedback"
   },
   reminder:{
     type:"REMIDER",
-    message:"You have recieved a new reminder for your next payment from {{shopName}}"
+    message:"Reminder from {{shopName}}: This is a gentle reminder to request a pending payment of ₹{{amount}} for your purchase/service is due on {{date}}.Please clear the dues today"
   },
   enquiry_added:{
     type:"ENQUIRY",
-    message:"{{customerName}} has raised an enquiry related to {{categoryName}}"
+    message:"New inquiry received from {{customerName}}. Tap here to view and respond to their query."
   },
   user_onboard:{
     type:"USER_ONBOARD",

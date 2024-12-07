@@ -55,7 +55,7 @@ export const createNewEnquiry=async(req:any,res:any) => {
         const notification=new Notification(notificationBody);
         await notification.save();
 
-        let message=FIREBASE_NOTIFICATION_MESSAGES.enquiry_added.message.replace('{{customerName}}', findVender?.name).replace('{{categoryName}}', categoryName?.name)
+        let message=FIREBASE_NOTIFICATION_MESSAGES.enquiry_added.message.replace('{{customerName}}', findCustomer?.name).replace('{{categoryName}}', categoryName?.name)
         let title = FIREBASE_NOTIFICATION_MESSAGES.enquiry_added.type;
 
         const tokens: string[] = [];

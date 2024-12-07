@@ -13,7 +13,6 @@ import Frauds from "../models/Fraud";
 import { MetaData } from "../models/MetaData";
 import Otp from "../models/Otps";
 import Shop from "../models/Shop";
-import { log } from "util";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -65,7 +64,6 @@ export const createNewTransaction = async (req: any, res: any) => {
 
       const user = new Customer(customerData);
       let custReds=await user.save();
-console.log(otp,'sksks');
 
       const otpRes = new Otp({
         customerId:custReds?._id,
@@ -124,8 +122,11 @@ export const verifyTransaction = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.emptyOtp, 404);
 
     const findUser=await User.findById(venderId)
+    const findCustomerUser=await User.findById(userId)
 
     if (!findUser)
+      return buildErrorResponse(res, constants.errors.userNotFound, 404);
+    if (!findCustomerUser)
       return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
     const isCustomerExits=await Customer.findOne({customerId:userId,venderId})
@@ -176,14 +177,23 @@ export const verifyTransaction = async (req: any, res: any) => {
     ];
     
     await Notification.insertMany(notificationBodies);
-
-    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_verify.message;
+    // customer mg
+    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_verify.message.replace('{{venderName}}', findUser?.name).replace('{{amount}}', amount);
+    //vender msg
+    let secondMessage=FIREBASE_NOTIFICATION_MESSAGES.transaction_verify.message.replace('{{customerName}}', findCustomerUser?.name).replace('{{amount}}', amount);
     let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_verify.type;
 
-    const tokens: string[] = [];
-    findUser?.deviceToken?.map((device: any) => tokens.push(device?.fcmToken));
-    if(tokens?.length>0){
-      await sendNotification("Transaction Verified",message,tokens,{type:title,transactionId:response?._id})
+    const venderTokens: string[] = [];
+    const customerTokens: string[] = [];
+    findCustomerUser?.deviceToken?.map((device: any) => customerTokens.push(device?.fcmToken));
+    findUser?.deviceToken?.map((device: any) => venderTokens.push(device?.fcmToken));
+
+    if(customerTokens?.length>0){
+      await sendNotification("Transaction Verified",message,customerTokens,{type:title,transactionId:response?._id})
+    }
+
+    if(venderTokens?.length>0){
+      await sendNotification("Transaction Verified",secondMessage,venderTokens,{type:title,transactionId:response?._id})
     }
 
     // return buildResponse(res, constants.success.transactionSuccesfullStarted ,200);
@@ -433,7 +443,7 @@ export const updateDueDateByCustomer = async (req: any, res: any) => {
     const notification=new Notification(notificationBody);
     await notification.save();
 
-    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_request.message.replace('{{userName}}', findUser?.name);
+    let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_request.message.replace('{{userName}}', findUser?.name).replace('{{amount}}', findTransaction.amount.toString());
     let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_request.type;
 
     const tokens: string[] = [];
@@ -588,7 +598,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
         );
       }
 
-      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_status_update.message.replace('{{venderName}}', findVender?.name);
+      let message=FIREBASE_NOTIFICATION_MESSAGES.transaction_status_update.message.replace('{{venderName}}', findVender?.name).replace('{{amount}}', findTransaction.amount.toString());
       let title = FIREBASE_NOTIFICATION_MESSAGES.transaction_status_update.type;
 
       const tokens: string[] = [];
