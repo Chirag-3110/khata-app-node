@@ -1216,8 +1216,7 @@ export const listCustomerPartTransactionsByVender = async (req: any, res: any) =
     const transactions = await Transaction.find({
       venderId: userId,
       customerId:customerId,
-      transactionType: TRANSACTION_TYPE.PARENT,
-      transactionStatus:TRANSACTION_STATUS.COMPLETE
+      transactionType: TRANSACTION_TYPE.PARENT
     })
     .populate("customerId")
     .populate("venderId")
