@@ -13,6 +13,7 @@ import Frauds from "../models/Fraud";
 import { MetaData } from "../models/MetaData";
 import Otp from "../models/Otps";
 import Shop from "../models/Shop";
+import { log } from "console";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -1244,19 +1245,38 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
 
     const skip = (page - 1) * limit;
 
-    const transactions = await Transaction.find({
-      venderId: userId,
-      transactionType: TRANSACTION_TYPE.PARENT,
-      transactionStatus:TRANSACTION_STATUS.PENDING,
-    })
-    .populate("customerId")
-    .populate({
-      path: "childTransaction"
-    })
-    .sort({ transactionDate: -1 });
+    const findCustomerUser=await User.findById(userId)
+    if(!findCustomerUser){
+      return buildObjectResponse(res, {transactions:[]});
+    }
 
-    console.log(transactions.length,'Lwlw');
-    
+    let roleData = await Role.findById(findCustomerUser.role)
+
+    let transactions:any=[]
+
+    if (roleData?.role === roles.Vender) {
+      transactions = await Transaction.find({
+        venderId: userId,
+        transactionType: TRANSACTION_TYPE.PARENT,
+        transactionStatus:TRANSACTION_STATUS.PENDING,
+      })
+      .populate("customerId")
+      .populate({
+        path: "childTransaction"
+      })
+      .sort({ transactionDate: -1 });
+    }else{
+      transactions = await Transaction.find({
+        customerId: userId,
+        transactionType: TRANSACTION_TYPE.PARENT,
+        transactionStatus:TRANSACTION_STATUS.PENDING,
+      })
+      .populate("venderId")
+      .populate({
+        path: "childTransaction"
+      })
+      .sort({ transactionDate: -1 });
+    }
 
     return buildObjectResponse(res, {
       transactions
