@@ -14,6 +14,7 @@ import { MetaData } from "../models/MetaData";
 import Otp from "../models/Otps";
 import Shop from "../models/Shop";
 import { log } from "console";
+import { once } from "events";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
@@ -244,8 +245,6 @@ export const payAmountToVender = async (req: any, res: any) => {
       finalAmountAfterPartial = numberValue - childTransactionAmount;
     }
 
-    console.log(typeof amount, typeof finalAmountAfterPartial, "ss");
-
     const date1Only = moment(findTransaction.dueDate).startOf("day");
     const date2Only = moment().startOf("day");
 
@@ -294,19 +293,6 @@ export const payAmountToVender = async (req: any, res: any) => {
             console.log("partial done");
         }
       }
-      await Wallet.findByIdAndUpdate(
-        checkUserExists?.walletId,
-        { credit: currentCredit + 2 },
-        { new: true }
-      );
-      const walletData={
-        walletAddress: checkUserExists?.walletId,
-        amount: 2,
-        transactionType:WALLET_TRANSACTION_TYPE.DEPOSIT,
-        module:TRANSACTION_MODULES.TRANSACTION
-      }
-      const walletTransaction=new WalletTransaction(walletData);
-      await walletTransaction.save();
     } else {
       console.log("date1 is after date2");
       if (amount == numberValue) {
@@ -351,20 +337,26 @@ export const payAmountToVender = async (req: any, res: any) => {
           console.log("partial done");
         }
       }
-      await Wallet.findByIdAndUpdate(
-        checkUserExists?.walletId,
-        { credit: currentCredit - 5 },
-        { new: true }
-      );
-      const walletData={
-        walletAddress: checkUserExists?.walletId,
-        amount: 5,
-        transactionType: WALLET_TRANSACTION_TYPE.WITHDRAW,
-        module: TRANSACTION_MODULES.TRANSACTION
-      }
-      const walletTransaction=new WalletTransaction(walletData);
-      await walletTransaction.save();
     }
+
+    let calculatedCreditScore=await calculateCreditScore(findTransaction?.customerId)
+    console.log(calculatedCreditScore,"CAlslsllsls");
+    
+
+    await Wallet.findByIdAndUpdate(
+      checkUserExists?.walletId,
+      { credit: calculatedCreditScore.normalizedScore },
+      { new: true }
+    );
+    const walletData={
+      walletAddress: checkUserExists?.walletId,
+      amount: calculatedCreditScore.normalizedScoreWithOutBase,
+      transactionType:WALLET_TRANSACTION_TYPE.DEPOSIT,
+      module:TRANSACTION_MODULES.TRANSACTION
+    }
+    const walletTransaction=new WalletTransaction(walletData);
+    await walletTransaction.save();
+
     const notificationBodies = [
       {
         title: "Payment Done",
@@ -1286,3 +1278,89 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
     return buildErrorResponse(res, constants.errors.internalServerError, 500);
   }
 };
+
+const calculateCreditScore=async(userId:any)=>{
+  const user:any = await User.findById(userId);
+  const transactions = await Transaction.find({ 
+    customerId: userId, 
+    transactionType:TRANSACTION_TYPE.PARENT,
+  })
+
+  const result: any = await Wallet.findOne({userId});
+  
+  const baseAmount = (result?.credit as number) ?? 0;
+
+  // if (transactions.length <= 10) {
+  //   return {
+  //     normalizedScore: baseAmount,
+  //     normalizedScoreWithOutBase: 0,
+  //   };
+  // }
+
+
+  const createdAt = moment(user.createdAt);
+  const currentDate = moment();
+  const yearsAsCustomer = currentDate.diff(createdAt, "years");
+
+  let totalOnTimePayments = 0;
+  let totalPayments = 0;
+  let totalPenaltyPoints = 0;
+  let totalConsistencyFactor = 0;
+  let loyaltyFactor = 0;
+  let baseLoyaltyPoints = 10;
+  let onTimePaymentRatio = 0;
+
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+  transactions.forEach((transaction:any) => {
+    const dueDate = new Date(transaction.dueDate);
+    const amountPaidDates = transaction.amountPaidDates.map((d:any) => new Date(d));
+    const transactionDate = new Date(transaction.transactionDate);
+
+    // Step 1: On-Time Payment Ratio
+    const onTimePayments = amountPaidDates.filter((date:any) => date <= dueDate).length;
+    
+    totalOnTimePayments += onTimePayments;
+    totalPayments += amountPaidDates.length;
+
+    // Step 2: Consistency Factor
+    const recentOnTimePayments = amountPaidDates
+      .filter((date:any) => date >= threeMonthsAgo && date <= dueDate).length;
+      totalConsistencyFactor += recentOnTimePayments
+
+    // Step 3: Penalty Points
+    const penaltyPoints = amountPaidDates
+      .filter((date:any) => date > dueDate)
+      .reduce((points:any, date:any) => {
+        const delayDays = Math.ceil((date.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (delayDays <= 10) return points + 2;
+        if (delayDays <= 29) return points + 3;
+        if (delayDays <= 49) return points + 5;
+        if (delayDays <= 89) return points + 7;
+        if (delayDays <= 149) return points + 10;
+        return points + 20;
+      }, 0);
+    totalPenaltyPoints += penaltyPoints;
+
+  });
+
+  onTimePaymentRatio = totalPayments > 0 ? totalOnTimePayments / totalPayments : 0;
+
+  // Step 4: Loyalty Factor
+  loyaltyFactor = (yearsAsCustomer * onTimePaymentRatio) * baseLoyaltyPoints;
+
+  // Step 6: Final Credit Score
+  const consistencyFactor = totalConsistencyFactor / transactions.length;
+  const averageLoyaltyFactor = loyaltyFactor / transactions.length;
+  
+  const creditScore = (onTimePaymentRatio * 0.4) + (consistencyFactor * 0.2) - (totalPenaltyPoints * 0.2 / transactions.length) + (averageLoyaltyFactor * 0.2);
+
+  const normalizedScore = (creditScore / 10) * 1000 + baseAmount; 
+  const normalizedScoreWithOutBase = (creditScore / 10) * 1000 ; 
+
+  return {
+    normalizedScore: Math.round(Math.max(0, Math.min(normalizedScore, 1000))),
+    normalizedScoreWithOutBase:Math.round(Math.max(0, Math.min(normalizedScoreWithOutBase, 1000)))
+  };
+}

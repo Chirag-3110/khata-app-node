@@ -15,7 +15,7 @@ const walletSchema = new Schema<Wallet>({
     },
     credit: {
         type: Number,
-        default:0
+        default:50
     },
     createdAt: {
         type: Date,
