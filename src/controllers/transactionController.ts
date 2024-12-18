@@ -1249,7 +1249,12 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
       transactions = await Transaction.find({
         venderId: userId,
         transactionType: TRANSACTION_TYPE.PARENT,
-        transactionStatus:TRANSACTION_STATUS.PENDING,
+        transactionStatus: { $in: [
+          TRANSACTION_STATUS.PENDING, 
+          TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL, 
+          TRANSACTION_STATUS.PARTIAL_DONE,
+          TRANSACTION_STATUS.CUSTOMER_PAID
+        ] }
       })
       .populate("customerId")
       .populate({
@@ -1260,9 +1265,19 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
       transactions = await Transaction.find({
         customerId: userId,
         transactionType: TRANSACTION_TYPE.PARENT,
-        transactionStatus:TRANSACTION_STATUS.PENDING,
+        transactionStatus: { $in: [
+          TRANSACTION_STATUS.PENDING, 
+          TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL, 
+          TRANSACTION_STATUS.PARTIAL_DONE,
+          TRANSACTION_STATUS.CUSTOMER_PAID
+        ] }
       })
-      .populate("venderId")
+      .populate({
+        path: "venderId",
+        populate: {
+          path: "shopId",
+        },
+      })
       .populate({
         path: "childTransaction"
       })
@@ -1354,7 +1369,7 @@ const calculateCreditScore=async(userId:any)=>{
   const consistencyFactor = totalConsistencyFactor / transactions.length;
   const averageLoyaltyFactor = loyaltyFactor / transactions.length;
   
-  const creditScore = (onTimePaymentRatio * 0.4) + (consistencyFactor * 0.2) - (totalPenaltyPoints * 0.2 / transactions.length) + (averageLoyaltyFactor * 0.2);
+  const creditScore = (onTimePaymentRatio * 0.3) + (consistencyFactor * 0.2) - (totalPenaltyPoints * 0.3 / transactions.length) + (averageLoyaltyFactor * 0.2);
 
   const normalizedScore = (creditScore / 10) * 1000 + baseAmount; 
   const normalizedScoreWithOutBase = (creditScore / 10) * 1000 ; 
