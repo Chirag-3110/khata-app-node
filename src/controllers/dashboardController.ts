@@ -9,6 +9,7 @@ import moment from "moment";
 import Review from "../models/Review";
 import Wallet from "../models/Wallet";
 import Shop from "../models/Shop";
+import { Enquiry } from "../models/Enquiry";
 
 export const getVenderDashboardData=async(req:any,res:any) => {
     const {userId}=req.user;    
@@ -22,7 +23,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 collectedAmount:0,
                 paidAmount:0,
                 todayDueAmount:0
-            }
+            },
+            openEnquiryCount: 0
         }
         if (!userId)
             return buildErrorResponse(res, constants.errors.invalidUserId, 404);
@@ -59,12 +61,15 @@ export const getVenderDashboardData=async(req:any,res:any) => {
 
         let venderCount = 0;
         let customerCount = 0;
-
+        // console.log(connectedUsers,'dkdkd');
+        
         connectedUsers.forEach((user:any) => {
-            if (user.role.role === roles.Vender) {
-              venderCount++;
-            } else if (user.role.role === roles.Customer) {
-              customerCount++;
+            if(user?.role?.role){
+                if (user.role.role === roles.Vender) {
+                  venderCount++;
+                } else if (user.role.role === roles.Customer) {
+                  customerCount++;
+                }
             }
         });
 
@@ -162,6 +167,11 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             return total + parentAmount;
         }, 0);
 
+        const openEnquiryCount = await Enquiry.countDocuments({
+            venderId: userId,
+            status: "Open"
+        });
+
         venderDashboardData={
             ...venderDashboardData,
             recentTransactions:recentTransactions,
@@ -172,7 +182,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 collectedAmount:completedAmount,
                 paidAmount:paidAmount,
                 todayDueAmount:totalPendingAmount
-            }
+            },
+            openEnquiryCount
         }
 
         return buildObjectResponse(res, {data:venderDashboardData});
