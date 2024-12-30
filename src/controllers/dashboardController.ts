@@ -53,6 +53,7 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             }
             return userIds;
         }, []);
+// console.log(connectedUserIds,'Cuserr');
 
         const connectedUsers = await User.find(
             { _id: { $in: connectedUserIds } },  
@@ -65,6 +66,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         
         connectedUsers.forEach((user:any) => {
             if(user?.role?.role){
+                // console.log(user.role.role,'sss',user._id);
+                
                 if (user.role.role === roles.Vender) {
                   venderCount++;
                 } else if (user.role.role === roles.Customer) {
@@ -73,7 +76,7 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             }
         });
 
-        console.log(venderCount,'USer',customerCount)
+        // console.log(venderCount,'vender count')
         
 
         const transactionAsVenderCompleted = await Transaction.find({

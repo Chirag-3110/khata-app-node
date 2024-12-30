@@ -94,30 +94,72 @@ export const getCustomersOfVender=async(req:any,res:any)=>{
 
         const page = parseInt(req.query.page as string) || 1; 
         const limit = parseInt(req.query.limit as string) || 10;
+        let customers = [];
+        let totalCustomers = 0
+        let totalPages = 0
 
         const skip = (page - 1) * limit;
         let filters: { venderId: any; role?: any } = { venderId: userId };
-
-        if(role){
-            const roles = await Role.findOne({role:role});
-            filters = {...filters,role:roles?._id}
-        }
-
-        const customers = await Customer.find(filters)
-        .populate("customerId")
-        .populate("role")
-        .populate("venderId")
         // .skip(skip)
         // .limit(limit);
 
-        const totalCustomers = await Customer.countDocuments(filters);
-        const totalPages = Math.ceil(totalCustomers / limit);
+        if(role == roles.Vender){
+            const roles = await Role.findOne({role:role});
+            customers = await Customer.find({ venderId: userId })
+            .populate("customerId")
+            .populate("venderId")
+            const connectedUserIds = customers.reduce((userIds:any, customer:any) => {
+                if (customer.venderId?._id.toString() !== userId.toString() && !userIds.includes(customer.venderId?._id.toString())) {
+                    userIds.push(customer.venderId._id.toString());
+                }
+                if (customer.customerId._id.toString() !== userId.toString() && !userIds.includes(customer.customerId._id.toString())) {
+                    userIds.push(customer.customerId._id.toString());
+                }
+                return userIds;
+            }, []);
+
+            
+            
+            const connectedUsers = await User.find({ 
+                _id: { $in: connectedUserIds },
+                role:roles?._id,
+                isProfileDone:true
+            },).select('_id')
+            const userIds = connectedUsers.map((user:any) => user._id);
+
+            const customersNew = await Customer.find({
+                venderId: userId, 
+                customerId: { $in: userIds }
+              })
+            .populate('customerId')
+            .populate({
+                path: "venderId",
+                populate: {
+                  path: "shopId",
+                },
+            })
+            customers = customersNew
+    
+        }else{
+            const role = await Role.findOne({role:roles.Customer});
+            customers = await Customer.find({ venderId: userId,role:role?._id })
+            .populate("customerId")
+            .populate({
+                path: "venderId",
+                populate: {
+                  path: "shopId",
+                },
+            })
+
+            // totalCustomers = await Customer.countDocuments({ venderId: userId });
+            // totalPages = Math.ceil(totalCustomers / limit);
+        }
 
         return buildObjectResponse(res, {
             customers,
-            totalPages,
-            currentPage: page,
-            totalItems: totalCustomers
+            // totalPages,
+            // currentPage: page,
+            // totalItems: totalCustomers
         });
 
     } catch (error) {

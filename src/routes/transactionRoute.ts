@@ -1,6 +1,5 @@
 import express from 'express';
-import { getWalletData } from '../controllers/walletController';
-import { acceptRejectDueDateRequest, createNewTransaction, getTransactionDetailById, listCompletedTransactionOfVender, listCompleteTransactionsOfCustomers, listCompleteTransactionUsingVenderId, listCustomerPartTransactionsByVender, listPendingTransactionsUsingVender, listTodayDueDateTransactionsOfVender, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateMultipleTransactionStatuses, updateTransactionStatus, verifyTransaction,  } from '../controllers/transactionController';
+import { acceptRejectDueDateRequest, createNewTransaction, getTransactionDetailById, listCompletedTransactionOfVender, listCompleteTransactionsOfCustomers, listCompleteTransactionUsingVenderId, listCustomerPartTransactionsByVender, listPendingTransactionsUsingVender, listTodayDueDateTransactionsOfVender, listTransaction, listTransactionsOfCustomers, listTransactionUsingVenderId, payAmountToVender, updateDueDateByCustomer, updateMultipleTransactionStatuses, updateTransactionStatus, uploadScreenShotofPayment, verifyTransaction,  } from '../controllers/transactionController';
 const transactionRoute = express.Router();
 const verifyToken = require('../middleware/auth'); 
 
@@ -22,5 +21,6 @@ transactionRoute.put(`/api/transaction/accept-reject-update-due-date-customer`,v
 transactionRoute.put(`/api/transaction/update-transaction-status/:transactionId`,verifyToken,updateTransactionStatus);
 transactionRoute.put(`/api/transaction/update-multiple-transaction-status`,verifyToken,updateMultipleTransactionStatuses);
 transactionRoute.get(`/api/transaction/get-transaction-by-id/:transactionId`,verifyToken,getTransactionDetailById)
+transactionRoute.post(`/api/transaction/upload-payment-screenshot`,verifyToken,uploadScreenShotofPayment)
 
 export default transactionRoute;

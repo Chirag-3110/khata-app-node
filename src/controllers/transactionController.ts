@@ -18,26 +18,33 @@ import { once } from "events";
 const moment = require("moment");
 
 export const createNewTransaction = async (req: any, res: any) => {
-  const { userId, amount, dueDate, venderId, description, createdBy } = req.body;
+  const { userId, dueDate, venderId } = req.body;
 
   try {
     if (!userId)
       return buildErrorResponse(res, constants.errors.invalidUserId, 404);
 
-    if (!amount)
-      return buildErrorResponse(res, constants.errors.amountRequired, 404);
-
     if (!dueDate)
       return buildErrorResponse(res, constants.errors.invalidDueDate, 404);
 
-    const findUser=await User.findById(userId);
-    const findVender=await User.findById(venderId);
-    
+    const findUser=await User.findOne({_id:userId,isProfileDone:true});
+    const findVender=await User.findOne({_id:venderId,isProfileDone:true});
+// console.log(findUser,'User');
+// console.log(findVender,'Vendef');
+
     if(!findUser)
       return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
     if(!findVender)
       return buildErrorResponse(res, constants.errors.userNotVender, 404);
+
+    if(!findUser?.activeStatus){
+      return buildErrorResponse(res, constants.errors.userDeactivated, 404);
+    }
+
+    if(!findVender?.activeStatus){
+      return buildErrorResponse(res, constants.errors.userDeactivated, 404);
+    }
     
     let shopName=findVender?.name
     if(findVender?.shopId){
@@ -747,8 +754,6 @@ export const listTransaction = async (req: any, res: any) => {
 
     const { fromDate, toDate } = req.query;
 
-    console.log(fromDate, toDate, 'dates');
-
     let dateFilter: any = {};
     if (fromDate) {
       const correctedFromDate = moment(fromDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').toISOString();
@@ -759,7 +764,6 @@ export const listTransaction = async (req: any, res: any) => {
       dateFilter.$lt = new Date(correctedToDate);
     }
 
-    console.log(dateFilter, 'dateFilter');
 
     const transactions = await Transaction.find({
       venderId: userId,
@@ -768,7 +772,12 @@ export const listTransaction = async (req: any, res: any) => {
       ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
       .populate("customerId")
-      .populate("venderId")
+      .populate({
+        path: "venderId",
+        populate: {
+          path: "shopId",
+        },
+      })
       .populate({
         path: "childTransaction"
       })
@@ -827,12 +836,13 @@ export const listTransactionsOfCustomers = async (req: any, res: any) => {
       transactionType:TRANSACTION_TYPE.PARENT,
       ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
-    .populate({
-      path: "venderId",
-      populate: {
-        path: "shopId",
-      },
-    })
+    .populate("customerId")
+      .populate({
+        path: "venderId",
+        populate: {
+          path: "shopId",
+        },
+      })
     .populate({
       path: "childTransaction"
     })
@@ -875,8 +885,6 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
 
     const { fromDate, toDate } = req.query;
 
-    console.log(fromDate, toDate, 'dates');
-
     let dateFilter: any = {};
     if (fromDate) {
       const correctedFromDate = moment(fromDate, 'YYYY-MM-DDTHH:mm:ss.SSSZ').toISOString();
@@ -887,7 +895,6 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
       dateFilter.$lt = new Date(correctedToDate);
     }
 
-    console.log(dateFilter, 'dateFilter');
 
     const transactions = await Transaction.find({
       customerId: userId,
@@ -897,6 +904,7 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
       transactionType:TRANSACTION_TYPE.PARENT,
       ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
+    .populate("customerId")
     .populate({
       path: "venderId",
       populate: {
@@ -954,8 +962,6 @@ export const listCompleteTransactionsOfCustomers = async (req: any, res: any) =>
       dateFilter.$lt = new Date(correctedToDate);
     }
 
-    console.log(dateFilter, 'dateFilter');
-
     const transactions = await Transaction.find({ 
       customerId: userId, 
       // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
@@ -963,6 +969,7 @@ export const listCompleteTransactionsOfCustomers = async (req: any, res: any) =>
       transactionType:TRANSACTION_TYPE.PARENT,
       ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
+    .populate("customerId")
     .populate({
       path: "venderId",
       populate: {
@@ -1007,7 +1014,6 @@ export const listCompletedTransactionOfVender = async (req: any, res: any) => {
 
     const { fromDate, toDate } = req.query;
 
-    console.log(fromDate, toDate, 'dates');
 
     let dateFilter: any = {};
     if (fromDate) {
@@ -1019,8 +1025,6 @@ export const listCompletedTransactionOfVender = async (req: any, res: any) => {
       dateFilter.$lt = new Date(correctedToDate);
     }
 
-    console.log(dateFilter, 'dateFilter');
-
     const transactions = await Transaction.find({ 
       venderId: userId,
       // status: { $ne: TRANSACTION_STATUS.COMPLETE }, 
@@ -1029,7 +1033,12 @@ export const listCompletedTransactionOfVender = async (req: any, res: any) => {
       ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
     })
       .populate("customerId")
-      .populate("venderId")
+      .populate({
+        path: "venderId",
+        populate: {
+          path: "shopId",
+        },
+      })
       .populate({
         path: "childTransaction"
       })
@@ -1077,6 +1086,7 @@ export const listCompleteTransactionUsingVenderId = async (req: any, res: any) =
       transactionStatus: { $eq: TRANSACTION_STATUS.COMPLETE },
       transactionType:TRANSACTION_TYPE.PARENT
     })
+    .populate("customerId")
     .populate({
       path: "venderId",
       populate: {
@@ -1153,6 +1163,12 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
     })
     .populate("customerId")
     .populate({
+      path: "venderId",
+      populate: {
+        path: "shopId",
+      },
+    })
+    .populate({
       path: "childTransaction"
     })
     .sort({ transactionDate: -1 });
@@ -1211,7 +1227,12 @@ export const listCustomerPartTransactionsByVender = async (req: any, res: any) =
       transactionType: TRANSACTION_TYPE.PARENT
     })
     .populate("customerId")
-    .populate("venderId")
+    .populate({
+      path: "venderId",
+      populate: {
+        path: "shopId",
+      },
+    })
     .populate({
       path: "childTransaction"
     })
@@ -1258,6 +1279,12 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
       })
       .populate("customerId")
       .populate({
+        path: "venderId",
+        populate: {
+          path: "shopId",
+        },
+      })
+      .populate({
         path: "childTransaction"
       })
       .sort({ transactionDate: -1 });
@@ -1278,6 +1305,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
           path: "shopId",
         },
       })
+      .populate("customerId")
       .populate({
         path: "childTransaction"
       })
@@ -1287,6 +1315,42 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
     return buildObjectResponse(res, {
       transactions
     });
+
+  } catch (error) {
+    console.log(error, "error");
+    return buildErrorResponse(res, constants.errors.internalServerError, 500);
+  }
+};
+
+export const uploadScreenShotofPayment = async (req: any, res: any) => {
+  try {
+    const { transactionId, paymentImage } = req.body;
+
+    if (!transactionId)
+      return buildErrorResponse(res,constants.errors.invalidTransactionId,400);
+
+    if (!paymentImage)
+      return buildErrorResponse(res,constants.errors.invalidPaymentImage,400);
+
+    const findTransaction = await Transaction.findById(transactionId);
+
+    if (!findTransaction)
+      return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
+
+    if (!Array.isArray(findTransaction.transactionProofs)) {
+      findTransaction.transactionProofs = [];
+    }
+
+    findTransaction.transactionProofs.push({
+      type: "paymentScreenshot",
+      imageUrl: paymentImage,
+      uploadedAt: new Date(),
+    });
+
+    // Save the updated transaction
+    await findTransaction.save();
+
+    return buildResponse(res,constants.success.ssAddedSuccess,200);
 
   } catch (error) {
     console.log(error, "error");

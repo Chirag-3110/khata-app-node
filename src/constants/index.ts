@@ -35,7 +35,8 @@ const constants = {
       categoryUpdate:"Category updated successfully",
       categoryDelete:"Category deleted successfully",
       testNotificaiton:"Test notification send",
-      otpSendSuccessfull:"Otp send successfully"
+      otpSendSuccessfull:"Otp send successfully",
+      ssAddedSuccess:"Image added successfully",
     },
     errors: {
       roleNotFound:"Role not found",
@@ -99,7 +100,8 @@ const constants = {
       categoryNotFound:"Category not found",
       unableToSendOtp:"Unable to send otp",
       sessionIdReq:"Session id is required",
-      otpMisMatch:"OTP Mismatch"
+      otpMisMatch:"OTP Mismatch",
+      invalidPaymentImage:"Image not found"
     },
 };
 

@@ -18,7 +18,7 @@ interface Transaction extends Document {
   description:string,
   createdBy:string,
   amountPaidDates:Date[],
-  transarionProofs:string[],
+  transactionProofs:object[],
 }
 
 const transactionSchema = new Schema<Transaction>({
@@ -85,8 +85,8 @@ const transactionSchema = new Schema<Transaction>({
     type: [Date],
     default: []
   },
-  transarionProofs: {
-    type: [String],
+  transactionProofs: {
+    type: [Object],
     default: []
   },
 });
