@@ -130,8 +130,13 @@ export const getCustomersOfVender=async(req:any,res:any)=>{
             const customersNew = await Customer.find({
                 venderId: userId, 
                 customerId: { $in: userIds }
-              })
-            .populate('customerId')
+            })
+            .populate({
+                path: 'customerId',
+                populate: {
+                  path: "role",
+                },
+            })
             .populate({
                 path: "venderId",
                 populate: {
@@ -141,9 +146,14 @@ export const getCustomersOfVender=async(req:any,res:any)=>{
             customers = customersNew
     
         }else{
-            const role = await Role.findOne({role:roles.Customer});
-            customers = await Customer.find({ venderId: userId,role:role?._id })
-            .populate("customerId")
+            // const role = await Role.findOne({role:roles.Customer});
+            let tempCustomer = await Customer.find({ venderId: userId })
+            .populate({
+                path: 'customerId',
+                populate: {
+                  path: "role",
+                },
+            })
             .populate({
                 path: "venderId",
                 populate: {
@@ -151,6 +161,9 @@ export const getCustomersOfVender=async(req:any,res:any)=>{
                 },
             })
 
+            const filteredData = tempCustomer.filter((user:any) => !user.customerId.shopId);
+
+            customers = filteredData
             // totalCustomers = await Customer.countDocuments({ venderId: userId });
             // totalPages = Math.ceil(totalCustomers / limit);
         }
