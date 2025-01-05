@@ -32,7 +32,11 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         const startOfMonth = moment().startOf('month').toDate();
         const endOfMonth = moment().endOf('month').toDate();
 
-        const recentTransactions=await Transaction.find({venderId:userId,transactionType:TRANSACTION_TYPE.PARENT,transactionDate: { $gte: startOfMonth, $lte: endOfMonth }})
+        const recentTransactions=await Transaction.find({
+            venderId:userId,
+            transactionType:TRANSACTION_TYPE.PARENT,
+            transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+        })
         .populate("customerId")
         .populate({
             path: "childTransaction"
@@ -53,7 +57,6 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             }
             return userIds;
         }, []);
-// console.log(connectedUserIds,'Cuserr');
 
         const connectedUsers = await User.find(
             { _id: { $in: connectedUserIds } },  
@@ -62,12 +65,9 @@ export const getVenderDashboardData=async(req:any,res:any) => {
 
         let venderCount = 0;
         let customerCount = 0;
-        // console.log(connectedUsers,'dkdkd');
         
         connectedUsers.forEach((user:any) => {
             if(user?.role?.role){
-                // console.log(user.role.role,'sss',user._id);
-                
                 if (user.role.role === roles.Vender) {
                   venderCount++;
                 } else if (user.role.role === roles.Customer) {
@@ -75,8 +75,6 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 }
             }
         });
-
-        // console.log(venderCount,'vender count')
         
 
         const transactionAsVenderCompleted = await Transaction.find({
@@ -142,13 +140,13 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             venderId: userId,
             transactionType: TRANSACTION_TYPE.PARENT,
             transactionStatus:TRANSACTION_STATUS.PENDING,
-            $expr: {
-                $and: [
-                { $eq: [{ $dayOfMonth: "$dueDate" }, currentDay] },
-                { $eq: [{ $month: "$dueDate" }, currentMonth] }, 
-                { $eq: [{ $year: "$dueDate" }, currentYear] }    
-                ]
-            }
+            // $expr: {
+            //     $and: [
+            //     { $eq: [{ $dayOfMonth: "$dueDate" }, currentDay] },
+            //     { $eq: [{ $month: "$dueDate" }, currentMonth] }, 
+            //     { $eq: [{ $year: "$dueDate" }, currentYear] }    
+            //     ]
+            // }
         })
         .populate("customerId")
         .populate({
