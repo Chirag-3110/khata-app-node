@@ -135,7 +135,7 @@ jobs:
         run: sudo docker build -t ${{ secrets.DOCKER_USERNAME }}/testing:latest .
 
       - name: Push Docker image to Docker Hub
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/testing:latest
+        run: sudo docker push ${{ secrets.DOCKER_USERNAME }}/testing:latest
 
   deploy:
     runs-on: self-hosted
