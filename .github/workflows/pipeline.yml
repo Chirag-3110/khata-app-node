@@ -13,14 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -29,11 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Inject Firebase Admin SDK JSON into testFile
-        run: echo "${{ secrets.FIREBASE_ADMIN_SDK_JSON }}" > ./src/testFile
-
       - name: Build Docker image
-        run: docker buildx build --build-arg FIREBASE_ADMIN_SDK_JSON="$(cat ./src/testFile)" -t testing .
+        run: docker build -t testing .
 
       - name: Save Docker image to file
         run: docker save testing -o testing.tar
