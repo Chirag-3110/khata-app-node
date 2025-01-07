@@ -151,14 +151,14 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-            docker pull ${{ secrets.DOCKER_USERNAME }}/payru:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/payru:latest
 
-            docker stop payru || true
-            docker rm payru || true
+            sudo docker stop payru || true
+            sudo docker rm payru || true
 
-            docker run -d --name payru -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/payru:latest
+            sudo docker run -d --name payru -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/payru:latest
 
       - name: Check disk usage after deployment
         run: df -h
