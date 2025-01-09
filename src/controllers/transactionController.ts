@@ -125,7 +125,7 @@ export const createNewTransaction = async (req: any, res: any) => {
 
 export const verifyTransaction = async (req: any, res: any) => {
   const { transactionData, otp } = req.body;
-  const {userId, amount, dueDate, venderId, description, createdBy} = transactionData
+  const {userId, amount, dueDate, venderId, description, createdBy, transactionUserToUser} = transactionData
   try {
     if (!otp)
       return buildErrorResponse(res, constants.errors.emptyOtp, 404);
@@ -163,7 +163,9 @@ export const verifyTransaction = async (req: any, res: any) => {
       otp:otp,
       createdBy:createdBy?createdBy:roles.Vender,
       transactionRef:transRef,
-      transactionDate: moment().format()
+      transactionDate: moment().format(),
+      paymentType:"", 
+      transactionUserToUser
     }
 
     const transaction = new Transaction(transactionData);
@@ -543,6 +545,7 @@ export const acceptRejectDueDateRequest = async (req: any, res: any) => {
 export const updateTransactionStatus = async (req: any, res: any) => {
   try {
     const { transactionId } = req.params;
+    const {paymentType}=req.body
 
     if (!transactionId)
       return buildErrorResponse(
@@ -575,6 +578,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
           {
             status: TRANSACTION_STATUS.COMPLETE,
             transactionStatus: TRANSACTION_STATUS.COMPLETE,
+            paymentType: paymentType
           },
           { new: true, session }
         );
@@ -584,6 +588,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
           {
             status: TRANSACTION_STATUS.COMPLETE,
             transactionStatus: TRANSACTION_STATUS.COMPLETE,
+            paymentType: paymentType
           },
           { new: true, session }
         );
@@ -593,6 +598,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
           {
             transactionStatus: TRANSACTION_STATUS.COMPLETE,
             status: TRANSACTION_STATUS.COMPLETE,
+            paymentType: paymentType
           },
           { session }
         );
@@ -633,7 +639,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
 
 export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
   try {
-    const { transactionIds } = req.body;
+    const { transactionIds, paymentType } = req.body;
     if (!transactionIds || !Array.isArray(transactionIds) || transactionIds.length === 0) {
       return buildErrorResponse(res, constants.errors.invalidTransactionId, 404);
     }
@@ -664,6 +670,7 @@ export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
             {
               status: TRANSACTION_STATUS.COMPLETE,
               transactionStatus: TRANSACTION_STATUS.COMPLETE,
+              paymentType: paymentType
             },
             { new: true, session }
           );
@@ -673,6 +680,7 @@ export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
             {
               status: TRANSACTION_STATUS.COMPLETE,
               transactionStatus: TRANSACTION_STATUS.COMPLETE,
+              paymentType: paymentType
             },
             { new: true, session }
           );
@@ -682,6 +690,7 @@ export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
             {
               transactionStatus: TRANSACTION_STATUS.COMPLETE,
               status: TRANSACTION_STATUS.COMPLETE,
+              paymentType: paymentType
             },
             { session }
           );

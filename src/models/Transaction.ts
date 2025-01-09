@@ -16,6 +16,8 @@ interface Transaction extends Document {
   requestedDueDate:Date,
   otp:string,
   description:string,
+  paymentType:string,
+  transactionUserToUser:string,
   createdBy:string,
   amountPaidDates:Date[],
   transactionProofs:object[],
@@ -76,6 +78,12 @@ const transactionSchema = new Schema<Transaction>({
     type: String,
   },
   description:{
+    type: String,
+  },
+  paymentType:{
+    type: String,
+  },
+  transactionUserToUser:{
     type: String,
   },
   createdBy:{
