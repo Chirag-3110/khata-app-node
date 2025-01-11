@@ -261,7 +261,7 @@ export const payAmountToVender = async (req: any, res: any) => {
 
     const result = await Wallet.findById(checkUserExists?.walletId);
     const currentCredit = (result?.credit as number) ?? 0;
-    const currentDate = new Date();
+    const currentDate = moment();
 
     if (date2Only.isSameOrBefore(date1Only)) {
       if (amount == numberValue) {
