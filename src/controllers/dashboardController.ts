@@ -33,7 +33,11 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         const endOfMonth = moment().endOf('month').toDate();
 
         const recentTransactions=await Transaction.find({
-            venderId:userId,
+            // venderId:userId,
+            $or: [
+                { venderId: userId },
+                { customerId: userId }
+            ],
             transactionType:TRANSACTION_TYPE.PARENT,
             transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         })
@@ -78,7 +82,11 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         
 
         const transactionAsVenderCompleted = await Transaction.find({
-            venderId: userId,
+            // venderId: userId,
+            $or: [
+                { venderId: userId },
+                { customerId: userId }
+            ],
             transactionType: TRANSACTION_TYPE.PARENT,
             transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         }).populate({
@@ -111,7 +119,11 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         })
 
         const transactionAsCustomerComplete = await Transaction.find({
-            customerId: userId,
+            // customerId: userId,
+            $or: [
+                { venderId: userId },
+                { customerId: userId }
+            ],
             transactionType: TRANSACTION_TYPE.PARENT,
             transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         }).populate({
