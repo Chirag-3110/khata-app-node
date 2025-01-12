@@ -12,7 +12,9 @@ import Shop from "../models/Shop";
 import { Enquiry } from "../models/Enquiry";
 
 export const getVenderDashboardData=async(req:any,res:any) => {
-    const {userId}=req.user;    
+    const {userId}=req.user;   
+    console.log(userId,'Sk');
+     
     try {
         let venderDashboardData=<Object>{
             recentTransactions:[],
@@ -22,7 +24,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 pendingAmount:0,
                 collectedAmount:0,
                 paidAmount:0,
-                todayDueAmount:0
+                todayDueAmount:0,
+                toBePaidToVender: 0
             },
             openEnquiryCount: 0
         }
@@ -82,11 +85,11 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         
 
         const transactionAsVenderCompleted = await Transaction.find({
-            // venderId: userId,
-            $or: [
-                { venderId: userId },
-                { customerId: userId }
-            ],
+            venderId: userId,
+            // $or: [
+            //     { venderId: userId },
+            //     { customerId: userId }
+            // ],
             transactionType: TRANSACTION_TYPE.PARENT,
             transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         }).populate({
@@ -118,12 +121,33 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             }
         })
 
+        let totalAmonuntToPaidToVender = 0
+
+        const transactionToBePaidToVenderPending = await Transaction.find({
+            customerId: userId,
+            transactionType: TRANSACTION_TYPE.PARENT,
+            transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+        }).populate({
+            path: "childTransaction"
+        })
+
+        transactionToBePaidToVenderPending?.map((trasaction:any)=>{
+            if(trasaction.transactionStatus == TRANSACTION_STATUS.PENDING){
+                totalAmonuntToPaidToVender += parseInt(trasaction?.amount)
+            }else{
+                trasaction?.childTransaction?.map((childTransaction:any)=>{
+                    if(childTransaction.transactionStatus == TRANSACTION_STATUS.COMPLETE)
+                        totalAmonuntToPaidToVender += parseInt(childTransaction?.amount)
+                })
+            }
+        })
+
         const transactionAsCustomerComplete = await Transaction.find({
-            // customerId: userId,
-            $or: [
-                { venderId: userId },
-                { customerId: userId }
-            ],
+            customerId: userId,
+            // $or: [
+            //     { venderId: userId },
+            //     { customerId: userId }
+            // ],
             transactionType: TRANSACTION_TYPE.PARENT,
             transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         }).populate({
@@ -194,7 +218,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 pendingAmount:pendingAmount,
                 collectedAmount:completedAmount,
                 paidAmount:paidAmount,
-                todayDueAmount:totalPendingAmount
+                todayDueAmount:totalPendingAmount,
+                toBePaidToVender: totalAmonuntToPaidToVender
             },
             openEnquiryCount
         }
