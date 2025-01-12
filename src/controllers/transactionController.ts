@@ -756,7 +756,8 @@ export const getTransactionDetailById = async (req: any, res: any) => {
 export const listTransaction = async (req: any, res: any) => {
   try {
     const { userId } = req.user;
-
+    // console.log(userId,'ss');
+    
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
@@ -775,7 +776,11 @@ export const listTransaction = async (req: any, res: any) => {
 
 
     const transactions = await Transaction.find({
-      venderId: userId,
+      // venderId: userId,
+      $or: [
+        { venderId: userId },
+        { customerId: userId }
+      ],
       transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
       transactionType: TRANSACTION_TYPE.PARENT,
       ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
@@ -794,20 +799,20 @@ export const listTransaction = async (req: any, res: any) => {
       .skip(skip)
       .limit(limit);
 
-    const totaltransactions = await Transaction.countDocuments({
-      venderId: userId,
-      transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
-      transactionType: TRANSACTION_TYPE.PARENT,
-      ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
-    });
+    // const totaltransactions = await Transaction.countDocuments({
+    //   venderId: userId,
+    //   transactionStatus: { $ne: TRANSACTION_STATUS.COMPLETE },
+    //   transactionType: TRANSACTION_TYPE.PARENT,
+    //   ...(Object.keys(dateFilter).length && { transactionDate: dateFilter })
+    // });
 
-    const totalPages = Math.ceil(totaltransactions / limit);
+    // const totalPages = Math.ceil(totaltransactions / limit);
 
     return buildObjectResponse(res, {
       transactions,
-      totalPages,
-      currentPage: page,
-      totalItems: totaltransactions,
+      // totalPages,
+      // currentPage: page,
+      // totalItems: totaltransactions,
     });
   } catch (error) {
     console.log(error, "error");
