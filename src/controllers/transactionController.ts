@@ -217,7 +217,7 @@ export const verifyTransaction = async (req: any, res: any) => {
 
 export const payAmountToVender = async (req: any, res: any) => {
   try {
-    const { transactionId, amount } = req.body;
+    const { transactionId, amount, paymentType } = req.body;
     const { userId } = req.user;
 
     if (!transactionId)
@@ -269,6 +269,7 @@ export const payAmountToVender = async (req: any, res: any) => {
           transactionId,
           { 
             status: TRANSACTION_STATUS.CUSTOMER_PAID,
+            paymentType: paymentType,
             $push: { amountPaidDates: currentDate },
           },
           { new: true }
@@ -285,7 +286,8 @@ export const payAmountToVender = async (req: any, res: any) => {
                 status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
                 dueDate: findTransaction.dueDate,
                 transactionStatus: TRANSACTION_STATUS.PENDING,
-                transactionType:TRANSACTION_TYPE.CHILD
+                transactionType:TRANSACTION_TYPE.CHILD,
+                paymentType: paymentType
             };
 
             const transaction = new Transaction(transactionData);
@@ -295,6 +297,7 @@ export const payAmountToVender = async (req: any, res: any) => {
                 transactionId,
                 {
                   status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
+                  paymentType: paymentType,
                   $push: { childTransaction: childTransaction._id, amountPaidDates: currentDate },
                 },
                 { new: true }
@@ -309,6 +312,7 @@ export const payAmountToVender = async (req: any, res: any) => {
           transactionId,
           { 
             status: TRANSACTION_STATUS.CUSTOMER_PAID,
+            paymentType: paymentType,
             $push: { amountPaidDates: currentDate }, 
           },
           { new: true }
@@ -329,7 +333,8 @@ export const payAmountToVender = async (req: any, res: any) => {
             status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
             dueDate: findTransaction.dueDate,
             transactionStatus: TRANSACTION_STATUS.PENDING,
-            transactionType:TRANSACTION_TYPE.CHILD
+            transactionType:TRANSACTION_TYPE.CHILD,
+            paymentType: paymentType,
           };
 
           const transaction = new Transaction(transactionData);
@@ -339,6 +344,7 @@ export const payAmountToVender = async (req: any, res: any) => {
             transactionId,
             {
               status: TRANSACTION_STATUS.CUSTOMER_PAID_PARTIAL,
+              paymentType: paymentType,
               $push: { childTransaction: childTransaction._id, amountPaidDates: currentDate },
             },
             { new: true }
@@ -577,8 +583,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
           transactionId,
           {
             status: TRANSACTION_STATUS.COMPLETE,
-            transactionStatus: TRANSACTION_STATUS.COMPLETE,
-            paymentType: paymentType
+            transactionStatus: TRANSACTION_STATUS.COMPLETE
           },
           { new: true, session }
         );
@@ -587,8 +592,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
           transactionId,
           {
             status: TRANSACTION_STATUS.COMPLETE,
-            transactionStatus: TRANSACTION_STATUS.COMPLETE,
-            paymentType: paymentType
+            transactionStatus: TRANSACTION_STATUS.COMPLETE
           },
           { new: true, session }
         );
@@ -597,8 +601,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
           { _id: { $in: findTransaction.childTransaction } },
           {
             transactionStatus: TRANSACTION_STATUS.COMPLETE,
-            status: TRANSACTION_STATUS.COMPLETE,
-            paymentType: paymentType
+            status: TRANSACTION_STATUS.COMPLETE
           },
           { session }
         );
@@ -669,8 +672,7 @@ export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
             transactionId,
             {
               status: TRANSACTION_STATUS.COMPLETE,
-              transactionStatus: TRANSACTION_STATUS.COMPLETE,
-              paymentType: paymentType
+              transactionStatus: TRANSACTION_STATUS.COMPLETE
             },
             { new: true, session }
           );
@@ -679,8 +681,7 @@ export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
             transactionId,
             {
               status: TRANSACTION_STATUS.COMPLETE,
-              transactionStatus: TRANSACTION_STATUS.COMPLETE,
-              paymentType: paymentType
+              transactionStatus: TRANSACTION_STATUS.COMPLETE
             },
             { new: true, session }
           );
@@ -689,8 +690,7 @@ export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
             { _id: { $in: findTransaction.childTransaction } },
             {
               transactionStatus: TRANSACTION_STATUS.COMPLETE,
-              status: TRANSACTION_STATUS.COMPLETE,
-              paymentType: paymentType
+              status: TRANSACTION_STATUS.COMPLETE
             },
             { session }
           );
