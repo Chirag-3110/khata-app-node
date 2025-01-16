@@ -355,8 +355,6 @@ export const payAmountToVender = async (req: any, res: any) => {
     }
 
     let calculatedCreditScore=await calculateCreditScore(findTransaction?.customerId)
-    console.log(calculatedCreditScore,"CAlslsllsls");
-    
 
     await Wallet.findByIdAndUpdate(
       checkUserExists?.walletId,
@@ -574,6 +572,9 @@ export const updateTransactionStatus = async (req: any, res: any) => {
     if (!findUser)
       return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
+    if(findTransaction?.status == TRANSACTION_STATUS.PENDING)
+      return buildErrorResponse(res, constants.errors.transactionIsInPendingState, 404);
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -658,6 +659,9 @@ export const updateMultipleTransactionStatuses = async (req: any, res: any) => {
           await session.abortTransaction();
           return buildErrorResponse(res, constants.errors.transactionNotFound, 404);
         }
+
+        if(findTransaction?.status == TRANSACTION_STATUS.PENDING)
+          return buildErrorResponse(res, constants.errors.transactionIsInPendingState, 404);
 
         const findVender = await User.findById(findTransaction?.venderId).session(session);
         const findUser = await User.findById(findTransaction?.customerId).session(session);
@@ -756,13 +760,12 @@ export const getTransactionDetailById = async (req: any, res: any) => {
 export const listTransaction = async (req: any, res: any) => {
   try {
     const { userId } = req.user;
-    // console.log(userId,'ss');
     
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    const { fromDate, toDate } = req.query;
+    const { fromDate, toDate, sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     let dateFilter: any = {};
     if (fromDate) {
@@ -795,9 +798,9 @@ export const listTransaction = async (req: any, res: any) => {
       .populate({
         path: "childTransaction"
       })
-      .sort({ transactionDate: -1 })
-      .skip(skip)
-      .limit(limit);
+      .sort({ [sortField] : sortBy })
+      // .skip(skip)
+      // .limit(limit);
 
     // const totaltransactions = await Transaction.countDocuments({
     //   venderId: userId,
@@ -829,7 +832,7 @@ export const listTransactionsOfCustomers = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
-    const { fromDate, toDate } = req.query;
+    const { fromDate, toDate, sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     let dateFilter: any = {};
     if (fromDate) {
@@ -860,7 +863,8 @@ export const listTransactionsOfCustomers = async (req: any, res: any) => {
     .populate({
       path: "childTransaction"
     })
-    .sort({ transactionDate: -1 });
+    // .sort({ transactionDate: -1 });
+    .sort({ [sortField] : sortBy })
     // .skip(skip)
     // .limit(limit);
 
@@ -897,7 +901,7 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
-    const { fromDate, toDate } = req.query;
+    const { fromDate, toDate, sortField = 'transactionDate', sortBy = -1  } = req.query;
 
     let dateFilter: any = {};
     if (fromDate) {
@@ -928,7 +932,7 @@ export const listTransactionUsingVenderId = async (req: any, res: any) => {
     .populate({
       path: "childTransaction"
     })
-    .sort({ transactionDate: -1 });
+    .sort({ [sortField] : sortBy })
     // .skip(skip)
     // .limit(limit);
 
@@ -962,9 +966,7 @@ export const listCompleteTransactionsOfCustomers = async (req: any, res: any) =>
 
     const skip = (page - 1) * limit;
 
-    const { fromDate, toDate } = req.query;
-
-    console.log(fromDate, toDate, 'dates');
+    const { fromDate, toDate, sortField = 'transactionDate', sortBy = -1  } = req.query;
 
     let dateFilter: any = {};
     if (fromDate) {
@@ -993,7 +995,7 @@ export const listCompleteTransactionsOfCustomers = async (req: any, res: any) =>
     .populate({
       path: "childTransaction"
     })
-    .sort({ transactionDate: -1 });
+    .sort({ [sortField] : sortBy })
     // .skip(skip)
     // .limit(limit);
 
@@ -1026,8 +1028,7 @@ export const listCompletedTransactionOfVender = async (req: any, res: any) => {
 
     const skip = (page - 1) * limit;
 
-    const { fromDate, toDate } = req.query;
-
+    const { fromDate, toDate,sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     let dateFilter: any = {};
     if (fromDate) {
@@ -1056,7 +1057,7 @@ export const listCompletedTransactionOfVender = async (req: any, res: any) => {
       .populate({
         path: "childTransaction"
       })
-      .sort({ transactionDate: -1 });
+      .sort({ [sortField] : sortBy })
     // .skip(skip)
     // .limit(limit);
 
@@ -1092,6 +1093,7 @@ export const listCompleteTransactionUsingVenderId = async (req: any, res: any) =
     const limit = parseInt(req.query.limit as string) || 10;
 
     const skip = (page - 1) * limit;
+    const { sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     const transactions = await Transaction.find({
       customerId: userId,
@@ -1110,7 +1112,7 @@ export const listCompleteTransactionUsingVenderId = async (req: any, res: any) =
     .populate({
       path: "childTransaction"
     })
-    .sort({ transactionDate: -1 });
+    .sort({ [sortField] : sortBy })
     // .skip(skip)
     // .limit(limit);
 
@@ -1157,6 +1159,7 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
     const limit = parseInt(req.query.limit as string) || 10;
 
     const skip = (page - 1) * limit;
+    const { sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     const today = new Date();
     const currentDay = today.getDate().toString().padStart(2, '0');    
@@ -1185,7 +1188,7 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
     .populate({
       path: "childTransaction"
     })
-    .sort({ transactionDate: -1 });
+    .sort({ [sortField] : sortBy })
 
     // const totalPendingAmount = transactions.reduce((total, transaction) => {
     //   let parentAmount = transaction.amount ? parseFloat(transaction.amount.toString()) : 0;
@@ -1232,6 +1235,7 @@ export const listCustomerPartTransactionsByVender = async (req: any, res: any) =
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
+    const { sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     const skip = (page - 1) * limit;
 
@@ -1250,7 +1254,7 @@ export const listCustomerPartTransactionsByVender = async (req: any, res: any) =
     .populate({
       path: "childTransaction"
     })
-    .sort({ transactionDate: -1 });
+    .sort({ [sortField] : sortBy })
 
     return buildObjectResponse(res, {
       transactions
@@ -1279,6 +1283,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
     let roleData = await Role.findById(findCustomerUser.role)
 
     let transactions:any=[]
+    const { sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     if (roleData?.role === roles.Vender) {
       transactions = await Transaction.find({
@@ -1301,7 +1306,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
       .populate({
         path: "childTransaction"
       })
-      .sort({ transactionDate: -1 });
+      .sort({ [sortField] : sortBy })
     }else{
       transactions = await Transaction.find({
         customerId: userId,
@@ -1323,7 +1328,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
       .populate({
         path: "childTransaction"
       })
-      .sort({ transactionDate: -1 });
+      .sort({ [sortField] : sortBy })
     }
 
     return buildObjectResponse(res, {

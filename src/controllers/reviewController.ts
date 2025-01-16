@@ -53,7 +53,7 @@ export const addNewReview=async(req:any,res:any)=>{
 
         const review=new Review(req.body);
 
-        // await review.save();
+        await review.save();
 
         const notificationBody={
             title:"New Review",
@@ -62,7 +62,7 @@ export const addNewReview=async(req:any,res:any)=>{
             userId:customerId
         }
         const notification=new Notification(notificationBody);
-        // await notification.save();
+        await notification.save();
 
         let message=FIREBASE_NOTIFICATION_MESSAGES.review.message.replace('{{shopUser}}', shopUser?.name);
         let secondMessage=FIREBASE_NOTIFICATION_MESSAGES.review.secondMessage.replace('{{customerName}}', findUser?.name);

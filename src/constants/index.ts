@@ -101,7 +101,8 @@ const constants = {
       unableToSendOtp:"Unable to send otp",
       sessionIdReq:"Session id is required",
       otpMisMatch:"OTP Mismatch",
-      invalidPaymentImage:"Image not found"
+      invalidPaymentImage:"Image not found",
+      transactionIsInPendingState:"Can't mark pending transaction as completed"
     },
 };
 
