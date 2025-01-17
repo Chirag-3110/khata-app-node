@@ -1282,11 +1282,13 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
 
     let roleData = await Role.findById(findCustomerUser.role)
 
-    let transactions:any=[]
+    let transactions:any={}
+    let customerTransactions:any=[]
+    let venderTransactions:any=[]
     const { sortField = 'transactionDate', sortBy = -1 } = req.query;
 
     if (roleData?.role === roles.Vender) {
-      transactions = await Transaction.find({
+      const allTransactions = await Transaction.find({
         venderId: userId,
         transactionType: TRANSACTION_TYPE.PARENT,
         transactionStatus: { $in: [
@@ -1296,7 +1298,6 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
           TRANSACTION_STATUS.CUSTOMER_PAID
         ] }
       })
-      .populate("customerId")
       .populate({
         path: "venderId",
         populate: {
@@ -1304,11 +1305,25 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
         },
       })
       .populate({
+        path: "customerId",
+        populate: {
+          path: "role",
+        },
+      })
+      .populate({
         path: "childTransaction"
       })
       .sort({ [sortField] : sortBy })
+
+      allTransactions?.forEach((item:any)=>{
+        if(item?.customerId?.role?.role == roles.Vender){
+          venderTransactions.push(item);
+        }else{
+          customerTransactions.push(item);
+        }
+      })
     }else{
-      transactions = await Transaction.find({
+      venderTransactions = await Transaction.find({
         customerId: userId,
         transactionType: TRANSACTION_TYPE.PARENT,
         transactionStatus: { $in: [
@@ -1324,7 +1339,12 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
           path: "shopId",
         },
       })
-      .populate("customerId")
+      .populate({
+        path: "customerId",
+        populate: {
+          path: "role",
+        },
+      })
       .populate({
         path: "childTransaction"
       })
@@ -1332,7 +1352,10 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
     }
 
     return buildObjectResponse(res, {
-      transactions
+      transactions:{
+        customerTransactions,
+        venderTransactions
+      }
     });
 
   } catch (error) {
