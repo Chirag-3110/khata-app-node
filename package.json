@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node-dev src/index.ts",
+    "start": "NODE_ENV=production ts-node-dev src/index.ts",
+    "dev": "NODE_ENV=development ts-node-dev src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Chirag Tak",
   "license": "ISC",
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -23,6 +24,7 @@
     "axios": "^1.7.7",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.18.2",
     "firebase-admin": "^12.5.0",
     "jsonwebtoken": "^9.0.2",

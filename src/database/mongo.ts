@@ -1,20 +1,11 @@
 import mongoose from 'mongoose';
-
-const mongoUri = "mongodb+srv://takchirag828:ln8nkqC42O3DEZEb@khatabook.qfoibva.mongodb.net/khata-book?retryWrites=true&w=majority&appName=khatabook";
-
-interface Config {
-  useNewUrlParser: boolean;
-  useUnifiedTopology: boolean;
-}
-
-const config: Config = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
+import config from '../config';
+// import dotenv from 'dotenv';
+// dotenv.config();
 
 const mongoConnect = async () => {
   try {
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(config.DB);
     console.log('Connected to MongoDB');
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
