@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=production ts-node-dev src/index.ts",
-    "dev": "NODE_ENV=development ts-node-dev src/index.ts",
+    "start:prod": "NODE_ENV=production ts-node-dev src/index.ts",
+    "start:dev": "NODE_ENV=development ts-node-dev src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
