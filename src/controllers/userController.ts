@@ -338,7 +338,7 @@ export const updateUserStatus=async(req:any,res:any) => {
 }
 
 export const editProfile = async (req:any, res:any) => {
-    const { userId, address, dob, gender, name, qrCode, upiId } = req.body;
+    const { userId, address, dob, gender, name, qrCode, upiId, email, pinCode } = req.body;
   
     try {
       if (!userId) {
@@ -354,16 +354,19 @@ export const editProfile = async (req:any, res:any) => {
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         {
-          address: address || findUser.address,
-          dob: dob || findUser.dob,
-          gender: gender || findUser.gender,
-          name: name || findUser.name,
-          qrCode: qrCode || findUser.qrCode,
-          upiId: upiId || findUser.upiId,
+            address: address || findUser.address,
+            dob: dob || findUser.dob,
+            gender: gender || findUser.gender,
+            name: name || findUser.name,
+            qrCode: qrCode || findUser.qrCode,
+            upiId: upiId || findUser.upiId,
+            pinCode: pinCode || findUser?.pinCode,
+            email: email || findUser?.email
         },
         { new: true }
       );
-  
+      console.log(updatedUser,"User");
+      
       return buildResponse(res, constants.success.userProfileUpdate, 200);
   
     } catch (error) {

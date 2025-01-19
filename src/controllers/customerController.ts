@@ -371,7 +371,7 @@ export const getUserDetailsComplete=async(req:any,res:any)=>{
         //role
         const role = await Role.findById(customerData?.role);
 
-        const filter= {customerId:userId}
+        const filter= {shopId:userId}
         // const filter=role?.role == roles.Customer ? {customerId:userId} : {shopId:userId}
 
         //reviews
