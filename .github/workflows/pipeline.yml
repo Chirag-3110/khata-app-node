@@ -43,8 +43,6 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           port: 22
-          envs:
-            GITHUB_REF_NAME: "production"
           script_stop: true
           script: |
             # Navigate to the project directory or create it if it doesn't exist
@@ -52,8 +50,6 @@ jobs:
             sudo chown -R $USER:$USER /var/www/transaction-backend
             cd /var/www/transaction-backend
 
-            # Debug: Echo the branch name
-            echo "Branch name: $GITHUB_REF_NAME"
 
             # Stop the current PM2 process for develop
             pm2 stop transaction-backend-dev || true
