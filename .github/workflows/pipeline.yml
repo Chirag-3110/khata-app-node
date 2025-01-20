@@ -46,7 +46,8 @@ jobs:
           script_stop: true
           script: |
             # Navigate to the project directory or create it if it doesn't exist
-            mkdir -p /var/www/transaction-backend
+            sudo mkdir -p /var/www/transaction-backend
+            sudo chown -R $USER:$USER /var/www/transaction-backend
             cd /var/www/transaction-backend
 
             # Stop the current PM2 process based on the branch
