@@ -1,111 +1,4 @@
-name: Testing CICD
-
-on:
-  push:
-    branches: [ "production" ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: self-hosted
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Docker image
-        run: docker build -t testing .
-
-      - name: Save Docker image to file
-        run: docker save testing -o testing.tar
-
-      - name: Show size of Docker image file
-        run: du -h testing.tar
-
-      - name: Archive Docker image file
-        run: tar -czf testing.tar.gz testing.tar
-
-      - name: Show size of archived Docker image file
-        run: du -h testing.tar.gz
-
-      - name: Upload Docker image file
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image
-          path: testing.tar.gz
-
-  deploy:
-    runs-on: self-hosted
-    needs: build
-
-    steps:
-      - name: Download Docker image file
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image
-          path: ~/
-
-      - name: Extract Docker image file
-        run: |
-          mkdir -p extracted-image
-          tar -xzf ~/testing.tar.gz -C extracted-image
-
-      - name: Check contents of extracted image directory
-        run: ls -l extracted-image/
-
-      - name: Set permissions for extracted image
-        run: chmod -R 755 extracted-image/
-
-      - name: Copy Docker image to EC2
-        uses: appleboy/scp-action@v0.1.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "extracted-image/"
-          target: "~/docker-image"
-          timeout: 60s
-          command_timeout: 20m
-
-      - name: SSH to EC2 and load Docker image
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          port: 22
-          script_stop: true
-          script: |
-            cd ~/docker-image/extracted-image
-            docker load -i testing.tar
-            docker stop testing || true
-            docker rm testing || true
-            docker run -d --restart unless-stopped --name testing -p 3000:3000 testing
-
-      - name: Debug Docker container status
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          port: 22
-          script_stop: false
-          script: |
-            docker ps -a
-            docker logs testing || true
-
-      - name: Check disk usage after deployment
-        run: df -h
-
-# name: Payru CICD
+# name: Testing CICD
 
 # on:
 #   push:
@@ -128,22 +21,62 @@ jobs:
 #       - name: Install dependencies
 #         run: npm install
 
-#       - name: Log in to Docker Hub
-#         run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
 #       - name: Build Docker image
-#         run: sudo docker build -t ${{ secrets.DOCKER_USERNAME }}/payru:latest .
+#         run: docker build -t testing .
 
-#       - name: Push Docker image to Docker Hub
-#         run: sudo docker push ${{ secrets.DOCKER_USERNAME }}/payru:latest
+#       - name: Save Docker image to file
+#         run: docker save testing -o testing.tar
+
+#       - name: Show size of Docker image file
+#         run: du -h testing.tar
+
+#       - name: Archive Docker image file
+#         run: tar -czf testing.tar.gz testing.tar
+
+#       - name: Show size of archived Docker image file
+#         run: du -h testing.tar.gz
+
+#       - name: Upload Docker image file
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: docker-image
+#           path: testing.tar.gz
 
 #   deploy:
 #     runs-on: self-hosted
 #     needs: build
 
 #     steps:
-#       - name: SSH to EC2 and deploy Docker image
-#         uses: appleboy/ssh-action@v0.1.8
+#       - name: Download Docker image file
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: docker-image
+#           path: ~/
+
+#       - name: Extract Docker image file
+#         run: |
+#           mkdir -p extracted-image
+#           tar -xzf ~/testing.tar.gz -C extracted-image
+
+#       - name: Check contents of extracted image directory
+#         run: ls -l extracted-image/
+
+#       - name: Set permissions for extracted image
+#         run: chmod -R 755 extracted-image/
+
+#       - name: Copy Docker image to EC2
+#         uses: appleboy/scp-action@v0.1.5
+#         with:
+#           host: ${{ secrets.EC2_HOST }}
+#           username: ${{ secrets.EC2_USERNAME }}
+#           key: ${{ secrets.EC2_PRIVATE_KEY }}
+#           source: "extracted-image/"
+#           target: "~/docker-image"
+#           timeout: 60s
+#           command_timeout: 20m
+
+#       - name: SSH to EC2 and load Docker image
+#         uses: appleboy/ssh-action@v0.1.5
 #         with:
 #           host: ${{ secrets.EC2_HOST }}
 #           username: ${{ secrets.EC2_USERNAME }}
@@ -151,14 +84,107 @@ jobs:
 #           port: 22
 #           script_stop: true
 #           script: |
-#             echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+#             cd ~/docker-image/extracted-image
+#             docker load -i testing.tar
+#             docker stop testing || true
+#             docker rm testing || true
+#             docker run -d --restart unless-stopped --name testing -p 3000:3000 testing
 
-#             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/payru:latest
-
-#             sudo docker stop payru || true
-#             sudo docker rm payru || true
-
-#             sudo docker run -d --name payru -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/payru:latest
+#       - name: Debug Docker container status
+#         uses: appleboy/ssh-action@v0.1.5
+#         with:
+#           host: ${{ secrets.EC2_HOST }}
+#           username: ${{ secrets.EC2_USERNAME }}
+#           key: ${{ secrets.EC2_PRIVATE_KEY }}
+#           port: 22
+#           script_stop: false
+#           script: |
+#             docker ps -a
+#             docker logs testing || true
 
 #       - name: Check disk usage after deployment
 #         run: df -h
+
+on:
+  push:
+    branches: [ "develop", "production" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Archive project files
+        run: zip -r project.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: project-artifact
+          path: project.zip
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: project-artifact
+
+      - name: SSH to EC2 and deploy with PM2
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            # Navigate to the project directory or create it if it doesn't exist
+            mkdir -p /var/www/transaction-backend
+            cd /var/www/transaction-backend
+
+            # Stop the current PM2 process based on the branch
+            if [ "$GITHUB_REF_NAME" = "develop" ]; then
+              pm2 stop transaction-backend-prod || true
+              pm2 delete transaction-backend-prod || true
+            elif [ "$GITHUB_REF_NAME" = "production" ]; then
+              pm2 stop transaction-backend-dev || true
+              pm2 delete transaction-backend-dev || true
+            fi
+
+            # Remove old files
+            rm -rf *
+
+            # Upload the new project files
+            unzip ~/project.zip -d .
+
+            # Install dependencies
+            npm install
+
+            # Start the appropriate PM2 process based on the branch
+            if [ "$GITHUB_REF_NAME" = "develop" ]; then
+              pm2 start npm --name "transaction-backend-dev" -- run start:dev
+            elif [ "$GITHUB_REF_NAME" = "production" ]; then
+              pm2 start npm --name "transaction-backend-prod" -- run start:prod
+            fi
+
+            # Save PM2 state to restart on server reboot
+            pm2 save
+
+      - name: Check PM2 status
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            pm2 list
