@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Archive project files
-        run: tar -czf project.tar.gz .
+        run: tar --exclude='.git' --exclude='./*tmp*' -czf project.tar.gz .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
