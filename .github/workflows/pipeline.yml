@@ -18,13 +18,13 @@ jobs:
         run: rsync -a --exclude='.git' --exclude='node_modules' ./ /tmp/project-archive
 
       - name: Archive project files
-        run: tar -czf project.tar.gz -C /tmp/project-archive .
+        run: tar -czf /tmp/project.tar.gz -C /tmp/project-archive .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: project-artifact
-          path: project.tar.gz
+          path: /tmp/project.tar.gz
 
   deploy:
     runs-on: self-hosted
@@ -62,11 +62,11 @@ jobs:
             # Remove old files
             rm -rf *
 
-            # Upload the new project files
-            tar -xzf ~/project.tar.gz -C .
+            # Extract the new project files
+            tar -xzf /tmp/project.tar.gz -C .
 
             # Install dependencies
-            npm install
+            npm ci
 
             # Start the appropriate PM2 process based on the branch
             if [ "$GITHUB_REF_NAME" = "develop" ]; then
