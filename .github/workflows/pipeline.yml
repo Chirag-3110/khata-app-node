@@ -11,8 +11,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create a temporary directory for archiving
+        run: mkdir -p /tmp/project-archive
+
+      - name: Copy files to temporary directory
+        run: rsync -a --exclude='.git' --exclude='node_modules' ./ /tmp/project-archive
+
       - name: Archive project files
-        run: tar --exclude='.git' --exclude='./*tmp*' -czf project.tar.gz .
+        run: tar -czf project.tar.gz -C /tmp/project-archive .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
