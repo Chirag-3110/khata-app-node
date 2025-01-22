@@ -1,3 +1,4 @@
 node_modules
-
+Dockerfile
+.dockerignore
 src/payru-30bfe-firebase-adminsdk-euzms-59a86ed991.json

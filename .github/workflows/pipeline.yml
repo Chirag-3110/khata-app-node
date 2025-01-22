@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [ "production" ]
+    branches: [ "develop" ]
   workflow_dispatch:
 
 jobs:
