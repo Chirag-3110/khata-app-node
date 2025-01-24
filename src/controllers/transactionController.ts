@@ -1289,7 +1289,10 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
 
     if (roleData?.role === roles.Vender) {
       const allTransactions = await Transaction.find({
-        venderId: userId,
+        $or: [
+          { venderId: userId },
+          { customerId: userId }
+        ],
         transactionType: TRANSACTION_TYPE.PARENT,
         transactionStatus: { $in: [
           TRANSACTION_STATUS.PENDING, 
@@ -1314,6 +1317,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
         path: "childTransaction"
       })
       .sort({ [sortField] : sortBy })
+      
 
       allTransactions?.forEach((item:any)=>{
         if(item?.customerId?.role?.role == roles.Vender){
