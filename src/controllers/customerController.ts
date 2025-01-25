@@ -371,7 +371,7 @@ export const getUserDetailsComplete=async(req:any,res:any)=>{
         //role
         const role = await Role.findById(customerData?.role);
 
-        const filter= {shopId:userId}
+        const filter= {customerId:userId}
         // const filter=role?.role == roles.Customer ? {customerId:userId} : {shopId:userId}
 
         //reviews
@@ -406,7 +406,7 @@ export const getUserDetailsComplete=async(req:any,res:any)=>{
 
         const totalUnpaidTransactions = await Transaction.countDocuments({
             customerId: userId,
-            transactionStatus: { $eq: TRANSACTION_STATUS.PENDING } ,
+            transactionStatus: { $eq: TRANSACTION_STATUS.PENDING } , // customer paid add
             transactionType:TRANSACTION_TYPE.PARENT
         });
         customer.totalUnpaidTransactions = totalUnpaidTransactions

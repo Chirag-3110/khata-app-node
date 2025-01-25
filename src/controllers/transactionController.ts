@@ -127,8 +127,6 @@ export const verifyTransaction = async (req: any, res: any) => {
   const { transactionData, otp } = req.body;
   const {userId, amount, dueDate, venderId, description, createdBy, transactionUserToUser} = transactionData
   try {
-    if (!otp)
-      return buildErrorResponse(res, constants.errors.emptyOtp, 404);
 
     const findUser=await User.findById(venderId)
     const findCustomerUser=await User.findById(userId)
@@ -143,10 +141,15 @@ export const verifyTransaction = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.customerNotExists, 404);
     }
 
-    const otpModal=await Otp.findOne({customerId:isCustomerExits?._id});
-
-    if(otpModal?.otp !== otp)
-      return buildErrorResponse(res, constants.errors.invalidOtp, 404);
+    if(createdBy == roles.Vender){
+      if (!otp)
+        return buildErrorResponse(res, constants.errors.emptyOtp, 404);
+  
+      const otpModal=await Otp.findOne({customerId:isCustomerExits?._id});
+  
+      if(otpModal?.otp !== otp)
+        return buildErrorResponse(res, constants.errors.invalidOtp, 404);
+    }
 
     const transRef=generateRandomTransactionRef();
 
@@ -160,7 +163,7 @@ export const verifyTransaction = async (req: any, res: any) => {
       transactionType: TRANSACTION_TYPE.PARENT,
       dueDateStatus: DUE_DATE_STATUS.PENDING,
       description:description,
-      otp:otp,
+      otp:otp?otp:"0000",
       createdBy:createdBy?createdBy:roles.Vender,
       transactionRef:transRef,
       transactionDate: moment().format(),
@@ -1479,7 +1482,7 @@ const calculateCreditScore=async(userId:any)=>{
   const consistencyFactor = totalConsistencyFactor / transactions.length;
   const averageLoyaltyFactor = loyaltyFactor / transactions.length;
   
-  const creditScore = (onTimePaymentRatio * 0.3) + (consistencyFactor * 0.2) - (totalPenaltyPoints * 0.3 / transactions.length) + (averageLoyaltyFactor * 0.2);
+  const creditScore = (onTimePaymentRatio * 0.2) + (consistencyFactor * 0.2) - (totalPenaltyPoints * 0.4 / transactions.length) + (averageLoyaltyFactor * 0.2);
 
   const normalizedScore = (creditScore / 10) * 1000 + baseAmount; 
   const normalizedScoreWithOutBase = (creditScore / 10) * 1000 ; 
