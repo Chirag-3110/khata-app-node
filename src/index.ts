@@ -25,6 +25,8 @@ import adminCategoryRoute from './routes/admin/categoryRoute';
 const app = express();
 const server = http.createServer(app)
 
+let port = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({
@@ -32,8 +34,8 @@ app.use(express.urlencoded({
 }));
 
 
-server.listen(3000, () => {
-    console.log('Server started at port 3000');
+server.listen(port, () => {
+    console.log(`Server started at port ${port}`);
     initializeFirebase()
     mongoConnect();
 });

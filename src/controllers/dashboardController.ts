@@ -176,13 +176,13 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             venderId: userId,
             transactionType: TRANSACTION_TYPE.PARENT,
             transactionStatus:TRANSACTION_STATUS.PENDING,
-            // $expr: {
-            //     $and: [
-            //     { $eq: [{ $dayOfMonth: "$dueDate" }, currentDay] },
-            //     { $eq: [{ $month: "$dueDate" }, currentMonth] }, 
-            //     { $eq: [{ $year: "$dueDate" }, currentYear] }    
-            //     ]
-            // }
+            $expr: {
+                $and: [
+                { $eq: [{ $dayOfMonth: "$dueDate" }, currentDay] },
+                { $eq: [{ $month: "$dueDate" }, currentMonth] }, 
+                { $eq: [{ $year: "$dueDate" }, currentYear] }    
+                ]
+            }
         })
         .populate("customerId")
         .populate({
