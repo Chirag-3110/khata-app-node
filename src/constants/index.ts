@@ -37,6 +37,7 @@ const constants = {
       testNotificaiton:"Test notification send",
       otpSendSuccessfull:"Otp send successfully",
       ssAddedSuccess:"Image added successfully",
+      subsAdded:"New subscription added successfully",
     },
     errors: {
       roleNotFound:"Role not found",
@@ -102,7 +103,9 @@ const constants = {
       sessionIdReq:"Session id is required",
       otpMisMatch:"OTP Mismatch",
       invalidPaymentImage:"Image not found",
-      transactionIsInPendingState:"Can't mark pending transaction as completed"
+      transactionIsInPendingState:"Can't mark pending transaction as completed",
+      subscrionNotFound:"Subscription not found",
+      shopUpdateFailed:"Shop subscription failed to update"
     },
 };
 

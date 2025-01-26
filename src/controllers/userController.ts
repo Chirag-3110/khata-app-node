@@ -15,6 +15,7 @@ import moment from "moment";
 import { Category } from "../models/Enquiry";
 import { MetaData } from "../models/MetaData";
 import { close } from "fs";
+import { model } from "mongoose";
 
 export const sendOtp = async (req: any, res: any) => {
     try {
@@ -230,7 +231,13 @@ export const getUserProfile=async(req:any,res:any) => {
             userData = await User.findById(userId)
                 .populate('role')
                 .populate('walletId')
-                .populate('shopId')
+                .populate({
+                    path:'shopId',
+                    populate:{
+                        path: "subscriptionId",
+                        model: "subscription"
+                    }
+                })
                 .populate({
                     path: 'redeemCode',
                     populate: {
@@ -251,7 +258,7 @@ export const getUserProfile=async(req:any,res:any) => {
 export const getShopById=async(req:any,res:any) => {
     const {shopId}=req.params;
     try {
-        let shopData = await Shop.findById(shopId).populate("user")
+        let shopData = await Shop.findById(shopId).populate("user").populate("subscriptionId")
 
         return buildObjectResponse(res,{shop:shopData});
     } catch (error) {

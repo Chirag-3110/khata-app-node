@@ -25,6 +25,7 @@ interface Shop extends Document {
     subscriptionType:string;
     subPurchaseDate:Date,
     subExpireDate:Date,
+    subscriptionId: Schema.Types.ObjectId
     category:string,
     businessCode:string,
     shopProfilePic:string,
@@ -110,6 +111,10 @@ const shopSchema = new Schema<Shop>({
     subExpireDate:{
         type:Date,
         default:Date.now()
+    },
+    subscriptionId: {
+        type: Schema.Types.ObjectId,
+        ref: 'subscription',
     },
     category:{
         type:String
