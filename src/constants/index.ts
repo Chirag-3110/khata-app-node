@@ -103,7 +103,7 @@ const constants = {
       sessionIdReq:"Session id is required",
       otpMisMatch:"OTP Mismatch",
       invalidPaymentImage:"Image not found",
-      transactionIsInPendingState:"Can't mark pending transaction as completed",
+      transactionIsInPendingState:"Customer has not made payment yet so you can not complete the transaction",
       subscrionNotFound:"Subscription not found",
       shopUpdateFailed:"Shop subscription failed to update"
     },

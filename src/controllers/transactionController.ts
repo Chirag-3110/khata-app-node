@@ -576,7 +576,7 @@ export const updateTransactionStatus = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.userNotFound, 404);
 
     if(findTransaction?.status == TRANSACTION_STATUS.PENDING)
-      return buildErrorResponse(res, constants.errors.transactionIsInPendingState, 404);
+      return buildErrorResponse(res, constants.errors.transactionIsInPendingState, 200);
 
     const session = await mongoose.startSession();
     session.startTransaction();
