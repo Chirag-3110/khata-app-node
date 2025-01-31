@@ -29,8 +29,6 @@ export const createNewTransaction = async (req: any, res: any) => {
 
     const findUser=await User.findOne({_id:userId,isProfileDone:true});
     const findVender=await User.findOne({_id:venderId,isProfileDone:true});
-// console.log(findUser,'User');
-// console.log(findVender,'Vendef');
 
     if(!findUser)
       return buildErrorResponse(res, constants.errors.userNotFound, 404);
@@ -141,7 +139,7 @@ export const verifyTransaction = async (req: any, res: any) => {
       return buildErrorResponse(res, constants.errors.customerNotExists, 404);
     }
 
-    if(createdBy == roles.Vender){
+    if(!createdBy || createdBy == roles.Vender){
       if (!otp)
         return buildErrorResponse(res, constants.errors.emptyOtp, 404);
   
