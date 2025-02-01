@@ -1230,9 +1230,9 @@ export const listCustomerPartTransactionsByVender = async (req: any, res: any) =
 
     const findRole=await Role.findById(findCustomer?.role);
 
-    if(findRole?.role == roles.Vender){
-      return buildErrorResponse(res, constants.errors.customerRole, 401);
-    }
+    // if(findRole?.role == roles.Vender){
+    //   return buildErrorResponse(res, constants.errors.customerRole, 401);
+    // }
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
