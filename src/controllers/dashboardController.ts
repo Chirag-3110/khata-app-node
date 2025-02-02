@@ -13,8 +13,7 @@ import { Enquiry } from "../models/Enquiry";
 
 export const getVenderDashboardData=async(req:any,res:any) => {
     const {userId}=req.user;   
-    console.log(userId,'Sk');
-     
+
     try {
         let venderDashboardData=<Object>{
             recentTransactions:[],
@@ -42,7 +41,7 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 { customerId: userId }
             ],
             transactionType:TRANSACTION_TYPE.PARENT,
-            transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+            // transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         })
         .populate("customerId")
         .populate({
@@ -109,9 +108,21 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             }
         })
 
+        const transactionAsVenderPending = await Transaction.find({
+            venderId: userId,
+            // $or: [
+            //     { venderId: userId },
+            //     { customerId: userId }
+            // ],
+            transactionType: TRANSACTION_TYPE.PARENT,
+            // transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+        }).populate({
+            path: "childTransaction"
+        })
+
         let pendingAmount=0;
 
-        transactionAsVenderCompleted?.map((trasaction:any)=>{
+        transactionAsVenderPending?.map((trasaction:any)=>{
             if(trasaction.transactionStatus == TRANSACTION_STATUS.PENDING){
                 pendingAmount += parseInt(trasaction?.amount)
                 trasaction?.childTransaction?.map((childTransaction:any)=>{
@@ -126,7 +137,7 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         const transactionToBePaidToVenderPending = await Transaction.find({
             customerId: userId,
             transactionType: TRANSACTION_TYPE.PARENT,
-            transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+            // transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         }).populate({
             path: "childTransaction"
         })
@@ -149,7 +160,7 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             //     { customerId: userId }
             // ],
             transactionType: TRANSACTION_TYPE.PARENT,
-            transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+            // transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
         }).populate({
             path: "childTransaction"
         });
