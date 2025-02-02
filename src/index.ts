@@ -62,4 +62,4 @@ app.use(subscriptionRoute);
 app.use(adminCategoryRoute);
 
 notificationReminderCron.start();
-shopOnOffCron.stop();
+shopOnOffCron.start();
