@@ -45,28 +45,21 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            # Navigate to the project directory or create it if it doesn't exist
             sudo mkdir -p /var/www/transaction-backend
             sudo chown -R $USER:$USER /var/www/transaction-backend
             cd /var/www/transaction-backend
 
-            # Stop the current PM2 process for production
             pm2 stop transaction-backend-prod || true
             pm2 delete transaction-backend-prod || true
 
-            # Remove old files
             rm -rf *
 
-            # Extract the new project files
             tar -xzf /tmp/project.tar.gz -C .
 
-            # Install dependencies
             npm ci
 
-            # Start the PM2 process for the develop environment
             pm2 start npm --name "transaction-backend-dev" --env development -- run start:dev
 
-            # Save PM2 state to restart on server reboot
             pm2 save
 
       - name: Check PM2 status

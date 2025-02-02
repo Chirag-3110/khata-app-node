@@ -486,8 +486,8 @@ export const shopOnOffCron = cron.schedule('0 */2 * * *', async () => {
         const currentTime = moment()
         const shops = await Shop.find();
         for (const shop of shops) {
-            const openTime = moment(shop.openTime).subtract(5, 'hours').subtract(30, 'minutes');
-            const closeDate = moment(shop.closeDate).subtract(5, 'hours').subtract(30, 'minutes');
+            const openTime = moment(shop.openTime)
+            const closeDate = moment(shop.closeDate)
             const currentTimeTime = currentTime.format("HH:mm");
             const openTimeTime = openTime.format("HH:mm");
             const closeDateTime = closeDate.format("HH:mm");
