@@ -1146,6 +1146,7 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
       return buildErrorResponse(res, constants.errors.invalidUserId, 404);
 
     const findVender=await User.findById(userId);
+    console.log(findVender,"Ven");
     
     if(!findVender)
       return buildErrorResponse(res, constants.errors.userNotFound, 404);
@@ -1179,7 +1180,12 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
         ]
       }
     })
-    .populate("customerId")
+    .populate({
+      path:"customerId",
+      populate: {
+        path: "shopId",
+      },
+    })
     .populate({
       path: "venderId",
       populate: {
@@ -1204,6 +1210,7 @@ export const listTodayDueDateTransactionsOfVender = async (req: any, res: any) =
 
     //   return total + parentAmount;
     // }, 0);
+console.log(transactions,'Tra');
 
     return buildObjectResponse(res, {
       transactions
@@ -1281,6 +1288,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
       return buildObjectResponse(res, {transactions:[]});
     }
 
+
     let roleData = await Role.findById(findCustomerUser.role)
 
     let transactions:any={}
@@ -1317,8 +1325,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
       .populate({
         path: "childTransaction"
       })
-      .sort({ [sortField] : sortBy })
-      
+      .sort({ [sortField] : sortBy });
 
       allTransactions?.forEach((item:any)=>{
         if(item?.customerId?.role?.role == roles.Vender){
@@ -1327,6 +1334,7 @@ export const listPendingTransactionsUsingVender = async (req: any, res: any) => 
           customerTransactions.push(item);
         }
       })
+
     }else{
       venderTransactions = await Transaction.find({
         customerId: userId,

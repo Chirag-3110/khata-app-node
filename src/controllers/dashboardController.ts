@@ -24,7 +24,8 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 collectedAmount:0,
                 paidAmount:0,
                 todayDueAmount:0,
-                toBePaidToVender: 0
+                toBePaidToVender: 0,
+                pendingFromVender: 0
             },
             openEnquiryCount: 0
         }
@@ -109,7 +110,7 @@ export const getVenderDashboardData=async(req:any,res:any) => {
         })
 
         const transactionAsVenderPending = await Transaction.find({
-            venderId: userId,
+            // venderId: userId,
             // $or: [
             //     { venderId: userId },
             //     { customerId: userId }
@@ -120,15 +121,50 @@ export const getVenderDashboardData=async(req:any,res:any) => {
             path: "childTransaction"
         })
 
-        let pendingAmount=0;
+        const transactionWithVenderPending = await Transaction.find({
+            venderId: userId,
+            // $or: [
+            //     { venderId: userId },
+            //     { customerId: userId }
+            // ],
+            transactionType: TRANSACTION_TYPE.PARENT,
+            // transactionDate: { $gte: startOfMonth, $lte: endOfMonth }
+        }).populate({
+            path: "childTransaction"
+        })
+        .populate({
+            path: "venderId",
+            populate: {
+              path: "shopId",
+            },
+          })
+          .populate({
+            path: "customerId",
+            populate: {
+              path: "role",
+            },
+        })
 
-        transactionAsVenderPending?.map((trasaction:any)=>{
-            if(trasaction.transactionStatus == TRANSACTION_STATUS.PENDING){
-                pendingAmount += parseInt(trasaction?.amount)
-                trasaction?.childTransaction?.map((childTransaction:any)=>{
-                    if(childTransaction.transactionStatus == TRANSACTION_STATUS.COMPLETE)
-                        pendingAmount -= parseInt(childTransaction?.amount)
-                })
+        let pendingAmount=0;
+        let toBeTakenFromVender=0;
+
+        transactionWithVenderPending?.map((trasaction:any)=>{
+            if(trasaction?.customerId?.role?.role == roles.Customer){
+                if(trasaction.transactionStatus == TRANSACTION_STATUS.PENDING){
+                    pendingAmount += parseInt(trasaction?.amount)
+                    trasaction?.childTransaction?.map((childTransaction:any)=>{
+                        if(childTransaction.transactionStatus == TRANSACTION_STATUS.COMPLETE)
+                            pendingAmount -= parseInt(childTransaction?.amount)
+                    })
+                }
+            }else{
+                if(trasaction.transactionStatus == TRANSACTION_STATUS.PENDING){
+                    toBeTakenFromVender += parseInt(trasaction?.amount)
+                    trasaction?.childTransaction?.map((childTransaction:any)=>{
+                        if(childTransaction.transactionStatus == TRANSACTION_STATUS.COMPLETE)
+                            toBeTakenFromVender -= parseInt(childTransaction?.amount)
+                    })
+                }
             }
         })
 
@@ -230,11 +266,12 @@ export const getVenderDashboardData=async(req:any,res:any) => {
                 collectedAmount:completedAmount,
                 paidAmount:paidAmount,
                 todayDueAmount:totalPendingAmount,
-                toBePaidToVender: totalAmonuntToPaidToVender
+                toBePaidToVender: totalAmonuntToPaidToVender,
+                pendingFromVender:toBeTakenFromVender
             },
             openEnquiryCount
         }
-
+        // console.log(venderDashboardData,"sss");
         return buildObjectResponse(res, {data:venderDashboardData});
 
     } catch (error) {
