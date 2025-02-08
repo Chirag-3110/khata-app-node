@@ -176,7 +176,7 @@ export const verifyTransaction = async (req: any, res: any) => {
     const notificationBodies = [
       {
         title: "Transaction completed",
-        description: `Your transaction is successfully created with the vendor`,
+        description: `Your transaction is successfully created with ${findUser?.name}`,
         notificationType: NOTIFICATION_TYPE.TRANSACTION,
         userId: userId,
       },
